@@ -1,0 +1,12 @@
+cot, arccos from trigonometry
+getNeighborVerticesInFace, Faces, Edges, Vertices, oppositeVertices from FundamentalMeshAccessors(M)
+M ∈ mesh
+x_i ∈ ℝ^3  
+
+angle(k, j, i) = arccos((x_j - x_k)⋅(x_i-x_k)/(||(x_j - x_k)||⋅||(x_i-x_k)||)) where i,j,k ∈ ℤ vertices
+
+rhs(i) = 1/(4A) (sum_(j ∈ Vertices(i)) (cot(α) + cot(β))(x_j - x_i) 
+where k, l = oppositeVertices(Edges(i,j)),
+α = angle(k, j, i),
+β = angle(l, i, j) ) where i ∈ ℤ vertices,
+A = 2

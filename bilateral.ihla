@@ -1,0 +1,17 @@
+getNeighborVerticesInFace, Faces, Vertices from FundamentalMeshAccessors(M)
+M ∈ mesh
+x_i ∈ ℝ^3 
+`σc` ∈  ℝ 
+`σs` ∈  ℝ 
+
+getVertexNormal(i) = (sum_(f ∈ Faces(i)) n/(||x_j-x_i||² ||x_k-x_i||²) 
+where n = (x_j- x_i)×(x_k-x_i),
+j, k = getNeighborVerticesInFace(f, i) ) where i ∈ ℤ vertices
+
+
+DenoisePoint(i) = x_i + n⋅(s/norm)  where i ∈ ℤ vertices,
+n = getVertexNormal(i),
+s = (sum_(v ∈ Vertices(i)) (`wc`⋅`ws`)⋅h where t = ||x_i - x_v||, h = <n, x_i - x_v>, `wc` = exp(-t²/(2`σc`²)) , `ws` = exp(-h²/(2`σs`²))),
+norm = (sum_(v ∈ Vertices(i)) `wc`⋅`ws` where t = ||x_i - x_v||, h = <n, x_i - x_v>, `wc` = exp(-t²/(2`σc`²)) , `ws` = exp(-h²/(2`σs`²)))
+ 
+
