@@ -24,8 +24,12 @@ evec = vec(edgeset(NonZeros(veᵀ IndicatorVector(M, {i}))) ∩ vertexset(NonZer
 getNeighborVerticesInFace(f, v) = tuple(vvec1_1, vvec2_1) where v ∈ ℤ vertices, f ∈ ℤ faces,
 es = edgeset(NonZeros(ef IndicatorVector(M, {f}))),
 nes = { s for s ∈ es if ve_v,s != 0 },
-vvec1 = vec({ e for e ∈ nes if ef_e,f ve_v,e == -1}),
-vvec2 = vec({ e for e ∈ nes if ef_e,f ve_v,e == 1 })
+eset1 = { e for e ∈ nes if ef_e,f ve_v,e == -1},
+vset1 = vertexset(NonZeros(uve IndicatorVector(M, eset1))),
+vvec1 = vec(vset1 - {v}),
+eset2 = { e for e ∈ nes if ef_e,f ve_v,e == 1 },
+vset2 = vertexset(NonZeros(uve IndicatorVector(M, eset2))),
+vvec2 = vec(vset2 - {v})
 
 getOrientedVertices(f) = tuple(vvec_1, i, j)    where f ∈ ℤ faces,
 vs = Vertices(f),

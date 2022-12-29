@@ -40,7 +40,6 @@ struct iheartla {
             int j = std::get<0>(tuple);
             int k = std::get<1>(tuple);
                 // n = (x_j- x_i)×(x_k-x_i)
-            std::cout<<"j:"<<j<<", k:"<<k<<std::endl;
             Eigen::Matrix<double, 3, 1> n = ((x.at(j) - x.at(i))).cross((x.at(k) - x.at(i)));
             sum_0 += n / double((pow((x.at(j) - x.at(i)).lpNorm<2>(), 2) * pow((x.at(k) - x.at(i)).lpNorm<2>(), 2)));
         }
@@ -150,19 +149,33 @@ struct iheartla {
                     getNeighborVerticesInFaceset_2.insert(e);
                 }
             }
-            std::vector<int> stdv_1(getNeighborVerticesInFaceset_2.begin(), getNeighborVerticesInFaceset_2.end());
+            // eset1 = { e for e ∈ nes if ef_e,f ve_v,e == -1}
+            std::set<int > eset1 = getNeighborVerticesInFaceset_2;
+            // vset1 = vertexset(NonZeros(uve IndicatorVector(M, eset1)))
+            std::set<int > vset1 = nonzeros(uve * M.edges_to_vector(eset1));
+            std::set<int > getNeighborVerticesInFaceset_3({v});
+            std::set<int > difference;
+            std::set_difference(vset1.begin(), vset1.end(), getNeighborVerticesInFaceset_3.begin(), getNeighborVerticesInFaceset_3.end(), std::inserter(difference, difference.begin()));
+            std::vector<int> stdv_1(difference.begin(), difference.end());
             Eigen::VectorXi vec_1(Eigen::Map<Eigen::VectorXi>(&stdv_1[0], stdv_1.size()));
-            // vvec1 = vec({ e for e ∈ nes if ef_e,f ve_v,e == -1})
+            // vvec1 = vec(vset1 - {v})
             Eigen::VectorXi vvec1 = vec_1;
-            std::set<int > getNeighborVerticesInFaceset_3;
+            std::set<int > getNeighborVerticesInFaceset_4;
             for(int e : nes){
                 if(ef.coeff(e, f) * ve.coeff(v, e) == 1){
-                    getNeighborVerticesInFaceset_3.insert(e);
+                    getNeighborVerticesInFaceset_4.insert(e);
                 }
             }
-            std::vector<int> stdv_2(getNeighborVerticesInFaceset_3.begin(), getNeighborVerticesInFaceset_3.end());
+            // eset2 = { e for e ∈ nes if ef_e,f ve_v,e == 1 }
+            std::set<int > eset2 = getNeighborVerticesInFaceset_4;
+            // vset2 = vertexset(NonZeros(uve IndicatorVector(M, eset2)))
+            std::set<int > vset2 = nonzeros(uve * M.edges_to_vector(eset2));
+            std::set<int > getNeighborVerticesInFaceset_5({v});
+            std::set<int > difference_1;
+            std::set_difference(vset2.begin(), vset2.end(), getNeighborVerticesInFaceset_5.begin(), getNeighborVerticesInFaceset_5.end(), std::inserter(difference_1, difference_1.begin()));
+            std::vector<int> stdv_2(difference_1.begin(), difference_1.end());
             Eigen::VectorXi vec_2(Eigen::Map<Eigen::VectorXi>(&stdv_2[0], stdv_2.size()));
-            // vvec2 = vec({ e for e ∈ nes if ef_e,f ve_v,e == 1 })
+            // vvec2 = vec(vset2 - {v})
             Eigen::VectorXi vvec2 = vec_2;
             return std::tuple<int,int >{ vvec1[1-1],vvec2[1-1] };    
         }
@@ -185,8 +198,8 @@ struct iheartla {
             const int & e)
         {
             std::set<int > diamondset_0({e});
-            std::set<int> myset;
-            return std::tuple< std::set<int >, std::set<int >, std::set<int >, std::set<int > >{ Vertices_2(e),diamondset_0,Faces_0(e),myset };    
+            std::set<int > ss;
+            return std::tuple< std::set<int >, std::set<int >, std::set<int >, std::set<int > >{ Vertices_2(e),diamondset_0,Faces_0(e), ss };    
         }
         std::tuple< int, int > oppositeVertices(
             const int & e)
@@ -272,7 +285,9 @@ struct iheartla {
 int main(int argc, const char * argv[]) {
     Eigen::MatrixXd meshV;
     Eigen::MatrixXi meshF;
-    igl::readOBJ("/Users/pressure/Downloads/mesh_source/models/cube.obj", meshV, meshF);
+    // igl::readOBJ("/Users/pressure/Downloads/mesh_source/models/cube.obj", meshV, meshF);
+    // igl::readOBJ("/Users/pressure/Downloads/mesh_source/models/small_bunny.obj", meshV, meshF);
+    igl::readOBJ("/Users/pressure/Documents/git/meshtaichi/vertex_normal/models/bunny.obj", meshV, meshF);
 
     TriangleMesh triangle_mesh;
     triangle_mesh.initialize(meshV, meshF);
@@ -294,6 +309,7 @@ int main(int argc, const char * argv[]) {
     for (int i = 0; i < meshV.rows(); ++i)
     {
         N.push_back(ihla.getVertexNormal(i));
+        std::cout<<"ihla.getVertexNormal(i):\n"<<ihla.getVertexNormal(i)<<std::endl;
     }
 
     // Add a scalar and a vector function defined on the mesh
