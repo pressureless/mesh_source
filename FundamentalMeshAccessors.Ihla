@@ -17,7 +17,8 @@ Faces(e) = faceset(NonZeros(uefᵀ IndicatorVector(M, {e}))) where e: ℤ edges
 Faces(S) = S₃ where S: SimplicialSet
 
 Edges(S) = S₂ where S: SimplicialSet 
-Edges(i, j) = vertexset(NonZeros(veᵀ IndicatorVector(M, {i}))) ∩ vertexset(NonZeros(veᵀ IndicatorVector(M, {j}))) where i,j: ℤ vertices
+Edges(i, j) = evec_1 where i,j: ℤ vertices,
+evec = vec(edgeset(NonZeros(veᵀ IndicatorVector(M, {i}))) ∩ vertexset(NonZeros(veᵀ IndicatorVector(M, {j}))))
 
 
 getNeighborVerticesInFace(f, v) = tuple(vvec1_1, vvec2_1) where v ∈ ℤ vertices, f ∈ ℤ faces,
@@ -26,7 +27,12 @@ nes = { s for s ∈ es if ve_v,s != 0 },
 vvec1 = vec({ e for e ∈ nes if ef_e,f ve_v,e == -1}),
 vvec2 = vec({ e for e ∈ nes if ef_e,f ve_v,e == 1 })
 
+getOrientedVertices(f) = tuple(vvec_1, i, j)    where f ∈ ℤ faces,
+vs = Vertices(f),
+vvec = vec(vs),
+i,j = getNeighborVerticesInFace(f, vvec_1)
+
 
 diamond(e) = SimplicialSet(Vertices(e) ,{e}, Faces(e)) where e ∈ ℤ edges
-oppositeVertices(e) = tuple(evec, evec) where e ∈ ℤ edges,
+oppositeVertices(e) = tuple(evec_1, evec_2) where e ∈ ℤ edges,
 evec = vec(Vertices(diamond(e)))
