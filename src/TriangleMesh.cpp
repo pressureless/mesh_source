@@ -32,7 +32,7 @@ void TriangleMesh::initialize(const Eigen::MatrixXd &V, Matrix &T){
     std::cout<<"T cols:"<<T.cols()<<std::endl;
     this->numerical_order = true;
     this->T = T;
-    std::cout<<"T:\n"<<this->T<<std::endl;
+    // std::cout<<"T:\n"<<this->T<<std::endl;
     if (T.cols() == 4) {
         // tets, assume each row (tet) already has the positive orientation
         this->T = T;
@@ -49,7 +49,7 @@ void TriangleMesh::initialize(const Eigen::MatrixXd &V, Matrix &T){
     else if(T.cols() == 3){
         // faces, assume each row (face) already has the positive orientation
         this->F = T;
-        std::cout<<"this->F:\n"<<this->F<<std::endl;
+        // std::cout<<"this->F:\n"<<this->F<<std::endl;
         Vector maxVal = this->F.rowwise().maxCoeff();
         this->num_v = maxVal.maxCoeff()+1;
         this->create_edges_from_faces();
@@ -192,7 +192,7 @@ void TriangleMesh::create_edges(){
         E.row(6*i+5) = sort_vector(v5);
     }
     this->E = remove_duplicate_rows(sort_matrix(E));
-    std::cout<<"this->E:\n"<<this->E<<std::endl;
+    // std::cout<<"this->E:\n"<<this->E<<std::endl;
     // create the mapping
     for (int i=0; i<this->E.rows(); i++) {
         this->map_e.insert(std::pair<key_e, int>(std::make_tuple(this->E(i,0), this->E(i,1)), i));
@@ -222,7 +222,7 @@ void TriangleMesh::create_edges_from_faces(){
     }
     // std::cout<<"before this->E:\n"<<E<<std::endl;
     this->E = remove_duplicate_rows(sort_matrix(E));    
-    std::cout<<"this->E:\n"<<this->E<<std::endl;
+    // std::cout<<"this->E:\n"<<this->E<<std::endl;
     // create the mapping
     for (int i=0; i<this->E.rows(); i++) {
         this->map_e.insert(std::pair<key_e, int>(std::make_tuple(this->E(i,0), this->E(i,1)), i));
@@ -258,7 +258,7 @@ void TriangleMesh::create_faces(){
         }
     }
     this->F = remove_duplicate_rows(sort_matrix(F));
-    std::cout<<"this->F:\n"<<this->F<<std::endl;
+    // std::cout<<"this->F:\n"<<this->F<<std::endl;
     // create the mapping
     for (int i=0; i<this->F.rows(); i++) {
         this->map_f.insert(std::pair<key_f, int>(std::make_tuple(this->F(i,0), this->F(i,1), this->F(i,2)), i));
@@ -315,7 +315,7 @@ void TriangleMesh::build_boundary_mat2(){
     }
     this->bm2.setFromTriplets(tripletList.begin(), tripletList.end());
     this->pos_bm2 = this->bm2.cwiseAbs();
-    std::cout<<"this->bm2:\n"<<this->bm2<<std::endl;
+    // std::cout<<"this->bm2:\n"<<this->bm2<<std::endl;
     // std::cout<<"this->pos_bm2:\n"<<this->pos_bm2<<std::endl;
 }
 
@@ -328,7 +328,7 @@ void TriangleMesh::build_boundary_mat1(){
     }
     this->bm1.setFromTriplets(tripletList.begin(), tripletList.end());
     this->pos_bm1 = this->bm1.cwiseAbs();
-    std::cout<<"this->bm1:\n"<<this->bm1<<std::endl;
+    // std::cout<<"this->bm1:\n"<<this->bm1<<std::endl;
     // std::cout<<"this->pos_bm1:\n"<<this->pos_bm1<<std::endl;
 }
 
@@ -643,6 +643,9 @@ SparseMatrix<int> TriangleMesh::vertices_to_vector(const std::set<int>& vset) co
     {
         tripletList.push_back(Eigen::Triplet<int>(idx, 0, 1));
     }
+    // std::cout<<"this->num_v:"<<this->num_v<<std::endl;
+    // std::cout<<"vset size:"<<vset.size()<<std::endl;
+    // std::cout<<"tripletList size:"<<tripletList.size()<<std::endl;
     v.setFromTriplets(tripletList.begin(), tripletList.end());
     return v;
 }
