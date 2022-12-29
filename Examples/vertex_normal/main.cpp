@@ -16,17 +16,6 @@
 #include "polyscope/polyscope.h"
 #include "polyscope/surface_mesh.h"
 
-using Eigen::MatrixXi;
-using Eigen::MatrixXd;
-
-#include <Eigen/Core>
-#include <Eigen/QR>
-#include <Eigen/Dense>
-#include <Eigen/Sparse>
-#include <iostream>
-#include <set>
-#include "TriangleMesh.h"
-
 struct iheartla {
 
     std::vector<Eigen::Matrix<double, 3, 1>> x;
@@ -41,7 +30,7 @@ struct iheartla {
             int k = std::get<1>(tuple);
                 // n = (x_j- x_i)×(x_k-x_i)
             Eigen::Matrix<double, 3, 1> n = ((x.at(j) - x.at(i))).cross((x.at(k) - x.at(i)));
-            sum_0 += n / double((pow((x.at(j) - x.at(i)).lpNorm<2>(), 2) * pow((x.at(k) - x.at(i)).lpNorm<2>(), 2)));
+            sum_0 += n / double((pow((x.at(j) - x.at(i)).lpNorm<2>(), 2) + pow((x.at(k) - x.at(i)).lpNorm<2>(), 2)));
         }
         return (sum_0);    
     }
@@ -198,8 +187,8 @@ struct iheartla {
             const int & e)
         {
             std::set<int > diamondset_0({e});
-            std::set<int > ss;
-            return std::tuple< std::set<int >, std::set<int >, std::set<int >, std::set<int > >{ Vertices_2(e),diamondset_0,Faces_0(e), ss };    
+        std::set<int > tetset;
+            return std::tuple<std::set<int >,std::set<int >,std::set<int >,std::set<int > >{ Vertices_2(e),diamondset_0,Faces_0(e),tetset };    
         }
         std::tuple< int, int > oppositeVertices(
             const int & e)
@@ -281,23 +270,17 @@ struct iheartla {
 };
 
 
-
 int main(int argc, const char * argv[]) {
     Eigen::MatrixXd meshV;
     Eigen::MatrixXi meshF;
     // igl::readOBJ("/Users/pressure/Downloads/mesh_source/models/cube.obj", meshV, meshF);
-    // igl::readOBJ("/Users/pressure/Downloads/mesh_source/models/small_bunny.obj", meshV, meshF);
-    igl::readOBJ("/Users/pressure/Documents/git/meshtaichi/vertex_normal/models/bunny.obj", meshV, meshF);
-
+    igl::readOBJ("/Users/pressure/Downloads/mesh_source/models/small_bunny.obj", meshV, meshF);
+    // igl::readOBJ("/Users/pressure/Documents/git/meshtaichi/vertex_normal/models/bunny.obj", meshV, meshF);
+    // Initialize triangle mesh
     TriangleMesh triangle_mesh;
     triangle_mesh.initialize(meshV, meshF);
-
     // Initialize polyscope
-    polyscope::init(); 
-
-    // Register a surface mesh structure
-    // `meshVerts` is a Vx3 array-like container of vertex positions
-    // `meshFaces` is a Fx3 array-like container of face indices  
+    polyscope::init();  
     polyscope::registerSurfaceMesh("my mesh", meshV, meshF);
     std::vector<Eigen::Matrix<double, 3, 1>> P;
     for (int i = 0; i < meshV.rows(); ++i)
@@ -308,18 +291,11 @@ int main(int argc, const char * argv[]) {
     std::vector<Eigen::Matrix<double, 3, 1>> N;
     for (int i = 0; i < meshV.rows(); ++i)
     {
-        N.push_back(ihla.getVertexNormal(i));
-        std::cout<<"ihla.getVertexNormal(i):\n"<<ihla.getVertexNormal(i)<<std::endl;
-    }
-
-    // Add a scalar and a vector function defined on the mesh
-    // `scalarQuantity` is a length V array-like container of values
-    // `vectorQuantity` is an Fx3 array-like container of vectors per face
-    // polyscope::getSurfaceMesh("my mesh")->addVertexScalarQuantity("my_scalar", scalarQuantity);
-    // polyscope::getSurfaceMesh("my mesh")->addFaceVectorQuantity("my_vector", vectorQuantity);
-
-    // View the point cloud and mesh we just registered in the 3D UI
+        Eigen::Matrix<double, 3, 1> n = ihla.getVertexNormal(i);
+        N.push_back(n);
+        // std::cout<<"ihla.getVertexNormal(i):\n"<<n<<std::endl;
+    } 
+    polyscope::getSurfaceMesh("my mesh")->addVertexVectorQuantity("VertexNormal", N); 
     polyscope::show();
-
     return 0;
 }

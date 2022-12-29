@@ -2,6 +2,6 @@ getNeighborVerticesInFace, Faces, Vertices from FundamentalMeshAccessors(M)
 M ∈ mesh
 x_i ∈ ℝ^3  
 
-getVertexNormal(i) = (sum_(f ∈ Faces(i)) n/(||x_j-x_i||² ||x_k-x_i||²) 
+getVertexNormal(i) = (sum_(f ∈ Faces(i)) n/(||x_j-x_i||²  + ||x_k-x_i||²) 
 where n = (x_j- x_i)×(x_k-x_i),
 j, k = getNeighborVerticesInFace(f, i) ) where i ∈ ℤ vertices
