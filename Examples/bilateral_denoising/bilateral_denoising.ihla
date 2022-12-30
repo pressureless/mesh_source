@@ -1,17 +1,34 @@
 getNeighborVerticesInFace, Faces, Vertices from FundamentalMeshAccessors(M)
 M ∈ mesh
 x_i ∈ ℝ^3 
-`σc` ∈  ℝ 
-`σs` ∈  ℝ 
 
-getVertexNormal(i) = (sum_(f ∈ Faces(i)) n/(||x_j-x_i||² ||x_k-x_i||²) 
+getVertexNormal(i) = (sum_(f ∈ Faces(i)) n/(||x_j-x_i||² + ||x_k-x_i||²) 
 where n = (x_j- x_i)×(x_k-x_i),
 j, k = getNeighborVerticesInFace(f, i) ) where i ∈ ℤ vertices
 
 
 DenoisePoint(i) = x_i + n⋅(s/norm)  where i ∈ ℤ vertices,
 n = getVertexNormal(i),
-s = (sum_(v ∈ Vertices(i)) (`wc`⋅`ws`)⋅h where t = ||x_i - x_v||, h = <n, x_i - x_v>, `wc` = exp(-t²/(2`σc`²)) , `ws` = exp(-h²/(2`σs`²))),
-norm = (sum_(v ∈ Vertices(i)) `wc`⋅`ws` where t = ||x_i - x_v||, h = <n, x_i - x_v>, `wc` = exp(-t²/(2`σc`²)) , `ws` = exp(-h²/(2`σs`²)))
+`σc` = calSigmaC(i),
+`σs` = calSigmaS(i),
+neighbors = getAdaptiveVertexNeighbor(i, {i}, `σc`),
+s = (sum_(v ∈ neighbors) (`wc`⋅`ws`)⋅h where t = ||x_i - x_v||, h = <n, x_i - x_v>, `wc` = exp(-t²/(2`σc`²)) , `ws` = exp(-h²/(2`σs`²))),
+norm = (sum_(v ∈ neighbors) `wc`⋅`ws` where t = ||x_i - x_v||, h = <n, x_i - x_v>, `wc` = exp(-t²/(2`σc`²)) , `ws` = exp(-h²/(2`σs`²)))
  
+
+calSigmaC(i) = min({||x_i - x_v|| for v ∈ Vertices(i)}) where i ∈ ℤ vertices
+
+calSigmaS(i) = {sqrt(offset) + 1.0E-12 if sqrt(offset) < 1.0E-12
+	sqrt(offset) otherwise where i ∈ ℤ vertices,
+n = getVertexNormal(i),
+c = |Vertices(i)|,
+su = (sum_(v ∈ Vertices(i)) t where t = sqrt(((x_v - x_i)⋅n)²)),
+sqs = (sum_(v ∈ Vertices(i)) t² where t = sqrt(((x_v - x_i)⋅n)²)),
+offset = sqs / c - (su² / c²)
+
+
+getAdaptiveVertexNeighbor(i, n, sigma) = { target if |n|==|target|
+                                           getAdaptiveVertexNeighbor(i, target, sigma) otherwise where i ∈ ℤ vertices, sigma ∈ ℝ, n ∈ {ℤ} vertices,
+target = {v for v ∈ Vertices(n) if ||x_i-x_v||<sigma}
+
 
