@@ -9,8 +9,8 @@ Vertices(f) = vertexset(NonZeros(uve uef IndicatorVector(M, {f}))) where f: ℤ 
 Vertices(f) = vertexset(NonZeros(uve uef IndicatorVector(M, f))) where f: {ℤ} faces
 Vertices(e) = vertexset(NonZeros(uve IndicatorVector(M, {e}))) where e: ℤ edges
 Vertices(e) = vertexset(NonZeros(uve IndicatorVector(M, e))) where e: {ℤ} edges
-Vertices(v) = vertexset(NonZeros(uve uveᵀ IndicatorVector(M, {v}))) where v: ℤ vertices
-Vertices(v) = vertexset(NonZeros(uve uveᵀ IndicatorVector(M, v))) where v: {ℤ} vertices
+Vertices(v) = vertexset(NonZeros(uve uveᵀ IndicatorVector(M, {v})))-{v} where v: ℤ vertices
+Vertices(v) = vertexset(NonZeros(uve uveᵀ IndicatorVector(M, v)))-v where v: {ℤ} vertices
 
 Faces(v) = faceset(NonZeros((uve uef)ᵀ IndicatorVector(M, {v}))) where v: ℤ vertices
 Faces(e) = faceset(NonZeros(uefᵀ IndicatorVector(M, {e}))) where e: ℤ edges
