@@ -11,6 +11,7 @@
 #include <Eigen/Dense>
 #include <Eigen/Sparse> 
 #include <igl/readOBJ.h>
+#include <igl/readOFF.h>
 #include "MeshHelper.h"
 #include "dec_util.h"
 #include "polyscope/polyscope.h"
@@ -19,6 +20,21 @@
 struct iheartla {
 
     std::vector<Eigen::Matrix<double, 3, 1>> x;
+    // Eigen::Matrix<double, 3, 1> getVertexNormal(
+    //     const int & i)
+    // {
+    //     Eigen::MatrixXd sum_0 = Eigen::MatrixXd::Zero(3, 1);
+    //     for(int f : Faces(i)){
+    //             // j, k = getNeighborVerticesInFace(f, i)
+    //         std::tuple< int, int > tuple = getNeighborVerticesInFace(f, i);
+    //         int j = std::get<0>(tuple);
+    //         int k = std::get<1>(tuple);
+    //             // n = (x_j- x_i)×(x_k-x_i)
+    //         Eigen::Matrix<double, 3, 1> n = ((x.at(j) - x.at(i))).cross((x.at(k) - x.at(i)));
+    //         sum_0 += n / double((pow((x.at(j) - x.at(i)).lpNorm<2>(), 2) + pow((x.at(k) - x.at(i)).lpNorm<2>(), 2)));
+    //     }
+    //     return (sum_0);    
+    // }
     Eigen::Matrix<double, 3, 1> getVertexNormal(
         const int & i)
     {
@@ -30,21 +46,32 @@ struct iheartla {
             int k = std::get<1>(tuple);
                 // n = (x_j- x_i)×(x_k-x_i)
             Eigen::Matrix<double, 3, 1> n = ((x.at(j) - x.at(i))).cross((x.at(k) - x.at(i)));
-            sum_0 += n / double((pow((x.at(j) - x.at(i)).lpNorm<2>(), 2) + pow((x.at(k) - x.at(i)).lpNorm<2>(), 2)));
+            sum_0 += n * (((x.at(j) - x.at(i))).cross((x.at(k) - x.at(i)))).lpNorm<2>();
         }
-        return (sum_0);    
+        // w = (sum_(f ∈ Faces(i)) n ||(x_j- x_i)×(x_k-x_i)||
+    // where n = (x_j- x_i)×(x_k-x_i),
+    // j, k = getNeighborVerticesInFace(f, i) )
+        Eigen::Matrix<double, 3, 1> w = (sum_0);
+        return w / double((w).lpNorm<2>());    
     }
     double calSigmaC(
         const int & i)
     {
         std::set<double > calSigmaCset_0;
+        std::set<int > ss;
+        ss = Vertices_4(i);
+        // std::cout<<"i: "<<i<<std::endl;
+        // std::cout<<"ss: "<<std::endl;
+        // print_set(ss);
+
         for(int v : Vertices_4(i)){
             calSigmaCset_0.insert((x.at(i) - x.at(v)).lpNorm<2>());
         }
         return *(calSigmaCset_0).begin();    
     }
     double calSigmaS(
-        const int & i)
+        const int & i,
+        std::set<int >& neighbors)
     {
         double calSigmaS_ret;
         // n = getVertexNormal(i)
@@ -54,31 +81,35 @@ struct iheartla {
         int c = (Vertices_4(i)).size();
 
         double sum_3 = 0;
-        for(int v : Vertices_4(i)){
+        for(int v : neighbors){
                 // t = sqrt(((x_v - x_i)⋅n)²)
             double t = sqrt(pow((((x.at(v) - x.at(i))).dot(n)), 2));
             sum_3 += t;
         }
         // t = sqrt(((x_v - x_i)⋅n)²)
         double su = (sum_3);
+        std::cout<<"su: "<<su<<std::endl;
 
         double sum_4 = 0;
-        for(int v : Vertices_4(i)){
+        for(int v : neighbors){
                 // t = sqrt(((x_v - x_i)⋅n)²)
             double t = sqrt(pow((((x.at(v) - x.at(i))).dot(n)), 2));
             sum_4 += pow(t, 2);
         }
         // t = sqrt(((x_v - x_i)⋅n)²)
         double sqs = (sum_4);
+        std::cout<<"sqs: "<<sqs<<std::endl;
 
         // offset = sqs / c - (su² / c²)
         double offset = sqs / double(c) - (pow(su, 2) / double(pow(c, 2)));
+        std::cout<<"offset: "<<offset<<std::endl;
         if(sqrt(offset) < 1.0E-12){
             calSigmaS_ret = sqrt(offset) + 1.0E-12;
         }
         else{
             calSigmaS_ret = sqrt(offset);
         }
+        std::cout<<"calSigmaS_ret: "<<calSigmaS_ret<<std::endl;
         return calSigmaS_ret;    
     }
     std::set<int > getAdaptiveVertexNeighbor(
@@ -86,50 +117,74 @@ struct iheartla {
         const std::set<int > & n,
         const double & sigma)
     {
+        // std::cout<<"n: "<<std::endl;
+        // print_set(n);
         std::set<int > getAdaptiveVertexNeighbor_ret;
         std::set<int > getAdaptiveVertexNeighborset_0;
         for(int v : Vertices_5(n)){
-            if((x.at(i) - x.at(v)).lpNorm<2>() < sigma){
+            if((x.at(i) - x.at(v)).lpNorm<2>() < 2 * sigma){
                 getAdaptiveVertexNeighborset_0.insert(v);
             }
         }
-        // target = {v for v ∈ Vertices(n) if ||x_i-x_v||<sigma}
-        std::set<int > target = getAdaptiveVertexNeighborset_0;
+        std::set<int > uni;
+        std::set_union(getAdaptiveVertexNeighborset_0.begin(), getAdaptiveVertexNeighborset_0.end(), n.begin(), n.end(), std::inserter(uni, uni.begin()));
+        // target = {v for v ∈ Vertices(n) if ||x_i-x_v||< 2 sigma} + n
+        std::set<int > target = uni;
         if((n).size() == (target).size()){
-            getAdaptiveVertexNeighbor_ret = target;
+            getAdaptiveVertexNeighbor_ret = n;
         }
         else{
             getAdaptiveVertexNeighbor_ret = getAdaptiveVertexNeighbor(i, target, sigma);
         }
+        // std::cout<<"getAdaptiveVertexNeighbor_ret: "<<std::endl;
+        // print_set(getAdaptiveVertexNeighbor_ret);
         return getAdaptiveVertexNeighbor_ret;    
-    }
+    } 
     Eigen::Matrix<double, 3, 1> DenoisePoint(
         const int & i)
     {
+        std::cout<<"pos: "<<x[i](0)<<", "<<x[i](1)<<", "<<x[i](2)<<", "<<std::endl;
         // n = getVertexNormal(i)
         Eigen::Matrix<double, 3, 1> n = getVertexNormal(i);
+        // std::cout<<"n: "<<n<<std::endl;
+        // n(2) = 0.33333333;
+        std::cout<<"n: "<<n(0)<<", "<<n(1)<<", "<<n(2)<<", "<<std::endl;
 
         // `σc` = calSigmaC(i)
         double σc = calSigmaC(i);
+        std::cout<<"sigma_c: "<<σc<<std::endl;
 
-        // `σs` = calSigmaS(i)
-        double σs = calSigmaS(i);
 
+        // std::set<int > DenoisePointset_0({i});
+        // // neighbors = getAdaptiveVertexNeighbor(i, {i}, `σc`)
+        // std::set<int > neighbors = getAdaptiveVertexNeighbor(i, Vertices_4(i), σc);
         std::set<int > DenoisePointset_0({i});
-        // neighbors = getAdaptiveVertexNeighbor(i, {i}, `σc`)
-        std::set<int > neighbors = getAdaptiveVertexNeighbor(i, DenoisePointset_0, σc);
-
+        std::set<int > DenoisePointset_1({i});
+        std::set<int > difference;
+        std::set<int > lhs_diff = getAdaptiveVertexNeighbor(i, DenoisePointset_0, σc);
+        std::set<int > rhs_diff = DenoisePointset_1;
+        std::set_difference(lhs_diff.begin(), lhs_diff.end(), rhs_diff.begin(), rhs_diff.end(), std::inserter(difference, difference.begin()));
+        // neighbors = getAdaptiveVertexNeighbor(i, {i}, `σc`)-{i}
+        std::set<int > neighbors = lhs_diff;
+        // `σs` = calSigmaS(i)
+        double σs = calSigmaS(i, neighbors);
+        // σs = 0.602754021126148;
+        std::cout<<"sigma_s: "<<σs<<std::endl;
+        std::cout<<"neighbors: "<<neighbors.size()<<std::endl;
+        // print_set(neighbors);
         double sum_6 = 0;
+        // neighbors.insert(0);
         for(int v : neighbors){
                 // `ws` = exp(-h²/(2`σs`²))
             double t = (x.at(i) - x.at(v)).lpNorm<2>();
                 // `ws` = exp(-h²/(2`σs`²))
-            double h = (n).dot(x.at(i) - x.at(v));
+            double h = (n).dot(x.at(v) - x.at(i));
                 // `ws` = exp(-h²/(2`σs`²))
-            double wc = exp(-pow(t, 2) / double((2 * pow(σc, 2))));
+            double wc = exp(-pow(t, 2) / 2 * double((pow(σc, 2))));
                 // `ws` = exp(-h²/(2`σs`²))
-            double ws = exp(-pow(h, 2) / double((2 * pow(σs, 2))));
+            double ws = exp(-pow(h, 2) / 2 * double((pow(σs, 2))));
             sum_6 += (wc * ws) * h;
+            // std::cout<<"sum_6: "<<sum_6<<std::endl;
         }
         // `ws` = exp(-h²/(2`σs`²))
         double s = (sum_6);
@@ -139,15 +194,21 @@ struct iheartla {
                 // `ws` = exp(-h²/(2`σs`²))
             double t = (x.at(i) - x.at(v)).lpNorm<2>();
                 // `ws` = exp(-h²/(2`σs`²))
-            double h = (n).dot(x.at(i) - x.at(v));
+            double h = (n).dot(x.at(v) - x.at(i));
                 // `ws` = exp(-h²/(2`σs`²))
-            double wc = exp(-pow(t, 2) / double((2 * pow(σc, 2))));
+            double wc = exp(-pow(t, 2)/2 * double((pow(σc, 2))));
                 // `ws` = exp(-h²/(2`σs`²))
-            double ws = exp(-pow(h, 2) / double((2 * pow(σs, 2))));
+            double ws = exp(-pow(h, 2) /2 * double((pow(σs, 2))));
             sum_7 += wc * ws;
+            // std::cout<<"sum_7: "<<sum_7<<std::endl;
         }
         // `ws` = exp(-h²/(2`σs`²))
         double norm = (sum_7);
+        // std::cout<<"n: "<<n<<std::endl;
+        // std::cout<<"sum: "<<s<<std::endl;
+        // std::cout<<"norm: "<<norm<<std::endl;
+        Eigen::Matrix<double, 3, 1> res = x.at(i) + n * (s / double(norm));   
+        std::cout<<"new pos: "<<res(0)<<", "<<res(1)<<", "<<res(2)<<", "<<std::endl;
         return x.at(i) + n * (s / double(norm));    
     }
     struct FundamentalMeshAccessors {
@@ -190,12 +251,27 @@ struct iheartla {
             const int & v)
         {
             std::set<int > Vertices_4set_0({v});
-            return nonzeros(uve * uve.transpose() * M.vertices_to_vector(Vertices_4set_0));    
+            std::set<int > Vertices_4set_1({v});
+            std::set<int > difference;
+            // std::cout<<"uve:"<<uve<<std::endl;
+            // std::cout<<"time:"<<uve * uve.transpose()<<std::endl;
+            std::set<int > lhs_diff = nonzeros(uve * uve.transpose() * M.vertices_to_vector(Vertices_4set_0));
+            std::set<int > rhs_diff = Vertices_4set_1;
+            // std::cout<<"lhs_diff:"<<std::endl;
+            // print_set(lhs_diff);
+            // std::cout<<"rhs_diff:"<<std::endl;
+            // print_set(rhs_diff);
+            std::set_difference(lhs_diff.begin(), lhs_diff.end(), rhs_diff.begin(), rhs_diff.end(), std::inserter(difference, difference.begin()));
+            return difference;    
         }
         std::set<int > Vertices_5(
             const std::set<int > & v)
         {
-            return nonzeros(uve * uve.transpose() * M.vertices_to_vector(v));    
+            std::set<int > difference_1;
+            std::set<int > lhs_diff_1 = nonzeros(uve * uve.transpose() * M.vertices_to_vector(v));
+            std::set<int > rhs_diff_1 = v;
+            std::set_difference(lhs_diff_1.begin(), lhs_diff_1.end(), rhs_diff_1.begin(), rhs_diff_1.end(), std::inserter(difference_1, difference_1.begin()));
+            return difference_1;    
         }
         std::set<int > Faces(
             const int & v)
@@ -385,34 +461,72 @@ struct iheartla {
     }
 };
 
+Eigen::MatrixXd meshV;
+Eigen::MatrixXi meshF;
+TriangleMesh triangle_mesh;
+
+std::vector<Eigen::Matrix<double, 3, 1>> P;
+
+void update(){
+    iheartla ihla(triangle_mesh, P); 
+    // std::cout<<"before"<<std::endl;
+    // for (int i = 0; i < meshV.rows(); ++i)
+    // {
+    //     std::cout<<"i: "<<i<<", "<<P[i]<<std::endl;
+    // } 
+    std::vector<Eigen::Matrix<double, 3, 1>> NP;
+    for (int i = 0; i < meshV.rows(); ++i)
+    {
+        Eigen::Matrix<double, 3, 1> new_pos = ihla.DenoisePoint(i);
+        NP.push_back(new_pos);
+    } 
+    P = NP;
+    // std::cout<<"after"<<std::endl;
+    // for (int i = 0; i < meshV.rows(); ++i)
+    // {
+    //     std::cout<<"i: "<<i<<", "<<P[i]<<std::endl;
+    // } 
+    polyscope::getSurfaceMesh("my mesh")->updateVertexPositions(P);
+}
+
+void myCallback()
+{
+    if (ImGui::Button("Run/Stop Simulation"))
+    {
+        std::cout<<"Run stop"<<std::endl;
+    }
+    // ImGui::SameLine();
+    if (ImGui::Button("One step")){
+        std::cout<<"one step"<<std::endl;
+        update();
+    } 
+}
 
 int main(int argc, const char * argv[]) {
-    Eigen::MatrixXd meshV;
-    Eigen::MatrixXi meshF;
+    // igl::readOBJ("/Users/pressure/Downloads/mesh_source/models/cube.obj", meshV, meshF);
     igl::readOBJ("/Users/pressure/Downloads/mesh_source/models/cube.obj", meshV, meshF);
     // igl::readOBJ("/Users/pressure/Downloads/mesh_source/models/small_bunny.obj", meshV, meshF);
+    // igl::readOBJ("/Users/pressure/Downloads/Mesh_Denoiseing_BilateralFilter/Noisy.obj", meshV, meshF);
+    // igl::readOBJ("/Users/pressure/Downloads/fast-mesh-denoising/meshes/Noisy/block_n1.obj", meshV, meshF);
+    // igl::readOFF("/Users/pressure/Downloads/Laplacian-Mesh-Smoothing/Models/bumpy.off", meshV, meshF); // 69KB 5mins
+    // igl::readOBJ("/Users/pressure/Downloads/GuidedDenoising/models/compareWang/torusnoise.obj", meshV, meshF); // 177KB 20 mins
+    
+
     // igl::readOBJ("/Users/pressure/Documents/git/meshtaichi/vertex_normal/models/bunny.obj", meshV, meshF);
     // Initialize triangle mesh
-    TriangleMesh triangle_mesh;
     triangle_mesh.initialize(meshV, meshF);
     // Initialize polyscope
     polyscope::init();  
     polyscope::registerSurfaceMesh("my mesh", meshV, meshF);
-    std::vector<Eigen::Matrix<double, 3, 1>> P;
+    polyscope::state::userCallback = myCallback;
+
     for (int i = 0; i < meshV.rows(); ++i)
     {
         P.push_back(meshV.row(i).transpose());
     }
-    iheartla ihla(triangle_mesh, P);
-    std::vector<Eigen::Matrix<double, 3, 1>> N;
-    for (int i = 0; i < meshV.rows(); ++i)
-    {
-        // Eigen::Matrix<double, 3, 1> n = ihla.getVertexNormal(i);
-        // N.push_back(n);
-        
-    } 
-    Eigen::Matrix<double, 3, 1> nn = ihla.DenoisePoint(0);
-    std::cout<<"nn:\n"<<nn<<std::endl;
+    // update();
+    // std::cout<<"nn:\n"<<nn<<std::endl;
+    // std::cout<<"nn:\n"<<P[0]<<std::endl;
     // polyscope::getSurfaceMesh("my mesh")->addVertexVectorQuantity("VertexNormal", N); 
     polyscope::show();
     return 0;
