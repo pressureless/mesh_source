@@ -1,14 +1,14 @@
-getNeighborVerticesInFace, Faces, Vertices from FundamentalMeshAccessors(M)
+GetNeighborVerticesInFace, VertexOneRing, FaceNeighbors from FundamentalMeshAccessors(M)
 M ∈ mesh
 x_i ∈ ℝ^3  
-d_i ∈ ℝ 
-
-Min(a, b) = { a if a < b
-	     b  otherwise where a,b∈ ℤ
 
 
-updateStep(v0, v1, v2) = { p if s_1,1 < 0 and s_2,1 < 0 
-			Min(d_(v1)+||x1||, d_(v2)+||x2||) otherwise where v0,v1,v2 ∈ ℤ vertices,
+Min(a, b) = { a  if a < b
+	          b  otherwise where a,b∈ ℝ
+
+
+UpdateStep(v0, v1, v2, d) = { p if s_1,1 < 0 and s_2,1 < 0 
+			Min(d_(v1)+||x1||, d_(v2)+||x2||) otherwise where v0,v1,v2 ∈ ℤ vertices, d_i ∈ ℝ,
 x1 = x_(v1) - x_(v0),
 x2 = x_(v2) - x_(v0),
 X = [x1 x2],
@@ -16,12 +16,12 @@ t = [d_(v1) d_(v2)]ᵀ,
 Q = (XᵀX)⁻¹,
 `1` = [1 ; 1],
 p = (`1`ᵀQt + sqrt((`1`ᵀQt)² - `1`ᵀQ`1` ⋅ (tᵀQt - 1)))/ (`1`ᵀQ`1`),
-n = XQ(t-`1`),
+n = XQ(t- p ⋅`1`),
 s = QXᵀn
 
-getNextLevel(U) = v - s where U_i  ∈  {ℤ} vertices,
+GetNextLevel(U) = v - s where U_i  ∈  {ℤ} vertices,
 s = ∪_i U_i,
-v = Vertices(s)
+v = VertexOneRing(s)
 
-getRangeLevel(U, a, b) = ∪_(i=a)^b U_i where U_j  ∈  {ℤ} vertices, a,b ∈ ℤ index
+GetRangeLevel(U, a, b) = ∪_(i=a)^b U_i where U_j  ∈  {ℤ} vertices, a,b ∈ ℤ index
 

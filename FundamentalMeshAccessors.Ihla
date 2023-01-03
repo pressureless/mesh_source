@@ -1,27 +1,31 @@
 vec from linearalgebra
 MeshSets, BoundaryMatrices, UnsignedBoundaryMatrices, NonZeros, ValueSet, IndicatorVector  from MeshConnectivity
+
 M ∈ mesh 
+
 V, E, F = MeshSets( M )
 ve, ef = BoundaryMatrices(M) 
 uve, uef = UnsignedBoundaryMatrices(M)
-Vertices(S) = S₁  where S: SimplicialSet
-Vertices(f) = vertexset(NonZeros(uve uef IndicatorVector(M, {f}))) where f: ℤ faces
-Vertices(f) = vertexset(NonZeros(uve uef IndicatorVector(M, f))) where f: {ℤ} faces
-Vertices(e) = vertexset(NonZeros(uve IndicatorVector(M, {e}))) where e: ℤ edges
-Vertices(e) = vertexset(NonZeros(uve IndicatorVector(M, e))) where e: {ℤ} edges
-Vertices(v) = vertexset(NonZeros(uve uveᵀ IndicatorVector(M, {v})))-{v} where v: ℤ vertices
-Vertices(v) = vertexset(NonZeros(uve uveᵀ IndicatorVector(M, v)))-v where v: {ℤ} vertices
 
-Faces(v) = faceset(NonZeros((uve uef)ᵀ IndicatorVector(M, {v}))) where v: ℤ vertices
-Faces(e) = faceset(NonZeros(uefᵀ IndicatorVector(M, {e}))) where e: ℤ edges
+Vertices(S) = S₁  where S: SimplicialSet
+Vertices(f) = vertexset(NonZeros(uve uef IndicatorVector(M, {f}))) where f ∈ F
+Vertices(f) = vertexset(NonZeros(uve uef IndicatorVector(M, f))) where f ∈ {ℤ} faces
+Vertices(e) = vertexset(NonZeros(uve IndicatorVector(M, {e}))) where e ∈ E
+Vertices(e) = vertexset(NonZeros(uve IndicatorVector(M, e))) where e ∈ {ℤ} edges
+VertexOneRing(v) = vertexset(NonZeros(uve uveᵀ IndicatorVector(M, {v})))-{v} where v ∈ V
+VertexOneRing(v) = vertexset(NonZeros(uve uveᵀ IndicatorVector(M, v)))-v where v ∈ {ℤ} vertices
+
+FaceNeighbors(v) = faceset(NonZeros((uve uef)ᵀ IndicatorVector(M, {v}))) where v ∈ V
+FaceNeighbors(e) = faceset(NonZeros(uefᵀ IndicatorVector(M, {e}))) where e ∈ E
 Faces(S) = S₃ where S: SimplicialSet
 
 Edges(S) = S₂ where S: SimplicialSet 
-Edges(i, j) = evec_1 where i,j: ℤ vertices,
+Edges(f) = faceset(NonZeros(uef IndicatorVector(M, {f}))) where f ∈ F
+
+GetEdgeIndex(i, j) = evec_1 where i,j ∈ V,
 evec = vec(edgeset(NonZeros(veᵀ IndicatorVector(M, {i}))) ∩ vertexset(NonZeros(veᵀ IndicatorVector(M, {j}))))
 
-
-getNeighborVerticesInFace(f, v) = tuple(vvec1_1, vvec2_1) where v ∈ ℤ vertices, f ∈ ℤ faces,
+GetNeighborVerticesInFace(f, v) = tuple(vvec1_1, vvec2_1) where v ∈ V, f ∈ F,
 es = edgeset(NonZeros(ef IndicatorVector(M, {f}))),
 nes = { s for s ∈ es if ve_v,s != 0 },
 eset1 = { e for e ∈ nes if ef_e,f ve_v,e == -1},
@@ -31,12 +35,12 @@ eset2 = { e for e ∈ nes if ef_e,f ve_v,e == 1 },
 vset2 = vertexset(NonZeros(uve IndicatorVector(M, eset2))),
 vvec2 = vec(vset2 - {v})
 
-getOrientedVertices(f) = tuple(vvec_1, i, j)    where f ∈ ℤ faces,
+GetOrientedVertices(f) = tuple(vvec_1, i, j)    where f ∈ F,
 vs = Vertices(f),
 vvec = vec(vs),
-i,j = getNeighborVerticesInFace(f, vvec_1)
+i,j = GetNeighborVerticesInFace(f, vvec_1)
 
+Diamond(e) = SimplicialSet(Vertices(e), {e}, FaceNeighbors(e)) where e ∈ E
 
-diamond(e) = SimplicialSet(Vertices(e) ,{e}, Faces(e)) where e ∈ ℤ edges
-oppositeVertices(e) = tuple(evec_1, evec_2) where e ∈ ℤ edges,
-evec = vec(Vertices(diamond(e)))
+OppositeVertices(e) = tuple(evec_1, evec_2) where e ∈ E,
+evec = vec(Vertices(Diamond(e)))
