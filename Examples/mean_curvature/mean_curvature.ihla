@@ -1,17 +1,19 @@
 cot, arccos from trigonometry
-FaceNeighbors, GetEdgeIndex, VertexOneRing, OppositeVertices, GetOrientedVertices from FundamentalMeshAccessors(M)
+FaceNeighbors, GetEdgeIndex, VertexOneRing, OppositeVertices, GetOrientedVertices,OrientedVertices from FundamentalMeshAccessors(M)
 M ∈ mesh
-x_i ∈ ℝ^3 
+
 t ∈ ℝ
 
-area(f) = 1/2 ||(x_j-x_i)×(x_k-x_i)|| where f ∈ ℤ faces,
+area(f, x) = 1/2 ||(x_j-x_i)×(x_k-x_i)|| where f ∈ ℤ faces, x_i ∈ ℝ^3,
 i,j,k = GetOrientedVertices(f)
 
-angle(k, j, i) = arccos((x_j - x_k)⋅(x_i-x_k)/(||(x_j - x_k)||⋅||(x_i-x_k)||)) where i,j,k ∈ ℤ vertices
+angle(k, j, i, x) = arccos((x_oj - x_k)⋅(x_oi-x_k)/(||(x_oj - x_k)||⋅||(x_oi-x_k)||)) where i,j,k ∈ ℤ vertices, x_i ∈ ℝ^3 ,
+oj, oi = OrientedVertices(k, j, i)
 
-Ax(i) = x_i - t K  where i ∈ ℤ vertices,
-A = (sum_(f ∈ FaceNeighbors(i)) area(f)),
+
+Ax(i, x) = x_i - t K  where i ∈ ℤ vertices, x_i ∈ ℝ^3,
+A = (sum_(f ∈ FaceNeighbors(i)) area(f, x)),
 K = 1/(4A)(sum_(j ∈ VertexOneRing(i)) (cot(α) + cot(β))(x_j - x_i) 
 where k, l = OppositeVertices(GetEdgeIndex(i,j)),
-α = angle(k, j, i),
-β = angle(l, i, j) )
+α = angle(k, j, i, x),
+β = angle(l, i, j, x) )

@@ -44,3 +44,14 @@ Diamond(e) = SimplicialSet(Vertices(e), {e}, FaceNeighbors(e)) where e ∈ E
 
 OppositeVertices(e) = tuple(evec_1, evec_2) where e ∈ E,
 evec = vec(Vertices(FaceNeighbors(e)) \ Vertices(e))
+
+GetFaceIndex(i,j,k) = fvec_1  where i,j,k ∈ V,
+ufv = (uve uef)ᵀ,
+iface = faceset(NonZeros(ufv  IndicatorVector(M, {i}))),
+jface = faceset(NonZeros(ufv  IndicatorVector(M, {j}))),
+kface = faceset(NonZeros(ufv IndicatorVector(M, {k}))),
+fvec = vec(iface ∩ jface ∩ kface)
+
+OrientedVertices(i,j,k) = GetNeighborVerticesInFace(f, i)  where i,j,k ∈ V,
+f = GetFaceIndex(i, j, k)
+
