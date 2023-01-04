@@ -43,4 +43,4 @@ i,j = GetNeighborVerticesInFace(f, vvec_1)
 Diamond(e) = SimplicialSet(Vertices(e), {e}, FaceNeighbors(e)) where e ∈ E
 
 OppositeVertices(e) = tuple(evec_1, evec_2) where e ∈ E,
-evec = vec(Vertices(Diamond(e)))
+evec = vec(Vertices(FaceNeighbors(e)) \ Vertices(e))

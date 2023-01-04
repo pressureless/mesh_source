@@ -19,13 +19,13 @@
 struct iheartla {
 
     std::vector<Eigen::Matrix<double, 3, 1>> x;
-    Eigen::Matrix<double, 3, 1> getVertexNormal(
+    Eigen::Matrix<double, 3, 1> GetVertexNormal(
         const int & i)
     {
         Eigen::MatrixXd sum_0 = Eigen::MatrixXd::Zero(3, 1);
-        for(int f : Faces(i)){
-                // j, k = getNeighborVerticesInFace(f, i)
-            std::tuple< int, int > tuple = getNeighborVerticesInFace(f, i);
+        for(int f : FaceNeighbors(i)){
+                // j, k = GetNeighborVerticesInFace(f, i)
+            std::tuple< int, int > tuple = GetNeighborVerticesInFace(f, i);
             int j = std::get<0>(tuple);
             int k = std::get<1>(tuple);
                 // n = (x_j- x_i)×(x_k-x_i)
@@ -51,6 +51,7 @@ struct iheartla {
         std::set<int > Vertices_0(
             const int & f)
         {
+            assert( F.find(f) != F.end() );
             std::set<int > Vertices_0set_0({f});
             return nonzeros(uve * uef * M.faces_to_vector(Vertices_0set_0));    
         }
@@ -62,6 +63,7 @@ struct iheartla {
         std::set<int > Vertices_2(
             const int & e)
         {
+            assert( E.find(e) != E.end() );
             std::set<int > Vertices_2set_0({e});
             return nonzeros(uve * M.edges_to_vector(Vertices_2set_0));    
         }
@@ -70,30 +72,42 @@ struct iheartla {
         {
             return nonzeros(uve * M.edges_to_vector(e));    
         }
-        std::set<int > Vertices_4(
+        std::set<int > VertexOneRing(
             const int & v)
         {
-            std::set<int > Vertices_4set_0({v});
-            return nonzeros(uve * uve.transpose() * M.vertices_to_vector(Vertices_4set_0));    
+            assert( V.find(v) != V.end() );
+            std::set<int > VertexOneRingset_0({v});
+            std::set<int > VertexOneRingset_1({v});
+            std::set<int > difference;
+            std::set<int > lhs_diff = nonzeros(uve * uve.transpose() * M.vertices_to_vector(VertexOneRingset_0));
+            std::set<int > rhs_diff = VertexOneRingset_1;
+            std::set_difference(lhs_diff.begin(), lhs_diff.end(), rhs_diff.begin(), rhs_diff.end(), std::inserter(difference, difference.begin()));
+            return difference;    
         }
-        std::set<int > Vertices_5(
+        std::set<int > VertexOneRing(
             const std::set<int > & v)
         {
-            return nonzeros(uve * uve.transpose() * M.vertices_to_vector(v));    
+            std::set<int > difference_1;
+            std::set<int > lhs_diff_1 = nonzeros(uve * uve.transpose() * M.vertices_to_vector(v));
+            std::set<int > rhs_diff_1 = v;
+            std::set_difference(lhs_diff_1.begin(), lhs_diff_1.end(), rhs_diff_1.begin(), rhs_diff_1.end(), std::inserter(difference_1, difference_1.begin()));
+            return difference_1;    
         }
-        std::set<int > Faces(
+        std::set<int > FaceNeighbors(
             const int & v)
         {
-            std::set<int > Facesset_0({v});
-            return nonzeros((uve * uef).transpose() * M.vertices_to_vector(Facesset_0));    
+            assert( V.find(v) != V.end() );
+            std::set<int > FaceNeighborsset_0({v});
+            return nonzeros((uve * uef).transpose() * M.vertices_to_vector(FaceNeighborsset_0));    
         }
-        std::set<int > Faces_0(
+        std::set<int > FaceNeighbors_0(
             const int & e)
         {
-            std::set<int > Faces_0set_0({e});
-            return nonzeros(uef.transpose() * M.edges_to_vector(Faces_0set_0));    
+            assert( E.find(e) != E.end() );
+            std::set<int > FaceNeighbors_0set_0({e});
+            return nonzeros(uef.transpose() * M.edges_to_vector(FaceNeighbors_0set_0));    
         }
-        std::set<int > Faces_1(
+        std::set<int > Faces(
             const std::tuple< std::set<int >, std::set<int >, std::set<int >, std::set<int > > & S)
         {
             return std::get<3-1>(S);    
@@ -103,99 +117,115 @@ struct iheartla {
         {
             return std::get<2-1>(S);    
         }
-        int Edges(
+        std::set<int > Edges(
+            const int & f)
+        {
+            assert( F.find(f) != F.end() );
+            std::set<int > Edges_0set_0({f});
+            return nonzeros(uef * M.faces_to_vector(Edges_0set_0));    
+        }
+        int GetEdgeIndex(
             const int & i,
             const int & j)
         {
-            std::set<int > Edges_0set_0({i});
-            std::set<int > Edges_0set_1({j});
+            assert( V.find(j) != V.end() );
+            std::set<int > GetEdgeIndexset_0({i});
+            std::set<int > GetEdgeIndexset_1({j});
             std::set<int > intsect;
-            std::set_intersection(nonzeros(ve.transpose() * M.vertices_to_vector(Edges_0set_0)).begin(), nonzeros(ve.transpose() * M.vertices_to_vector(Edges_0set_0)).end(), nonzeros(ve.transpose() * M.vertices_to_vector(Edges_0set_1)).begin(), nonzeros(ve.transpose() * M.vertices_to_vector(Edges_0set_1)).end(), std::inserter(intsect, intsect.begin()));
+            std::set_intersection(nonzeros(ve.transpose() * M.vertices_to_vector(GetEdgeIndexset_0)).begin(), nonzeros(ve.transpose() * M.vertices_to_vector(GetEdgeIndexset_0)).end(), nonzeros(ve.transpose() * M.vertices_to_vector(GetEdgeIndexset_1)).begin(), nonzeros(ve.transpose() * M.vertices_to_vector(GetEdgeIndexset_1)).end(), std::inserter(intsect, intsect.begin()));
             std::vector<int> stdv(intsect.begin(), intsect.end());
             Eigen::VectorXi vec(Eigen::Map<Eigen::VectorXi>(&stdv[0], stdv.size()));
             // evec = vec(edgeset(NonZeros(veᵀ IndicatorVector(M, {i}))) ∩ vertexset(NonZeros(veᵀ IndicatorVector(M, {j}))))
             Eigen::VectorXi evec = vec;
             return evec[1-1];    
         }
-        std::tuple< int, int > getNeighborVerticesInFace(
+        std::tuple< int, int > GetNeighborVerticesInFace(
             const int & f,
             const int & v)
         {
-            std::set<int > getNeighborVerticesInFaceset_0({f});
+            assert( F.find(f) != F.end() );
+            std::set<int > GetNeighborVerticesInFaceset_0({f});
             // es = edgeset(NonZeros(ef IndicatorVector(M, {f})))
-            std::set<int > es = nonzeros(ef * M.faces_to_vector(getNeighborVerticesInFaceset_0));
-            std::set<int > getNeighborVerticesInFaceset_1;
+            std::set<int > es = nonzeros(ef * M.faces_to_vector(GetNeighborVerticesInFaceset_0));
+            std::set<int > GetNeighborVerticesInFaceset_1;
             for(int s : es){
                 if(ve.coeff(v, s) != 0){
-                    getNeighborVerticesInFaceset_1.insert(s);
+                    GetNeighborVerticesInFaceset_1.insert(s);
                 }
             }
             // nes = { s for s ∈ es if ve_v,s != 0 }
-            std::set<int > nes = getNeighborVerticesInFaceset_1;
-            std::set<int > getNeighborVerticesInFaceset_2;
+            std::set<int > nes = GetNeighborVerticesInFaceset_1;
+            std::set<int > GetNeighborVerticesInFaceset_2;
             for(int e : nes){
                 if(ef.coeff(e, f) * ve.coeff(v, e) == -1){
-                    getNeighborVerticesInFaceset_2.insert(e);
+                    GetNeighborVerticesInFaceset_2.insert(e);
                 }
             }
             // eset1 = { e for e ∈ nes if ef_e,f ve_v,e == -1}
-            std::set<int > eset1 = getNeighborVerticesInFaceset_2;
+            std::set<int > eset1 = GetNeighborVerticesInFaceset_2;
             // vset1 = vertexset(NonZeros(uve IndicatorVector(M, eset1)))
             std::set<int > vset1 = nonzeros(uve * M.edges_to_vector(eset1));
-            std::set<int > getNeighborVerticesInFaceset_3({v});
-            std::set<int > difference;
-            std::set_difference(vset1.begin(), vset1.end(), getNeighborVerticesInFaceset_3.begin(), getNeighborVerticesInFaceset_3.end(), std::inserter(difference, difference.begin()));
-            std::vector<int> stdv_1(difference.begin(), difference.end());
+            std::set<int > GetNeighborVerticesInFaceset_3({v});
+            std::set<int > difference_2;
+            std::set<int > lhs_diff_2 = vset1;
+            std::set<int > rhs_diff_2 = GetNeighborVerticesInFaceset_3;
+            std::set_difference(lhs_diff_2.begin(), lhs_diff_2.end(), rhs_diff_2.begin(), rhs_diff_2.end(), std::inserter(difference_2, difference_2.begin()));
+            std::vector<int> stdv_1(difference_2.begin(), difference_2.end());
             Eigen::VectorXi vec_1(Eigen::Map<Eigen::VectorXi>(&stdv_1[0], stdv_1.size()));
             // vvec1 = vec(vset1 - {v})
             Eigen::VectorXi vvec1 = vec_1;
-            std::set<int > getNeighborVerticesInFaceset_4;
+            std::set<int > GetNeighborVerticesInFaceset_4;
             for(int e : nes){
                 if(ef.coeff(e, f) * ve.coeff(v, e) == 1){
-                    getNeighborVerticesInFaceset_4.insert(e);
+                    GetNeighborVerticesInFaceset_4.insert(e);
                 }
             }
             // eset2 = { e for e ∈ nes if ef_e,f ve_v,e == 1 }
-            std::set<int > eset2 = getNeighborVerticesInFaceset_4;
+            std::set<int > eset2 = GetNeighborVerticesInFaceset_4;
             // vset2 = vertexset(NonZeros(uve IndicatorVector(M, eset2)))
             std::set<int > vset2 = nonzeros(uve * M.edges_to_vector(eset2));
-            std::set<int > getNeighborVerticesInFaceset_5({v});
-            std::set<int > difference_1;
-            std::set_difference(vset2.begin(), vset2.end(), getNeighborVerticesInFaceset_5.begin(), getNeighborVerticesInFaceset_5.end(), std::inserter(difference_1, difference_1.begin()));
-            std::vector<int> stdv_2(difference_1.begin(), difference_1.end());
+            std::set<int > GetNeighborVerticesInFaceset_5({v});
+            std::set<int > difference_3;
+            std::set<int > lhs_diff_3 = vset2;
+            std::set<int > rhs_diff_3 = GetNeighborVerticesInFaceset_5;
+            std::set_difference(lhs_diff_3.begin(), lhs_diff_3.end(), rhs_diff_3.begin(), rhs_diff_3.end(), std::inserter(difference_3, difference_3.begin()));
+            std::vector<int> stdv_2(difference_3.begin(), difference_3.end());
             Eigen::VectorXi vec_2(Eigen::Map<Eigen::VectorXi>(&stdv_2[0], stdv_2.size()));
             // vvec2 = vec(vset2 - {v})
             Eigen::VectorXi vvec2 = vec_2;
             return std::tuple<int,int >{ vvec1[1-1],vvec2[1-1] };    
         }
-        std::tuple< int, int, int > getOrientedVertices(
+        std::tuple< int, int, int > GetOrientedVertices(
             const int & f)
         {
+            assert( F.find(f) != F.end() );
             // vs = Vertices(f)
             std::set<int > vs = Vertices_0(f);
             std::vector<int> stdv_3(vs.begin(), vs.end());
             Eigen::VectorXi vec_3(Eigen::Map<Eigen::VectorXi>(&stdv_3[0], stdv_3.size()));
             // vvec = vec(vs)
             Eigen::VectorXi vvec = vec_3;
-            // i,j = getNeighborVerticesInFace(f, vvec_1)
-            std::tuple< int, int > tuple_3 = getNeighborVerticesInFace(f, vvec[1-1]);
+            // i,j = GetNeighborVerticesInFace(f, vvec_1)
+            std::tuple< int, int > tuple_3 = GetNeighborVerticesInFace(f, vvec[1-1]);
             int i = std::get<0>(tuple_3);
             int j = std::get<1>(tuple_3);
             return std::tuple<int,int,int >{ vvec[1-1],i,j };    
         }
-        std::tuple< std::set<int >, std::set<int >, std::set<int >, std::set<int > > diamond(
+        std::tuple< std::set<int >, std::set<int >, std::set<int >, std::set<int > > Diamond(
             const int & e)
         {
-            std::set<int > diamondset_0({e});
+            assert( E.find(e) != E.end() );
+            std::set<int > Diamondset_0({e});
         std::set<int > tetset;
-            return std::tuple<std::set<int >,std::set<int >,std::set<int >,std::set<int > >{ Vertices_2(e),diamondset_0,Faces_0(e),tetset };    
+            return std::tuple<std::set<int >,std::set<int >,std::set<int >,std::set<int > >{ Vertices_2(e),Diamondset_0,FaceNeighbors_0(e),tetset };    
         }
-        std::tuple< int, int > oppositeVertices(
+        std::tuple< int, int > OppositeVertices(
             const int & e)
         {
-            std::vector<int> stdv_4(Vertices(diamond(e)).begin(), Vertices(diamond(e)).end());
+            assert( E.find(e) != E.end() );
+            std::vector<int> stdv_4(Vertices(Diamond(e)).begin(), Vertices(Diamond(e)).end());
             Eigen::VectorXi vec_4(Eigen::Map<Eigen::VectorXi>(&stdv_4[0], stdv_4.size()));
-            // evec = vec(Vertices(diamond(e)))
+            // evec = vec(Vertices(Diamond(e)))
             Eigen::VectorXi evec = vec_4;
             return std::tuple<int,int >{ evec[1-1],evec[2-1] };    
         }
@@ -221,38 +251,14 @@ struct iheartla {
         }
     };
     FundamentalMeshAccessors _FundamentalMeshAccessors;
-    std::tuple< int, int > getNeighborVerticesInFace(int p0,int p1){
-        return _FundamentalMeshAccessors.getNeighborVerticesInFace(p0,p1);
+    std::tuple< int, int > GetNeighborVerticesInFace(int p0,int p1){
+        return _FundamentalMeshAccessors.GetNeighborVerticesInFace(p0,p1);
     };
-    std::set<int > Faces(int p0){
-        return _FundamentalMeshAccessors.Faces(p0);
+    std::set<int > FaceNeighbors(int p0){
+        return _FundamentalMeshAccessors.FaceNeighbors(p0);
     };
-    std::set<int > Faces_0(int p0){
-        return _FundamentalMeshAccessors.Faces_0(p0);
-    };
-    std::set<int > Faces_1(std::tuple< std::set<int >, std::set<int >, std::set<int >, std::set<int > > p0){
-        return _FundamentalMeshAccessors.Faces_1(p0);
-    };
-    std::set<int > Vertices(std::tuple< std::set<int >, std::set<int >, std::set<int >, std::set<int > > p0){
-        return _FundamentalMeshAccessors.Vertices(p0);
-    };
-    std::set<int > Vertices_0(int p0){
-        return _FundamentalMeshAccessors.Vertices_0(p0);
-    };
-    std::set<int > Vertices_1(std::set<int > p0){
-        return _FundamentalMeshAccessors.Vertices_1(p0);
-    };
-    std::set<int > Vertices_2(int p0){
-        return _FundamentalMeshAccessors.Vertices_2(p0);
-    };
-    std::set<int > Vertices_3(std::set<int > p0){
-        return _FundamentalMeshAccessors.Vertices_3(p0);
-    };
-    std::set<int > Vertices_4(int p0){
-        return _FundamentalMeshAccessors.Vertices_4(p0);
-    };
-    std::set<int > Vertices_5(std::set<int > p0){
-        return _FundamentalMeshAccessors.Vertices_5(p0);
+    std::set<int > FaceNeighbors_0(int p0){
+        return _FundamentalMeshAccessors.FaceNeighbors_0(p0);
     };
     iheartla(
         const TriangleMesh & M,
@@ -268,7 +274,6 @@ struct iheartla {
     
     }
 };
-
 
 int main(int argc, const char * argv[]) {
     Eigen::MatrixXd meshV;
@@ -291,7 +296,7 @@ int main(int argc, const char * argv[]) {
     std::vector<Eigen::Matrix<double, 3, 1>> N;
     for (int i = 0; i < meshV.rows(); ++i)
     {
-        Eigen::Matrix<double, 3, 1> n = ihla.getVertexNormal(i);
+        Eigen::Matrix<double, 3, 1> n = ihla.GetVertexNormal(i);
         N.push_back(n);
         // std::cout<<"ihla.getVertexNormal(i):\n"<<n<<std::endl;
     } 

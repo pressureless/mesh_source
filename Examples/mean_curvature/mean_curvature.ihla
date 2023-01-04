@@ -1,15 +1,15 @@
 cot, arccos from trigonometry
-getNeighborVerticesInFace, Faces, Edges, Vertices, oppositeVertices,getOrientedVertices from FundamentalMeshAccessors(M)
+FaceNeighbors, GetEdgeIndex, VertexOneRing, OppositeVertices, GetOrientedVertices from FundamentalMeshAccessors(M)
 M ∈ mesh
 x_i ∈ ℝ^3  
 
 area(f) = 1/2 ||(x_j-x_i)×(x_k-x_i)|| where f ∈ ℤ faces,
-i,j,k = getOrientedVertices(f)
+i,j,k = GetOrientedVertices(f)
 
 angle(k, j, i) = arccos((x_j - x_k)⋅(x_i-x_k)/(||(x_j - x_k)||⋅||(x_i-x_k)||)) where i,j,k ∈ ℤ vertices
 
-rhs(i) = 1/(4A) (sum_(j ∈ Vertices(i)) (cot(α) + cot(β))(x_j - x_i) 
-where k, l = oppositeVertices(Edges(i,j)),
+rhs(i) = 1/(4A) (sum_(j ∈ VertexOneRing(i)) (cot(α) + cot(β))(x_j - x_i) 
+where k, l = OppositeVertices(GetEdgeIndex(i,j)),
 α = angle(k, j, i),
 β = angle(l, i, j) ) where i ∈ ℤ vertices,
-A = sum_(f ∈ Faces(i)) area(f)
+A = sum_(f ∈ FaceNeighbors(i)) area(f)
