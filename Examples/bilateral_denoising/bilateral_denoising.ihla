@@ -10,16 +10,16 @@ j, k = GetNeighborVerticesInFace(f, i) )
 
 DenoisePoint(i) = x_i + n⋅(s/norm)  where i ∈ ℤ vertices,
 n = GetVertexNormal(i),
-`σc` = CalSigmaC(i),
+`σc` = CalcSigmaC(i),
 neighbors = GetAdaptiveVertexNeighbor(i, {i}, `σc`),
-`σs` = CalSigmaS(i, neighbors),
+`σs` = CalcSigmaS(i, neighbors),
 s = (sum_(v ∈ neighbors) (`wc`⋅`ws`)⋅h where t = ||x_i - x_v||, h = <n, x_v - x_i>, `wc` = exp(-t²/(2`σc`²)) , `ws` = exp(-h²/(2`σs`²))),
 norm = (sum_(v ∈ neighbors) `wc`⋅`ws` where t = ||x_i - x_v||, h = <n, x_v - x_i>, `wc` = exp(-t²/(2`σc`²)) , `ws` = exp(-h²/(2`σs`²)))
  
 
-CalSigmaC(i) = min({||x_i - x_v|| for v ∈ VertexOneRing(i)}) where i ∈ ℤ vertices
+CalcSigmaC(i) = min({||x_i - x_v|| for v ∈ VertexOneRing(i)}) where i ∈ ℤ vertices
 
-CalSigmaS(i, N) = {sqrt(offset) + 1.0E-12 if sqrt(offset) < 1.0E-12
+CalcSigmaS(i, N) = {sqrt(offset) + 1.0E-12 if sqrt(offset) < 1.0E-12
 	sqrt(offset) otherwise where i ∈ ℤ vertices, N ∈ {ℤ} vertices,
 n = GetVertexNormal(i),
 avg = (sum_(v ∈ N) t where t = sqrt(((x_v - x_i)⋅n)²))/|N|,
@@ -27,7 +27,7 @@ sqs = (sum_(v ∈ N) (t-avg)² where t = sqrt(((x_v - x_i)⋅n)²)),
 offset = sqs / |N|
 
 
-GetAdaptiveVertexNeighbor(i, n, sigma) = { n  if |n|==|target| 
-                                           GetAdaptiveVertexNeighbor(i, target, sigma) otherwise where i ∈ ℤ vertices, sigma ∈ ℝ, n ∈ {ℤ} vertices,
-target = {v for v ∈ VertexOneRing(n) if ||x_i-x_v||< 2 sigma} + n
+GetAdaptiveVertexNeighbor(i, n, σ) = { n  if |n|=|target| 
+                                           GetAdaptiveVertexNeighbor(i, target, σ) otherwise where i ∈ ℤ vertices, σ ∈ ℝ, n ∈ {ℤ} vertices,
+target = {v for v ∈ VertexOneRing(n) if ||x_i-x_v||< 2σ} ∪ n
 
