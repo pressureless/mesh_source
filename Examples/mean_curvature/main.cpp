@@ -16,27 +16,10 @@
 #include "dec_util.h"
 #include "polyscope/polyscope.h"
 #include "polyscope/surface_mesh.h"
- 
+
 struct iheartla {
 
     double t;
-    double clamp(
-        const double & v)
-    {
-        double clamp_ret;
-        // bound = 19.1
-        double bound = 19.1;
-        if(v < -bound){
-            clamp_ret = -bound;
-        }
-        else if(v > bound){
-            clamp_ret = bound;
-        }
-        else{
-            clamp_ret = v;
-        }
-        return clamp_ret;    
-    }
     double area(
         const int & f,
         const int & p,
@@ -58,13 +41,9 @@ struct iheartla {
         // pr = x_r - x_p
         Eigen::Matrix<double, 3, 1> pr = x.at(r) - x.at(p);
 
-        // A = ||(x_q-x_p)×(x_r-x_p)||
-        double A = (((x.at(q) - x.at(p))).cross((x.at(r) - x.at(p)))).lpNorm<2>();
-        if (A == 0)
-        {
-            // std::cout<<"zzzzzzzzero"<<std::endl;
-            return 0;    
-        }
+        // A = ½||(x_q-x_p)×(x_r-x_p)||
+        double A = (1/double(2)) * (((x.at(q) - x.at(p))).cross((x.at(r) - x.at(p)))).lpNorm<2>();
+
         // dotp = pq ⋅ pr
         double dotp = (pq).dot(pr);
 
@@ -73,29 +52,51 @@ struct iheartla {
 
         // dotr = qr⋅ pr
         double dotr = (qr).dot(pr);
-        if(dotp < 0){
-            area_ret = 0.25 * A;
+
+        // cotq = dotq/(2A)
+        double cotq = dotq / double((2 * A));
+
+        // cotr = dotr/(2A)
+        double cotr = dotr / double((2 * A));
+        if(A == 0){
+            area_ret = 0;
+        }
+        else if(dotp < 0){
+            area_ret = (1/double(2)) * A;
         }
         else if((dotq < 0) || (dotr < 0)){
-            area_ret = 0.125 * A;
+            area_ret = (1/double(4)) * A;
         }
         else{
-            area_ret = 0.125 * (clamp(dotq / double(A)) * (pr).lpNorm<2>() + clamp(dotr / double(A)) * (pq).lpNorm<2>());
+            area_ret = (1/double(4)) * (cotq * pow((pr).lpNorm<2>(), 2) + cotr * pow((pq).lpNorm<2>(), 2));
         }
         return area_ret;    
     }
-    double angle(
+    double cot(
         const int & k,
         const int & j,
         const int & i,
         const std::vector<Eigen::Matrix<double, 3, 1>> & x)
     {
         const long dim_1 = x.size();
+        double cot_ret;
         // oj, oi = OrientedVertices(k, j, i)
         std::tuple< int, int > tuple_1 = OrientedVertices(k, j, i);
         int oj = std::get<0>(tuple_1);
         int oi = std::get<1>(tuple_1);
-        return acos(((x.at(oj) - x.at(k))).dot((x.at(oi) - x.at(k))) / double((((x.at(oj) - x.at(k))).lpNorm<2>() * ((x.at(oi) - x.at(k))).lpNorm<2>())));    
+
+        // cos = (x_oj - x_k)⋅(x_oi-x_k)
+        double cos = ((x.at(oj) - x.at(k))).dot((x.at(oi) - x.at(k)));
+
+        // sin = ||(x_oj - x_k)×(x_oi-x_k)||
+        double sin = (((x.at(oj) - x.at(k))).cross((x.at(oi) - x.at(k)))).lpNorm<2>();
+        if(sin != 0){
+            cot_ret = cos / double(sin);
+        }
+        else{
+            cot_ret = 0;
+        }
+        return cot_ret;    
     }
     Eigen::Matrix<double, 3, 1> Ax(
         const int & i,
@@ -115,23 +116,16 @@ struct iheartla {
             std::tuple< int, int > tuple_2 = OppositeVertices(GetEdgeIndex(i, j));
             int k = std::get<0>(tuple_2);
             int l = std::get<1>(tuple_2);
-                // α = angle(k, j, i, x)
-            double α = angle(k, j, i, x);
-                // β = angle(l, i, j, x)
-            double β = angle(l, i, j, x);
-            if (tan(α) ==0 or tan(β) == 0)
-            {
-                std::cout<<"tan zero"<<std::endl;
-            }
-            else{
-                sum_1 += std::max((clamp(1/tan(α)) + clamp(1/tan(β))), 0.0) * (x.at(j) - x.at(i));
-            }
-            
+                // `cot(α)` = cot(k, j, i, x)
+            double cotα = cot(k, j, i, x);
+                // `cot(β)` = cot(l, i, j, x)
+            double cotβ = cot(l, i, j, x);
+            sum_1 += (cotα + cotβ) * (x.at(j) - x.at(i));
         }
-        // K = 1/(2A)(sum_(j ∈ VertexOneRing(i)) max((clamp(cot(α)) + clamp(cot(β))), 0)(x_j - x_i) 
+        // K = 1/(2A)(sum_(j ∈ VertexOneRing(i)) (`cot(α)` + `cot(β)`)(x_j - x_i) 
     // where k, l = OppositeVertices(GetEdgeIndex(i,j)),
-    // α = angle(k, j, i, x),
-    // β = angle(l, i, j, x) )
+    // `cot(α)` = cot(k, j, i, x),
+    // `cot(β)` = cot(l, i, j, x) )
         Eigen::Matrix<double, 3, 1> K = 1 / double((2 * A)) * (sum_1);
         return x.at(i) - t * K;    
     }
@@ -451,8 +445,8 @@ Eigen::MatrixXi meshF;
 TriangleMesh triangle_mesh;
 
 double cg_tolerance = 1e-5;
-int MAX_ITERATION = 2;
-double step = 5e-4;
+int MAX_ITERATION = 1;
+double step = 10;
 
 std::vector<Eigen::Matrix<double, 3, 1>> OriginalPosition;
 std::vector<Eigen::Matrix<double, 3, 1>> Position;
@@ -496,24 +490,12 @@ void cg(std::vector<Eigen::Matrix<double, 3, 1>>& X,
     // Page 50 in "An Introduction to the Conjugate Gradient Method Without the Agonizing Pain"
     // CG solver. Solve for the three coordinates simultaneously
 
-    // s = Ax
-    // mcf_matvec(mesh, X, S, num_omp_threads);
-    // std::cout<<"cgggg"<<std::endl;
-    // for (int i = 0; i < meshV.rows(); ++i)
-    // {
-    //     std::cout<<"i: "<<i<<", ("<<X[i][0]<<", "<<X[i][1]<<", "<<X[i][2]<<")"<<std::endl;
-    // } 
+    // s = Ax 
     for (int i = 0; i < meshV.rows(); ++i)
     {
         S[i] = ihla.Ax(i, X);
     } 
-
-    // std::cout<<"S:"<<std::endl;
-    // for (int i = 0; i < meshV.rows(); ++i)
-    // {
-    //     std::cout<<"i: "<<i<<", ("<<S[i][0]<<", "<<S[i][1]<<", "<<S[i][2]<<")"<<std::endl;
-    // } 
-
+ 
     // r = b - s = b - Ax
     // p = r 
     for (int i = 0; i < int(meshV.rows()); ++i) {
@@ -525,12 +507,7 @@ void cg(std::vector<Eigen::Matrix<double, 3, 1>>& X,
         P[i] = R[i];
         P[i] = R[i];
     }
-    // std::cout<<"P: "<<std::endl;
-    // for (int i = 0; i < meshV.rows(); ++i)
-    // {
-    //     std::cout<<"i: "<<i<<", ("<<P[i][0]<<", "<<P[i][1]<<", "<<P[i][2]<<")"<<std::endl;
-    // } 
-
+ 
     // delta_new = <r,r>
     double delta_new = dot3(R, R);
 
@@ -540,24 +517,12 @@ void cg(std::vector<Eigen::Matrix<double, 3, 1>>& X,
 
     start_residual = delta_0;
     uint32_t iter  = 0;
-    while (iter < MAX_ITERATION) {
-    // std::cout<<"while loop"<<std::endl;
-        // s = Ap
-        // mcf_matvec(mesh, P, S, num_omp_threads);
-    // std::cout<<"P: "<<std::endl;
-    // for (int i = 0; i < meshV.rows(); ++i)
-    // {
-    //     std::cout<<"i: "<<i<<", ("<<P[i][0]<<", "<<P[i][1]<<", "<<P[i][2]<<")"<<std::endl;
-    // } 
+    while (iter < MAX_ITERATION) { 
+        // s = Ap 
         for (int i = 0; i < meshV.rows(); ++i)
         {
             S[i] = ihla.Ax(i, P);
-        } 
-    std::cout<<"S: "<<std::endl;
-    for (int i = 0; i < meshV.rows(); ++i)
-    {
-        std::cout<<"i: "<<i<<", ("<<S[i][0]<<", "<<S[i][1]<<", "<<S[i][2]<<")"<<std::endl;
-    } 
+        }  
 
         // alpha = delta_new / <s,p>
         double alpha = dot3(S, P);
@@ -567,12 +532,6 @@ void cg(std::vector<Eigen::Matrix<double, 3, 1>>& X,
         std::cout<<"alpha: "<<alpha<<std::endl;
         // x =  x + alpha*p
         axpy3(P, alpha, 1.0, X);
-
-    // std::cout<<"XXXXX: "<<std::endl;
-    // for (int i = 0; i < meshV.rows(); ++i)
-    // {
-    //     std::cout<<"i: "<<i<<", ("<<X[i][0]<<", "<<X[i][1]<<", "<<X[i][2]<<")"<<std::endl;
-    // } 
 
         // r = r - alpha*s
         axpy3(S, -alpha, 1.0, R);
@@ -599,12 +558,7 @@ void cg(std::vector<Eigen::Matrix<double, 3, 1>>& X,
 
         ++iter;
         std::cout<<"iter:"<<iter<<std::endl;
-    } 
-    // std::cout<<"x:"<<std::endl;
-    // for (int i = 0; i < meshV.rows(); ++i)
-    // {
-    //     std::cout<<"i: "<<i<<", ("<<X[i][0]<<", "<<X[i][1]<<", "<<X[i][2]<<")"<<std::endl;
-    // } 
+    }  
     stop_residual = delta_new;
 }
 
@@ -648,8 +602,7 @@ void update(){
 
 void myCallback()
 { 
-    if (ImGui::Button("One step")){
-        // std::cout<<"one step"<<std::endl;
+    if (ImGui::Button("One step")){ 
         update();
     } 
     if (ImGui::Button("Ten steps")){
@@ -672,7 +625,8 @@ int main(int argc, const char * argv[]) {
     // igl::readOBJ("/Users/pressure/Downloads/mesh_source/models/cube.obj", meshV, meshF);
     // igl::readOBJ("/Users/pressure/Downloads/mesh_source/models/small_bunny.obj", meshV, meshF);
     // igl::readOBJ("/Users/pressure/Downloads/mesh_source/models/sphere3.obj", meshV, meshF);
-    igl::readOFF("/Users/pressure/Downloads/Laplacian-Mesh-Smoothing/Models/bumpy.off", meshV, meshF); // 69KB 5mins
+    igl::readOBJ("/Users/pressure/Downloads/mesh_source/models/sphere.obj", meshV, meshF);
+    // igl::readOFF("/Users/pressure/Downloads/Laplacian-Mesh-Smoothing/Models/bumpy.off", meshV, meshF); // 69KB 5mins
     
     // igl::readOBJ("/Users/pressure/Downloads/mesh_source/models/sphere.obj", meshV, meshF);
     // igl::readOBJ("/Users/pressure/Documents/git/meshtaichi/vertex_normal/models/bunny.obj", meshV, meshF);
@@ -691,7 +645,6 @@ int main(int argc, const char * argv[]) {
     // {
     //     std::cout<<"i: "<<i<<", ("<<Position[i][0]<<", "<<Position[i][1]<<", "<<Position[i][2]<<")"<<std::endl;
     // } 
-
     polyscope::show();
     return 0;
 }

@@ -25,3 +25,15 @@ v = VertexOneRing(s)
 
 GetRangeLevel(U, a, b) = ∪_(i=a)^b U_i where U_j  ∈  {ℤ} vertices, a,b ∈ ℤ index
 
+
+GetLevelSequence(U) = { sequence(U, n) if |n| ≠ 0
+                        U otherwise where U_i  ∈  {ℤ} vertices,
+n = GetNextLevel(U)
+
+
+GetDistanceForV(V, v, d) =  where V_i  ∈  {ℤ} vertices,v ∈ ℤ vertices,d_i  ∈  ℝ,
+newD = {UpdateStep(v, v1, v2, d) for f ∈ FaceNeighbors(v)}
+
+
+
+DistanceMap(i,j,k,d,V) = where i,j,k ∈ ℤ, d_i
