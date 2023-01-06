@@ -3,6 +3,11 @@ M ∈ mesh
 
 t ∈ ℝ: step length
 
+clamp(v) = { -bound if v < -bound
+             bound if v > bound
+	     v otherwise where v ∈ ℝ,
+bound = 19.1
+
 area(f, p, x) = { 0 if A=0
 		½A if dotp < 0
                   ¼A if dotq <0 or dotr <0
@@ -15,11 +20,11 @@ A = ½||pq×pr||,
 dotp = pq ⋅ pr,
 dotq = (x_q-x_r) ⋅ pq,
 dotr = qr⋅ pr,
-cotq = dotq/(2A),
-cotr = dotr/(2A) 
+cotq = clamp(dotq/(2A)),
+cotr = clamp(dotr/(2A))
 
  
-cot(k, j, i, x) = { cos/sin if sin≠0
+cot(k, j, i, x) = { clamp(cos/sin) if sin≠0
                     0 otherwise where i,j,k ∈ ℤ vertices, x_i ∈ ℝ^3 ,
 oj, oi = OrientedVertices(k, j, i),
 cos = (x_oj - x_k)⋅(x_oi-x_k),
@@ -28,7 +33,7 @@ sin = ||(x_oj - x_k)×(x_oi-x_k)||
 
 Ax(i, x) = x_i - t K  where i ∈ ℤ vertices, x_i ∈ ℝ^3,
 A = (sum_(f ∈ FaceNeighbors(i)) area(f, i, x)),
-K = 1/(2A)(sum_(j ∈ VertexOneRing(i)) (`cot(α)` + `cot(β)`)(x_j - x_i) 
+K = 1/(2A)(sum_(j ∈ VertexOneRing(i)) max(`cot(α)` + `cot(β)`,0)(x_j - x_i) 
 where k, l = OppositeVertices(GetEdgeIndex(i,j)),
 `cot(α)` = cot(k, j, i, x),
 `cot(β)` = cot(l, i, j, x) )

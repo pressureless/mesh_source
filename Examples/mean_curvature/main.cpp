@@ -20,6 +20,23 @@
 struct iheartla {
 
     double t;
+    double clamp(
+        const double & v)
+    {
+        double clamp_ret;
+        // bound = 19.1
+        double bound = 19.1;
+        if(v < -bound){
+            clamp_ret = -bound;
+        }
+        else if(v > bound){
+            clamp_ret = bound;
+        }
+        else{
+            clamp_ret = v;
+        }
+        return clamp_ret;    
+    }
     double area(
         const int & f,
         const int & p,
@@ -53,12 +70,11 @@ struct iheartla {
         // dotr = qr⋅ pr
         double dotr = (qr).dot(pr);
 
-        // cotq = dotq/(2A)
-        double cotq = dotq / double((2 * A));
+        // cotq = clamp(dotq/(2A))
+        double cotq = clamp(dotq / double((2 * A)));
 
-        // cotr = dotr/(2A)
-        double cotr = dotr / double((2 * A));
-        // return A;
+        // cotr = clamp(dotr/(2A))
+        double cotr = clamp(dotr / double((2 * A)));
         if(A == 0){
             area_ret = 0;
         }
@@ -92,7 +108,7 @@ struct iheartla {
         // sin = ||(x_oj - x_k)×(x_oi-x_k)||
         double sin = (((x.at(oj) - x.at(k))).cross((x.at(oi) - x.at(k)))).lpNorm<2>();
         if(sin != 0){
-            cot_ret = cos / double(sin);
+            cot_ret = clamp(cos / double(sin));
         }
         else{
             cot_ret = 0;
@@ -110,6 +126,10 @@ struct iheartla {
         }
         // A = (sum_(f ∈ FaceNeighbors(i)) area(f, i, x))
         double A = (sum_0);
+        if (A == 0)
+        {
+            std::cout<<"zero"<<std::endl;
+        }
 
         Eigen::MatrixXd sum_1 = Eigen::MatrixXd::Zero(3, 1);
         for(int j : VertexOneRing(i)){
@@ -121,14 +141,9 @@ struct iheartla {
             double cotα = cot(k, j, i, x);
                 // `cot(β)` = cot(l, i, j, x)
             double cotβ = cot(l, i, j, x);
-            if (cotα<0 || cotβ<0)
-            {
-                std::cout<<"cotα:"<<cotα<<", cotβ:"<<cotβ<<std::endl;
-                continue;
-            }
-            sum_1 += (cotα + cotβ) * (x.at(j) - x.at(i));
+            sum_1 += std::max({double(cotα + cotβ), double(0)}) * (x.at(j) - x.at(i));
         }
-        // K = 1/(2A)(sum_(j ∈ VertexOneRing(i)) (`cot(α)` + `cot(β)`)(x_j - x_i) 
+        // K = 1/(2A)(sum_(j ∈ VertexOneRing(i)) max(`cot(α)` + `cot(β)`,0)(x_j - x_i) 
     // where k, l = OppositeVertices(GetEdgeIndex(i,j)),
     // `cot(α)` = cot(k, j, i, x),
     // `cot(β)` = cot(l, i, j, x) )
@@ -452,7 +467,7 @@ TriangleMesh triangle_mesh;
 
 double cg_tolerance = 1e-5;
 int MAX_ITERATION = 1;
-double step = 5e-3;
+double step = 5e-5;
 
 std::vector<Eigen::Matrix<double, 3, 1>> OriginalPosition;
 std::vector<Eigen::Matrix<double, 3, 1>> Position;
@@ -634,9 +649,9 @@ int main(int argc, const char * argv[]) {
     // igl::readOBJ("/Users/pressure/Downloads/mesh_source/models/sphere.obj", meshV, meshF);
     // igl::readOBJ("/Users/pressure/Downloads/libigl-polyscope-project/input/sphere.obj", meshV, meshF);
     // igl::readOBJ("/Users/pressure/Documents/git/ddg-exercises/input/sphere.obj", meshV, meshF);
-    // igl::readOFF("/Users/pressure/Downloads/Laplacian-Mesh-Smoothing/Models/bumpy.off", meshV, meshF); // 69KB 5mins
+    igl::readOFF("/Users/pressure/Downloads/Laplacian-Mesh-Smoothing/Models/bumpy.off", meshV, meshF); // 69KB 5mins
     
-    igl::readOFF("/Users/pressure/Downloads/Laplacian-Mesh-Smoothing/Models/cow.off", meshV, meshF);
+    // igl::readOFF("/Users/pressure/Downloads/Laplacian-Mesh-Smoothing/Models/cow.off", meshV, meshF);
     // igl::readOBJ("/Users/pressure/Downloads/mesh_source/models/sphere.obj", meshV, meshF);
     // igl::readOBJ("/Users/pressure/Documents/git/meshtaichi/vertex_normal/models/bunny.obj", meshV, meshF);
     // Initialize triangle mesh
