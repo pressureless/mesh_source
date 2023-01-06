@@ -29,13 +29,10 @@ struct iheartla {
             std::tuple< int, int > tuple = GetNeighborVerticesInFace(f, i);
             int j = std::get<0>(tuple);
             int k = std::get<1>(tuple);
-                // n = (x_j- x_i)×(x_k-x_i)
-            Eigen::Matrix<double, 3, 1> n = ((x.at(j) - x.at(i))).cross((x.at(k) - x.at(i)));
-            sum_0 += n * (((x.at(j) - x.at(i))).cross((x.at(k) - x.at(i)))).lpNorm<2>();
+            sum_0 += ((x.at(j) - x.at(i))).cross((x.at(k) - x.at(i)));
         }
-        // w = (sum_(f ∈ FaceNeighbors(i)) n ||(x_j- x_i)×(x_k-x_i)||
-    // where n = (x_j- x_i)×(x_k-x_i),
-    // j, k = GetNeighborVerticesInFace(f, i) )
+        // w = (sum_(f ∈ FaceNeighbors(i)) (x_j- x_i)×(x_k-x_i)
+    // where j, k = GetNeighborVerticesInFace(f, i) )
         Eigen::Matrix<double, 3, 1> w = (sum_0);
         return w / double((w).lpNorm<2>());    
     }
@@ -456,6 +453,7 @@ struct iheartla {
     
     }
 };
+
 
 Eigen::MatrixXd meshV;
 Eigen::MatrixXi meshF;

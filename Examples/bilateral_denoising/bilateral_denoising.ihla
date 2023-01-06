@@ -3,9 +3,8 @@ M ∈ mesh
 x_i ∈ ℝ^3 
 
 GetVertexNormal(i) = w/||w|| where i ∈ ℤ vertices,
-w = (sum_(f ∈ FaceNeighbors(i)) n ||(x_j- x_i)×(x_k-x_i)||
-where n = (x_j- x_i)×(x_k-x_i),
-j, k = GetNeighborVerticesInFace(f, i) )
+w = (sum_(f ∈ FaceNeighbors(i)) (x_j- x_i)×(x_k-x_i)
+where j, k = GetNeighborVerticesInFace(f, i) )
 
 
 DenoisePoint(i) = x_i + n⋅(s/norm)  where i ∈ ℤ vertices,
