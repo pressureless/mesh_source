@@ -28,7 +28,7 @@ struct iheartla {
             std::tuple< int, int > tuple = GetNeighborVerticesInFace(f, i);
             int j = std::get<0>(tuple);
             int k = std::get<1>(tuple);
-            sum_0 += ((x.at(j) - x.at(i))).cross((x.at(k) - x.at(i))) / double((pow((x.at(j) - x.at(i)).lpNorm<2>(), 2) + pow((x.at(k) - x.at(i)).lpNorm<2>(), 2)));
+            sum_0 += ((x.at(j) - x.at(i))).cross((x.at(k) - x.at(i))) / double((pow((x.at(j) - x.at(i)).lpNorm<2>(), 2) * pow((x.at(k) - x.at(i)).lpNorm<2>(), 2)));
         }
         return (sum_0);    
     }
