@@ -1,0 +1,23 @@
+FaceNeighbors, GetEdgeIndex, VertexOneRing, OppositeVertices, GetOrientedVertices,OrientedVertices,GetNeighborVerticesInFace from FundamentalMeshAccessors(M)
+M ∈ mesh
+x_i ∈ ℝ^3: original positions
+m ∈ ℝ: mass
+damping ∈ ℝ: mass
+K ∈ ℝ: stiffness
+dt ∈ ℝ: step size
+
+
+e(i, j) = ||x_i - x_j|| where i,j ∈ ℤ vertices
+
+computeInternalForces(i, v, xn) = tuple(vn, f)  where i ∈ ℤ vertices, v_i ∈ ℝ^3, xn_i ∈ ℝ^3,
+f = (sum_(j ∈ VertexOneRing(i)) (-K) (||disp|| - e(i, j)) dir
+where disp = xn_i - xn_j,
+dir = disp/||disp||),
+vn = v_i exp(-dt damping) + dt f
+
+
+applyForces(i, v, f, xn) = tuple(vn, xnn) where i ∈ ℤ vertices, v_i ∈ ℝ^3, f_i ∈ ℝ^3,xn_i ∈ ℝ^3,
+a = f_i / m,
+vn = v_i + a dt,
+xnn = vn dt
+
