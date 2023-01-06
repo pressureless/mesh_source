@@ -1,17 +1,17 @@
 FaceNeighbors, GetEdgeIndex, VertexOneRing, OppositeVertices, GetOrientedVertices,OrientedVertices,GetNeighborVerticesInFace from FundamentalMeshAccessors(M)
 M ∈ mesh
 
-t ∈ ℝ
+t ∈ ℝ: step length
 
 area(f, p, x) = { 0 if A=0
 		½A if dotp < 0
                   ¼A if dotq <0 or dotr <0
-                  ¼(cotq ||pr||² + cotr ||pq||² ) otherwise where f ∈ ℤ faces, x_i ∈ ℝ^3, p ∈ ℤ vertices,
+                  ⅛(cotq ||pr||² + cotr ||pq||² ) otherwise where f ∈ ℤ faces, x_i ∈ ℝ^3, p ∈ ℤ vertices,
 q,r = GetNeighborVerticesInFace(f, p),
 pq = x_q - x_p,
 qr = x_r - x_q,
 pr = x_r - x_p,
-A = ½||(x_q-x_p)×(x_r-x_p)||,
+A = ½||pq×pr||,
 dotp = pq ⋅ pr,
 dotq = (x_q-x_r) ⋅ pq,
 dotr = qr⋅ pr,

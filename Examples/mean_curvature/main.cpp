@@ -41,8 +41,8 @@ struct iheartla {
         // pr = x_r - x_p
         Eigen::Matrix<double, 3, 1> pr = x.at(r) - x.at(p);
 
-        // A = ½||(x_q-x_p)×(x_r-x_p)||
-        double A = (1/double(2)) * (((x.at(q) - x.at(p))).cross((x.at(r) - x.at(p)))).lpNorm<2>();
+        // A = ½||pq×pr||
+        double A = (1/double(2)) * ((pq).cross(pr)).lpNorm<2>();
 
         // dotp = pq ⋅ pr
         double dotp = (pq).dot(pr);
@@ -58,6 +58,7 @@ struct iheartla {
 
         // cotr = dotr/(2A)
         double cotr = dotr / double((2 * A));
+        // return A;
         if(A == 0){
             area_ret = 0;
         }
@@ -68,7 +69,7 @@ struct iheartla {
             area_ret = (1/double(4)) * A;
         }
         else{
-            area_ret = (1/double(4)) * (cotq * pow((pr).lpNorm<2>(), 2) + cotr * pow((pq).lpNorm<2>(), 2));
+            area_ret = (1/double(8)) * (cotq * pow((pr).lpNorm<2>(), 2) + cotr * pow((pq).lpNorm<2>(), 2));
         }
         return area_ret;    
     }
@@ -120,6 +121,11 @@ struct iheartla {
             double cotα = cot(k, j, i, x);
                 // `cot(β)` = cot(l, i, j, x)
             double cotβ = cot(l, i, j, x);
+            if (cotα<0 || cotβ<0)
+            {
+                std::cout<<"cotα:"<<cotα<<", cotβ:"<<cotβ<<std::endl;
+                continue;
+            }
             sum_1 += (cotα + cotβ) * (x.at(j) - x.at(i));
         }
         // K = 1/(2A)(sum_(j ∈ VertexOneRing(i)) (`cot(α)` + `cot(β)`)(x_j - x_i) 
@@ -446,7 +452,7 @@ TriangleMesh triangle_mesh;
 
 double cg_tolerance = 1e-5;
 int MAX_ITERATION = 1;
-double step = 10;
+double step = 5e-3;
 
 std::vector<Eigen::Matrix<double, 3, 1>> OriginalPosition;
 std::vector<Eigen::Matrix<double, 3, 1>> Position;
@@ -477,7 +483,7 @@ double dot3(const std::vector<Eigen::Matrix<double, 3, 1>>& A,
 }
 
 
-void cg(std::vector<Eigen::Matrix<double, 3, 1>>& X,
+void conjugate_gradients_algorithm(std::vector<Eigen::Matrix<double, 3, 1>>& X,
         std::vector<Eigen::Matrix<double, 3, 1>>& B,
         std::vector<Eigen::Matrix<double, 3, 1>>& R,
         std::vector<Eigen::Matrix<double, 3, 1>>& P,
@@ -577,7 +583,7 @@ void update(){
         X[i] = Position[i];
         B[i] = Position[i];
     } 
-    cg(X, B, R, P, S, start_residual, stop_residual, ihla);
+    conjugate_gradients_algorithm(X, B, R, P, S, start_residual, stop_residual, ihla);
     std::cout<<"start_residual:"<<start_residual<<", stop_residual:"<<stop_residual<<std::endl;
     
     Position = X;
@@ -625,9 +631,12 @@ int main(int argc, const char * argv[]) {
     // igl::readOBJ("/Users/pressure/Downloads/mesh_source/models/cube.obj", meshV, meshF);
     // igl::readOBJ("/Users/pressure/Downloads/mesh_source/models/small_bunny.obj", meshV, meshF);
     // igl::readOBJ("/Users/pressure/Downloads/mesh_source/models/sphere3.obj", meshV, meshF);
-    igl::readOBJ("/Users/pressure/Downloads/mesh_source/models/sphere.obj", meshV, meshF);
+    // igl::readOBJ("/Users/pressure/Downloads/mesh_source/models/sphere.obj", meshV, meshF);
+    // igl::readOBJ("/Users/pressure/Downloads/libigl-polyscope-project/input/sphere.obj", meshV, meshF);
+    // igl::readOBJ("/Users/pressure/Documents/git/ddg-exercises/input/sphere.obj", meshV, meshF);
     // igl::readOFF("/Users/pressure/Downloads/Laplacian-Mesh-Smoothing/Models/bumpy.off", meshV, meshF); // 69KB 5mins
     
+    igl::readOFF("/Users/pressure/Downloads/Laplacian-Mesh-Smoothing/Models/cow.off", meshV, meshF);
     // igl::readOBJ("/Users/pressure/Downloads/mesh_source/models/sphere.obj", meshV, meshF);
     // igl::readOBJ("/Users/pressure/Documents/git/meshtaichi/vertex_normal/models/bunny.obj", meshV, meshF);
     // Initialize triangle mesh
