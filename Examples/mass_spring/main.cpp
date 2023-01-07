@@ -13,10 +13,14 @@
 #include <igl/readOBJ.h>
 #include <igl/writeOBJ.h>
 #include <igl/readOFF.h>
+// #include <thread> 
 #include "MeshHelper.h"
 #include "dec_util.h"
 #include "polyscope/polyscope.h"
 #include "polyscope/surface_mesh.h"
+
+double bottom_z = 0;
+
 
 struct iheartla {
 
@@ -73,9 +77,17 @@ struct iheartla {
 
         // vn = v_i + a dt
         Eigen::Matrix<double, 3, 1> vn = v.at(i) + a * dt;
+        Eigen::Matrix<double, 3, 1> xnn = xn.at(i);
+        if (xn.at(i)(1) < bottom_z)
+        {
+            xnn(1) = bottom_z;
+            vn(1) = -vn(1);
+            vn(0) = 0;
+            vn(2) = 0;
+        }
 
         // xnn = xn_i + vn dt
-        Eigen::Matrix<double, 3, 1> xnn = xn.at(i) + vn * dt;
+        xnn += vn * dt;
         return std::tuple<Eigen::Matrix<double, 3, 1>,Eigen::Matrix<double, 3, 1> >{ vn,xnn };    
     }
     struct FundamentalMeshAccessors {
@@ -402,10 +414,10 @@ Eigen::MatrixXd meshV;
 Eigen::MatrixXi meshF;
 TriangleMesh triangle_mesh;
 
+bool running = false;
 double mass = 1.0;
 double stiffness = 5e5;
 double damping = 5;
-double bottom_z = -70.0;
 double dt = 2e-4;
 double eps = 1e-6;
 
@@ -422,7 +434,7 @@ void update(){
         Velocity[i] = Eigen::Matrix<double, 3, 1>::Zero();
         Force[i] = Eigen::Matrix<double, 3, 1>::Zero();
     } 
-    while(true){
+    // while(true){
         int TIMES = 25;
         for (int i = 0; i < TIMES; ++i)
         {
@@ -464,15 +476,22 @@ void update(){
         std::cout<<"After updating, min_offset: "<<min_diff<<", max_offset: "<<max_diff<<std::endl;
     
         polyscope::getSurfaceMesh("my mesh")->updateVertexPositions(Position);
-    }
+        // polyscope::show();
+        // update();
+    // }
 }
 
 
 void myCallback()
 { 
-    if (ImGui::Button("Start simulation")){ 
-        update();
+    if (ImGui::Button("Start/stop simulation")){ 
+        // std::thread first (update); 
+        running = !running;
     } 
+    if (running)
+    {
+        update();
+    }
 }
 
  
@@ -490,9 +509,16 @@ int main(int argc, const char * argv[]) {
     // igl::readOBJ("/Users/pressure/Downloads/mesh_source/models/sphere.obj", meshV, meshF);
     // igl::readOBJ("/Users/pressure/Documents/git/meshtaichi/vertex_normal/models/bunny.obj", meshV, meshF);
     // Initialize triangle mesh
+    for (int i = 0; i < meshV.rows(); ++i)
+    {
+        meshV(i, 1) += 2;
+    }
     triangle_mesh.initialize(meshV, meshF);
     // Initialize polyscope
+    polyscope::options::autocenterStructures = false;
+    polyscope::options::autoscaleStructures = false;
     polyscope::init();  
+    polyscope::options::automaticallyComputeSceneExtents = false;
     polyscope::registerSurfaceMesh("my mesh", meshV, meshF);
     polyscope::state::userCallback = myCallback;
     Eigen::Matrix<double, 3, 1> initV;
