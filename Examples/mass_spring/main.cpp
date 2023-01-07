@@ -54,7 +54,9 @@ struct iheartla {
 
         // vn = v_i exp(-dt damping) + dt f
         Eigen::Matrix<double, 3, 1> vn = v.at(i) * exp(-dt * damping) + dt * f;
-        return std::tuple<Eigen::Matrix<double, 3, 1>,Eigen::Matrix<double, 3, 1> >{ vn,f };    
+        Eigen::Matrix<double, 3, 1> computeInternalForces_0;
+        computeInternalForces_0 << 0.0, -98.0, 0.0;
+        return std::tuple<Eigen::Matrix<double, 3, 1>,Eigen::Matrix<double, 3, 1> >{ vn,f + computeInternalForces_0 };    
     }
     std::tuple< Eigen::Matrix<double, 3, 1>, Eigen::Matrix<double, 3, 1> > applyForces(
         const int & i,
@@ -72,8 +74,8 @@ struct iheartla {
         // vn = v_i + a dt
         Eigen::Matrix<double, 3, 1> vn = v.at(i) + a * dt;
 
-        // xnn = vn dt
-        Eigen::Matrix<double, 3, 1> xnn = vn * dt;
+        // xnn = xn_i + vn dt
+        Eigen::Matrix<double, 3, 1> xnn = xn.at(i) + vn * dt;
         return std::tuple<Eigen::Matrix<double, 3, 1>,Eigen::Matrix<double, 3, 1> >{ vn,xnn };    
     }
     struct FundamentalMeshAccessors {
@@ -413,26 +415,56 @@ std::vector<Eigen::Matrix<double, 3, 1>> Velocity;
 std::vector<Eigen::Matrix<double, 3, 1>> Force;
  
 void update(){
-    iheartla ihla(triangle_mesh, OriginalPosition, mass, damping, stiffness, dt); 
+    iheartla ihla(triangle_mesh, OriginalPosition, mass, damping, stiffness, dt);
     for (int i = 0; i < meshV.rows(); ++i)
     {
-        std::tuple< Eigen::Matrix<double, 3, 1>, Eigen::Matrix<double, 3, 1> > tuple = ihla.applyForces(i, Velocity, Force, Position);
-        Eigen::Matrix<double, 3, 1> vn = std::get<0>(tuple);
-        Eigen::Matrix<double, 3, 1> xn = std::get<1>(tuple);
-        // Position[i] = OriginalPosition[i]; 
+        //
+        Velocity[i] = Eigen::Matrix<double, 3, 1>::Zero();
+        Force[i] = Eigen::Matrix<double, 3, 1>::Zero();
     } 
-     
-    for (int i = 0; i < meshV.rows(); ++i)
-    {
-        std::tuple< Eigen::Matrix<double, 3, 1>, Eigen::Matrix<double, 3, 1> > tuple = ihla.computeInternalForces(i, Velocity, Position);
-        Eigen::Matrix<double, 3, 1> vn = std::get<0>(tuple);
-        Eigen::Matrix<double, 3, 1> f = std::get<1>(tuple);
+    while(true){
+        int TIMES = 25;
+        for (int i = 0; i < TIMES; ++i)
+        {
+            for (int i = 0; i < meshV.rows(); ++i)
+            {
+                std::tuple< Eigen::Matrix<double, 3, 1>, Eigen::Matrix<double, 3, 1> > tuple = ihla.applyForces(i, Velocity, Force, Position);
+                Eigen::Matrix<double, 3, 1> vn = std::get<0>(tuple);
+                Eigen::Matrix<double, 3, 1> xn = std::get<1>(tuple);
+                //
+                Velocity[i] = vn;
+                Position[i] = xn; 
+                // std::cout<<"i:"<<i<<", pos:( "<<xn[0]<<", "<<xn[1]<<", "<<xn[2]<<" )"<<std::endl;
+            } 
+            
+            for (int i = 0; i < meshV.rows(); ++i)
+            {
+                std::tuple< Eigen::Matrix<double, 3, 1>, Eigen::Matrix<double, 3, 1> > tuple = ihla.computeInternalForces(i, Velocity, Position);
+                Eigen::Matrix<double, 3, 1> vn = std::get<0>(tuple);
+                Eigen::Matrix<double, 3, 1> f = std::get<1>(tuple);
+                //
+                Velocity[i] = vn;
+                Force[i] = f; 
+            } 
+        } 
         
-        // Position[i] = OriginalPosition[i]; 
-    } 
-
-
-    polyscope::getSurfaceMesh("my mesh")->updateVertexPositions(Position);
+        double min_diff = 1000;
+        double max_diff = 0;
+        for (int i = 0; i < meshV.rows(); ++i)
+        {
+            double norm = (Position[i]-OriginalPosition[i]).norm();
+            if (norm < min_diff)
+            {
+                min_diff = norm;
+            }
+            if(norm > max_diff){
+                max_diff = norm;
+            } 
+        } 
+        std::cout<<"After updating, min_offset: "<<min_diff<<", max_offset: "<<max_diff<<std::endl;
+    
+        polyscope::getSurfaceMesh("my mesh")->updateVertexPositions(Position);
+    }
 }
 
 
@@ -448,13 +480,13 @@ void myCallback()
 int main(int argc, const char * argv[]) {
     // igl::readOBJ("/Users/pressure/Downloads/mesh_source/models/cube.obj", meshV, meshF);
     // igl::readOBJ("/Users/pressure/Downloads/mesh_source/models/small_bunny.obj", meshV, meshF);
-    // igl::readOBJ("/Users/pressure/Downloads/mesh_source/models/sphere3.obj", meshV, meshF);
+    igl::readOBJ("/Users/pressure/Downloads/mesh_source/models/sphere3.obj", meshV, meshF);
     // igl::readOBJ("/Users/pressure/Downloads/mesh_source/models/sphere.obj", meshV, meshF);
     // igl::readOBJ("/Users/pressure/Downloads/libigl-polyscope-project/input/sphere.obj", meshV, meshF);
     // igl::readOBJ("/Users/pressure/Documents/git/ddg-exercises/input/sphere.obj", meshV, meshF);
     // igl::readOFF("/Users/pressure/Downloads/Laplacian-Mesh-Smoothing/Models/bumpy.off", meshV, meshF); // 69KB 5mins
     
-    igl::readOFF("/Users/pressure/Downloads/Laplacian-Mesh-Smoothing/Models/cow.off", meshV, meshF);
+    // igl::readOFF("/Users/pressure/Downloads/Laplacian-Mesh-Smoothing/Models/cow.off", meshV, meshF);
     // igl::readOBJ("/Users/pressure/Downloads/mesh_source/models/sphere.obj", meshV, meshF);
     // igl::readOBJ("/Users/pressure/Documents/git/meshtaichi/vertex_normal/models/bunny.obj", meshV, meshF);
     // Initialize triangle mesh
@@ -463,10 +495,15 @@ int main(int argc, const char * argv[]) {
     polyscope::init();  
     polyscope::registerSurfaceMesh("my mesh", meshV, meshF);
     polyscope::state::userCallback = myCallback;
+    Eigen::Matrix<double, 3, 1> initV;
+    initV << 0, 0, -100;
     for (int i = 0; i < meshV.rows(); ++i)
     {
         Position.push_back(meshV.row(i).transpose());
         OriginalPosition.push_back(meshV.row(i).transpose());
+        //
+        Velocity.push_back(Eigen::Matrix<double, 3, 1>::Zero());
+        Force.push_back(Eigen::Matrix<double, 3, 1>::Zero());
     } 
     // for (int i = 0; i < meshV.rows(); ++i)
     // {

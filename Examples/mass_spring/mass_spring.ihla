@@ -9,7 +9,7 @@ dt ∈ ℝ: step size
 
 e(i, j) = ||x_i - x_j|| where i,j ∈ ℤ vertices
 
-computeInternalForces(i, v, xn) = tuple(vn, f)  where i ∈ ℤ vertices, v_i ∈ ℝ^3, xn_i ∈ ℝ^3,
+computeInternalForces(i, v, xn) = tuple(vn, f+(0.0, -98.0, 0.0))  where i ∈ ℤ vertices, v_i ∈ ℝ^3, xn_i ∈ ℝ^3,
 f = (sum_(j ∈ VertexOneRing(i)) (-K) (||disp|| - e(i, j)) dir
 where disp = xn_i - xn_j,
 dir = disp/||disp||),
@@ -19,5 +19,5 @@ vn = v_i exp(-dt damping) + dt f
 applyForces(i, v, f, xn) = tuple(vn, xnn) where i ∈ ℤ vertices, v_i ∈ ℝ^3, f_i ∈ ℝ^3,xn_i ∈ ℝ^3,
 a = f_i / m,
 vn = v_i + a dt,
-xnn = vn dt
+xnn = xn_i + vn dt
 
