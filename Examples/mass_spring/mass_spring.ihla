@@ -1,4 +1,4 @@
-FaceNeighbors, GetEdgeIndex, VertexOneRing, OppositeVertices, GetOrientedVertices,OrientedVertices,GetNeighborVerticesInFace from FundamentalMeshAccessors(M)
+FaceNeighbors, VertexOneRing, OppositeVertices, OrientedVertices from Neighborhoods(M)
 M ∈ mesh
 x_i ∈ ℝ^3: original positions
 m ∈ ℝ: mass

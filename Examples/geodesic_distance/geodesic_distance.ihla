@@ -1,4 +1,4 @@
-GetNeighborVerticesInFace, VertexOneRing, FaceNeighbors from FundamentalMeshAccessors(M)
+GetNeighborVerticesInFace, VertexOneRing, FaceNeighbors from Neighborhoods(M)
 M ∈ mesh
 x_i ∈ ℝ^3  
 

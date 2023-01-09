@@ -13,6 +13,7 @@
 #include <igl/readOBJ.h>
 #include <igl/writeOBJ.h>
 #include <igl/readOFF.h>
+#include <igl/readSTL.h>
 // #include <thread> 
 #include "MeshHelper.h"
 #include "dec_util.h"
@@ -21,6 +22,40 @@
 
 double bottom_z = 0;
 
+
+/*
+FaceNeighbors, GetEdgeIndex, VertexOneRing, OppositeVertices, GetOrientedVertices,OrientedVertices,GetNeighborVerticesInFace from Neighborhoods(M)
+M ∈ mesh
+x_i ∈ ℝ^3: original positions
+m ∈ ℝ: mass
+damping ∈ ℝ: mass
+K ∈ ℝ: stiffness
+dt ∈ ℝ: step size
+
+
+e(i, j) = ||x_i - x_j|| where i,j ∈ ℤ vertices
+
+computeInternalForces(i, v, xn) = tuple(vn, f+(0.0, -98.0, 0.0))  where i ∈ ℤ vertices, v_i ∈ ℝ^3, xn_i ∈ ℝ^3,
+f = (sum_(j ∈ VertexOneRing(i)) (-K) (||disp|| - e(i, j)) dir
+where disp = xn_i - xn_j,
+dir = disp/||disp||),
+vn = v_i exp(-dt damping) + dt f
+
+
+applyForces(i, v, f, xn) = tuple(vn, xnn) where i ∈ ℤ vertices, v_i ∈ ℝ^3, f_i ∈ ℝ^3,xn_i ∈ ℝ^3,
+a = f_i / m,
+vn = v_i + a dt,
+xnn = xn_i + vn dt
+
+
+*/
+#include <Eigen/Core>
+#include <Eigen/QR>
+#include <Eigen/Dense>
+#include <Eigen/Sparse>
+#include <iostream>
+#include <set>
+#include <algorithm>
 
 struct iheartla {
 
@@ -90,7 +125,7 @@ struct iheartla {
         xnn += vn * dt;
         return std::tuple<Eigen::Matrix<double, 3, 1>,Eigen::Matrix<double, 3, 1> >{ vn,xnn };    
     }
-    struct FundamentalMeshAccessors {
+    struct Neighborhoods {
         std::set<int > V;
         std::set<int > E;
         std::set<int > F;
@@ -99,35 +134,6 @@ struct iheartla {
         Eigen::SparseMatrix<int> uve;
         Eigen::SparseMatrix<int> uef;
         TriangleMesh M;
-        std::set<int > Vertices(
-            const std::tuple< std::set<int >, std::set<int >, std::set<int >, std::set<int > > & S)
-        {
-            return std::get<1-1>(S);    
-        }
-        std::set<int > Vertices_0(
-            const int & f)
-        {
-            assert( F.find(f) != F.end() );
-            std::set<int > Vertices_0set_0({f});
-            return nonzeros(uve * uef * M.faces_to_vector(Vertices_0set_0));    
-        }
-        std::set<int > Vertices_1(
-            const std::set<int > & f)
-        {
-            return nonzeros(uve * uef * M.faces_to_vector(f));    
-        }
-        std::set<int > Vertices_2(
-            const int & e)
-        {
-            assert( E.find(e) != E.end() );
-            std::set<int > Vertices_2set_0({e});
-            return nonzeros(uve * M.edges_to_vector(Vertices_2set_0));    
-        }
-        std::set<int > Vertices_3(
-            const std::set<int > & e)
-        {
-            return nonzeros(uve * M.edges_to_vector(e));    
-        }
         std::set<int > VertexOneRing(
             const int & v)
         {
@@ -162,23 +168,6 @@ struct iheartla {
             assert( E.find(e) != E.end() );
             std::set<int > FaceNeighbors_0set_0({e});
             return nonzeros(uef.transpose() * M.edges_to_vector(FaceNeighbors_0set_0));    
-        }
-        std::set<int > Faces(
-            const std::tuple< std::set<int >, std::set<int >, std::set<int >, std::set<int > > & S)
-        {
-            return std::get<3-1>(S);    
-        }
-        std::set<int > Edges(
-            const std::tuple< std::set<int >, std::set<int >, std::set<int >, std::set<int > > & S)
-        {
-            return std::get<2-1>(S);    
-        }
-        std::set<int > Edges(
-            const int & f)
-        {
-            assert( F.find(f) != F.end() );
-            std::set<int > Edges_0set_0({f});
-            return nonzeros(uef * M.faces_to_vector(Edges_0set_0));    
         }
         int GetEdgeIndex(
             const int & i,
@@ -338,7 +327,140 @@ struct iheartla {
             int f = GetFaceIndex(i, j, k);
             return GetNeighborVerticesInFace(f, i);    
         }
-        FundamentalMeshAccessors(const TriangleMesh & M)
+        struct FundamentalMeshAccessors {
+            std::set<int > V;
+            std::set<int > E;
+            std::set<int > F;
+            Eigen::SparseMatrix<int> ve;
+            Eigen::SparseMatrix<int> ef;
+            Eigen::SparseMatrix<int> uve;
+            Eigen::SparseMatrix<int> uef;
+            TriangleMesh M;
+            std::set<int > Vertices(
+                const std::tuple< std::set<int >, std::set<int >, std::set<int >, std::set<int > > & S)
+            {
+                return std::get<1-1>(S);    
+            }
+            std::set<int > Edges(
+                const std::tuple< std::set<int >, std::set<int >, std::set<int >, std::set<int > > & S)
+            {
+                return std::get<2-1>(S);    
+            }
+            std::set<int > Faces(
+                const std::tuple< std::set<int >, std::set<int >, std::set<int >, std::set<int > > & S)
+            {
+                return std::get<3-1>(S);    
+            }
+            std::set<int > Vertices_0(
+                const int & f)
+            {
+                assert( F.find(f) != F.end() );
+                std::set<int > Vertices_0set_0({f});
+                return nonzeros(uve * uef * M.faces_to_vector(Vertices_0set_0));    
+            }
+            std::set<int > Vertices_1(
+                const std::set<int > & G)
+            {
+                return nonzeros(uve * uef * M.faces_to_vector(G));    
+            }
+            std::set<int > Vertices_2(
+                const int & e)
+            {
+                assert( E.find(e) != E.end() );
+                std::set<int > Vertices_2set_0({e});
+                return nonzeros(uve * M.edges_to_vector(Vertices_2set_0));    
+            }
+            std::set<int > Vertices_3(
+                const std::set<int > & H)
+            {
+                return nonzeros(uve * M.edges_to_vector(H));    
+            }
+            std::set<int > Edges_0(
+                const int & v)
+            {
+                assert( V.find(v) != V.end() );
+                std::set<int > Edges_0set_0({v});
+                return nonzeros(uve.transpose() * M.vertices_to_vector(Edges_0set_0));    
+            }
+            std::set<int > Edges_1(
+                const int & f)
+            {
+                assert( F.find(f) != F.end() );
+                std::set<int > Edges_1set_0({f});
+                return nonzeros(uef * M.faces_to_vector(Edges_1set_0));    
+            }
+            std::set<int > Faces_0(
+                const int & v)
+            {
+                assert( V.find(v) != V.end() );
+                std::set<int > Faces_0set_0({v});
+                return nonzeros((uve * uef).transpose() * M.vertices_to_vector(Faces_0set_0));    
+            }
+            std::set<int > Faces_1(
+                const int & e)
+            {
+                assert( E.find(e) != E.end() );
+                std::set<int > Faces_1set_0({e});
+                return nonzeros(uef.transpose() * M.edges_to_vector(Faces_1set_0));    
+            }
+            FundamentalMeshAccessors(const TriangleMesh & M)
+            {
+                // V, E, F = MeshSets( M )
+                std::tuple< std::set<int >, std::set<int >, std::set<int > > tuple = M.MeshSets();
+                V = std::get<0>(tuple);
+                E = std::get<1>(tuple);
+                F = std::get<2>(tuple);
+                int dimv_0 = M.n_vertices();
+                int dime_0 = M.n_edges();
+                int dimf_0 = M.n_faces();
+                this->M = M;
+                // ve, ef = BoundaryMatrices(M)
+                std::tuple< Eigen::SparseMatrix<int>, Eigen::SparseMatrix<int> > tuple_1 = M.BoundaryMatrices();
+                ve = std::get<0>(tuple_1);
+                ef = std::get<1>(tuple_1);
+                // uve, uef = UnsignedBoundaryMatrices(M)
+                std::tuple< Eigen::SparseMatrix<int>, Eigen::SparseMatrix<int> > tuple_2 = M.UnsignedBoundaryMatrices();
+                uve = std::get<0>(tuple_2);
+                uef = std::get<1>(tuple_2);
+            }
+        };
+        FundamentalMeshAccessors _FundamentalMeshAccessors;
+        std::set<int > Vertices(std::tuple< std::set<int >, std::set<int >, std::set<int >, std::set<int > > p0){
+            return _FundamentalMeshAccessors.Vertices(p0);
+        };
+        std::set<int > Vertices_0(int p0){
+            return _FundamentalMeshAccessors.Vertices_0(p0);
+        };
+        std::set<int > Vertices_1(std::set<int > p0){
+            return _FundamentalMeshAccessors.Vertices_1(p0);
+        };
+        std::set<int > Vertices_2(int p0){
+            return _FundamentalMeshAccessors.Vertices_2(p0);
+        };
+        std::set<int > Vertices_3(std::set<int > p0){
+            return _FundamentalMeshAccessors.Vertices_3(p0);
+        };
+        std::set<int > Edges(std::tuple< std::set<int >, std::set<int >, std::set<int >, std::set<int > > p0){
+            return _FundamentalMeshAccessors.Edges(p0);
+        };
+        std::set<int > Edges_0(int p0){
+            return _FundamentalMeshAccessors.Edges_0(p0);
+        };
+        std::set<int > Edges_1(int p0){
+            return _FundamentalMeshAccessors.Edges_1(p0);
+        };
+        std::set<int > Faces(std::tuple< std::set<int >, std::set<int >, std::set<int >, std::set<int > > p0){
+            return _FundamentalMeshAccessors.Faces(p0);
+        };
+        std::set<int > Faces_0(int p0){
+            return _FundamentalMeshAccessors.Faces_0(p0);
+        };
+        std::set<int > Faces_1(int p0){
+            return _FundamentalMeshAccessors.Faces_1(p0);
+        };
+        Neighborhoods(const TriangleMesh & M)
+        :
+        _FundamentalMeshAccessors(M)
         {
             // V, E, F = MeshSets( M )
             std::tuple< std::set<int >, std::set<int >, std::set<int > > tuple = M.MeshSets();
@@ -359,33 +481,33 @@ struct iheartla {
             uef = std::get<1>(tuple_2);
         }
     };
-    FundamentalMeshAccessors _FundamentalMeshAccessors;
+    Neighborhoods _Neighborhoods;
     std::set<int > FaceNeighbors(int p0){
-        return _FundamentalMeshAccessors.FaceNeighbors(p0);
+        return _Neighborhoods.FaceNeighbors(p0);
     };
     std::set<int > FaceNeighbors_0(int p0){
-        return _FundamentalMeshAccessors.FaceNeighbors_0(p0);
+        return _Neighborhoods.FaceNeighbors_0(p0);
     };
     int GetEdgeIndex(int p0,int p1){
-        return _FundamentalMeshAccessors.GetEdgeIndex(p0,p1);
+        return _Neighborhoods.GetEdgeIndex(p0,p1);
     };
     std::set<int > VertexOneRing(int p0){
-        return _FundamentalMeshAccessors.VertexOneRing(p0);
+        return _Neighborhoods.VertexOneRing(p0);
     };
     std::set<int > VertexOneRing(std::set<int > p0){
-        return _FundamentalMeshAccessors.VertexOneRing(p0);
+        return _Neighborhoods.VertexOneRing(p0);
     };
     std::tuple< int, int > OppositeVertices(int p0){
-        return _FundamentalMeshAccessors.OppositeVertices(p0);
+        return _Neighborhoods.OppositeVertices(p0);
     };
     std::tuple< int, int, int > GetOrientedVertices(int p0){
-        return _FundamentalMeshAccessors.GetOrientedVertices(p0);
+        return _Neighborhoods.GetOrientedVertices(p0);
     };
     std::tuple< int, int > OrientedVertices(int p0,int p1,int p2){
-        return _FundamentalMeshAccessors.OrientedVertices(p0,p1,p2);
+        return _Neighborhoods.OrientedVertices(p0,p1,p2);
     };
     std::tuple< int, int > GetNeighborVerticesInFace(int p0,int p1){
-        return _FundamentalMeshAccessors.GetNeighborVerticesInFace(p0,p1);
+        return _Neighborhoods.GetNeighborVerticesInFace(p0,p1);
     };
     iheartla(
         const TriangleMesh & M,
@@ -395,7 +517,7 @@ struct iheartla {
         const double & K,
         const double & dt)
     :
-    _FundamentalMeshAccessors(M)
+    _Neighborhoods(M)
     {
         int dimv_0 = M.n_vertices();
         int dime_0 = M.n_edges();
@@ -410,8 +532,11 @@ struct iheartla {
     }
 };
 
+
+
 Eigen::MatrixXd meshV;
 Eigen::MatrixXi meshF;
+Eigen::MatrixXd meshN;
 TriangleMesh triangle_mesh;
 
 bool running = false;
@@ -499,19 +624,38 @@ void myCallback()
 int main(int argc, const char * argv[]) {
     // igl::readOBJ("/Users/pressure/Downloads/mesh_source/models/cube.obj", meshV, meshF);
     // igl::readOBJ("/Users/pressure/Downloads/mesh_source/models/small_bunny.obj", meshV, meshF);
-    igl::readOBJ("/Users/pressure/Downloads/mesh_source/models/sphere3.obj", meshV, meshF);
+    // igl::readOBJ("/Users/pressure/Downloads/mesh_source/models/sphere3.obj", meshV, meshF);
+    // igl::readOBJ("/Users/pressure/Downloads/mesh_source/models/small_disk.obj", meshV, meshF);
     // igl::readOBJ("/Users/pressure/Downloads/mesh_source/models/sphere.obj", meshV, meshF);
     // igl::readOBJ("/Users/pressure/Downloads/libigl-polyscope-project/input/sphere.obj", meshV, meshF);
     // igl::readOBJ("/Users/pressure/Documents/git/ddg-exercises/input/sphere.obj", meshV, meshF);
     // igl::readOFF("/Users/pressure/Downloads/Laplacian-Mesh-Smoothing/Models/bumpy.off", meshV, meshF); // 69KB 5mins
-    
-    // igl::readOFF("/Users/pressure/Downloads/Laplacian-Mesh-Smoothing/Models/cow.off", meshV, meshF);
+    // igl::readSTL("/Users/pressure/Downloads/small_mesh_from_Thingi10k/1772593.stl", meshV, meshF, meshN); 
+    igl::readOFF("/Users/pressure/Downloads/Laplacian-Mesh-Smoothing/Models/cow.off", meshV, meshF);
     // igl::readOBJ("/Users/pressure/Downloads/mesh_source/models/sphere.obj", meshV, meshF);
     // igl::readOBJ("/Users/pressure/Documents/git/meshtaichi/vertex_normal/models/bunny.obj", meshV, meshF);
     // Initialize triangle mesh
+    double minY = 1000;
+    double offset = 0;
     for (int i = 0; i < meshV.rows(); ++i)
     {
-        meshV(i, 1) += 2;
+        if (meshV(i, 1) < minY)
+        {
+            minY = meshV(i, 1);
+        }
+        // std::cout<<"i: "<<i<<", ("<<meshV(i, 0)<<", "<<meshV(i, 1)<<", "<<meshV(i, 2)<<")"<<std::endl;
+    } 
+    if (minY < 0)
+    {
+        offset = -minY + 0.1;
+    }
+    else{
+        offset = 0;
+    }
+    std::cout<<"offset: "<<offset<<std::endl;
+    for (int i = 0; i < meshV.rows(); ++i)
+    {
+        meshV(i, 1) += offset;
     }
     triangle_mesh.initialize(meshV, meshF);
     // Initialize polyscope
@@ -531,10 +675,6 @@ int main(int argc, const char * argv[]) {
         Velocity.push_back(Eigen::Matrix<double, 3, 1>::Zero());
         Force.push_back(Eigen::Matrix<double, 3, 1>::Zero());
     } 
-    // for (int i = 0; i < meshV.rows(); ++i)
-    // {
-    //     std::cout<<"i: "<<i<<", ("<<Position[i][0]<<", "<<Position[i][1]<<", "<<Position[i][2]<<")"<<std::endl;
-    // } 
     polyscope::show();
     return 0;
 }
