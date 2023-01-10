@@ -1,12 +1,5 @@
 #include "MeshHelper.h"
-
-std::tuple<std::set<int>, std::set<int>, std::set<int>> MeshSets(const TriangleMesh& mesh){
-	return std::tuple<std::set<int>, std::set<int>, std::set<int>>(mesh.Vi, mesh.Ei, mesh.Fi);
-}
-
-std::tuple<Eigen::SparseMatrix<int>, Eigen::SparseMatrix<int> > BoundaryMatrices(const TriangleMesh& mesh){
-	return std::tuple< Eigen::SparseMatrix<int>, Eigen::SparseMatrix<int> >(mesh.bm1, mesh.bm2);
-}
+ 
 
 // std::set<int> vector_to_vertices(const TriangleMesh& mesh, const Eigen::VectorXi& vi){
 // 	return mesh.vector_to_vertices(vi);
@@ -20,25 +13,27 @@ std::tuple<Eigen::SparseMatrix<int>, Eigen::SparseMatrix<int> > BoundaryMatrices
 // 	return mesh.vector_to_vertices(fi);
 // }
 
-std::set<int> nonzeros(Eigen::SparseMatrix<int> target){
-    return nonzeros(target, true);
-}
-
-std::set<int> nonzeros(Eigen::SparseMatrix<int> target, bool is_row){
-    std::set<int> result;
+std::vector<int> nonzeros(Eigen::SparseMatrix<int> target, bool is_row){
+    std::vector<int> result;
+    result.reserve(target.rows());  // reserve
     for (int k=0; k<target.outerSize(); ++k){
       for (SparseMatrix<int>::InnerIterator it(target,k); it; ++it) {
         if (is_row)
         {
-            result.insert(it.row());
+            result.push_back(it.row());
         }
         else{
-            result.insert(it.col());
+            result.push_back(it.col());
         }
       }
     } 
     return result;
 }
+
+std::vector<int> nonzeros(Eigen::SparseMatrix<int> target){
+    return nonzeros(target, true);
+}
+
 std::set<int> ValueSet(Eigen::SparseMatrix<int> target, int value){
     // return row indices for specific value
     return ValueSet(target, value, true);
