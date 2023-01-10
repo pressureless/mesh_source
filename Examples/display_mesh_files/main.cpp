@@ -21,7 +21,7 @@
 
 
 int current_index = 0;
-int MAX = 119;
+int MAX = 299;
 std::string original_file = "/Users/pressure/Downloads/Laplacian-Mesh-Smoothing/Models/cow.off";
 std::string file_name = "/Users/pressure/Downloads/ffff/files/new_";
 
