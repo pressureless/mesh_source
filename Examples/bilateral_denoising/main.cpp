@@ -25,14 +25,23 @@ VertexNormal(i) = w/||w|| where i ∈ ℤ vertices,
 w = (sum_(f ∈ FaceNeighbors(i)) (x_j- x_i)×(x_k-x_i)
 where j, k = NeighborVerticesInFace(f, i) )
 
+CalcNorm(i, v, n, `σ_c`, `σ_s`) = `w_c`⋅`w_s` where i,v ∈ ℤ vertices,`σ_c`, `σ_s` ∈ℝ, n ∈ ℝ³,
+t = ||x_i - x_v||,
+h = <n, x_v - x_i>, 
+`w_c` = exp(-t²/(2`σ_c`²)),
+`w_s` = exp(-h²/(2`σ_s`²))
+
+CalcS(i, v, n, `σ_c`, `σ_s`) = CalcNorm(i, v, n, `σ_c`,`σ_s`)⋅h where i,v ∈ ℤ vertices,`σ_c`, `σ_s` ∈ℝ, n ∈ ℝ³,
+h = <n, x_v - x_i>
+
 
 DenoisePoint(i) = x_i + n⋅(s/norm)  where i ∈ ℤ vertices,
 n = VertexNormal(i),
-`σc` = CalcSigmaC(i),
-neighbors = AdaptiveVertexNeighbor(i, {i}, `σc`),
-`σs` = CalcSigmaS(i, neighbors),
-s = (sum_(v ∈ neighbors) (`wc`⋅`ws`)⋅h where t = ||x_i - x_v||, h = <n, x_v - x_i>, `wc` = exp(-t²/(2`σc`²)) , `ws` = exp(-h²/(2`σs`²))),
-norm = (sum_(v ∈ neighbors) `wc`⋅`ws` where t = ||x_i - x_v||, h = <n, x_v - x_i>, `wc` = exp(-t²/(2`σc`²)) , `ws` = exp(-h²/(2`σs`²)))
+`σ_c` = CalcSigmaC(i),
+neighbors = AdaptiveVertexNeighbor(i, {i}, `σ_c`),
+`σ_s` = CalcSigmaS(i, neighbors),
+s = (sum_(v ∈ neighbors) CalcS(i, v, n, `σ_c`, `σ_s`)),
+norm = (sum_(v ∈ neighbors) CalcNorm(i, v, n, `σ_c`, `σ_s`))
  
 
 CalcSigmaC(i) = min({||x_i - x_v|| for v ∈ VertexOneRing(i)}) where i ∈ ℤ vertices
@@ -40,7 +49,7 @@ CalcSigmaC(i) = min({||x_i - x_v|| for v ∈ VertexOneRing(i)}) where i ∈ ℤ 
 CalcSigmaS(i, N) = {sqrt(offset) + 1.0E-12 if sqrt(offset) < 1.0E-12
 	sqrt(offset) otherwise where i ∈ ℤ vertices, N ∈ {ℤ} vertices,
 n = VertexNormal(i),
-avg = (sum_(v ∈ N) t where t = sqrt(((x_v - x_i)⋅n)²))/|N|,
+avg = (sum_(v ∈ N) t/|N| where t = sqrt(((x_v - x_i)⋅n)²)),
 sqs = (sum_(v ∈ N) (t-avg)² where t = sqrt(((x_v - x_i)⋅n)²)),
 offset = sqs / |N|
 
@@ -78,6 +87,37 @@ struct iheartla {
         Eigen::Matrix<double, 3, 1> w = (sum_0);
         return w / double((w).lpNorm<2>());    
     }
+    double CalcNorm(
+        const int & i,
+        const int & v,
+        const Eigen::Matrix<double, 3, 1> & n,
+        const double & σ_c,
+        const double & σ_s)
+    {
+        // t = ||x_i - x_v||
+        double t = (x.at(i) - x.at(v)).lpNorm<2>();
+
+        // h = <n, x_v - x_i>
+        double h = (n).dot(x.at(v) - x.at(i));
+
+        // `w_c` = exp(-t²/(2`σ_c`²))
+        double w_c = exp(-pow(t, 2) / double((2 * pow(σ_c, 2))));
+
+        // `w_s` = exp(-h²/(2`σ_s`²))
+        double w_s = exp(-pow(h, 2) / double((2 * pow(σ_s, 2))));
+        return w_c * w_s;    
+    }
+    double CalcS(
+        const int & i,
+        const int & v,
+        const Eigen::Matrix<double, 3, 1> & n,
+        const double & σ_c,
+        const double & σ_s)
+    {
+        // h = <n, x_v - x_i>
+        double h = (n).dot(x.at(v) - x.at(i));
+        return CalcNorm(i, v, n, σ_c, σ_s) * h;    
+    }
     double CalcSigmaC(
         const int & i)
     {
@@ -105,10 +145,10 @@ struct iheartla {
         for(int v : N){
                 // t = sqrt(((x_v - x_i)⋅n)²)
             double t = sqrt(pow((((x.at(v) - x.at(i))).dot(n)), 2));
-            sum_3 += t;
+            sum_3 += t / double((N).size());
         }
         // t = sqrt(((x_v - x_i)⋅n)²)
-        double avg = (sum_3) / double((N).size());
+        double avg = (sum_3);
 
         double sum_4 = 0;
         for(int v : N){
@@ -168,48 +208,32 @@ struct iheartla {
         // n = VertexNormal(i)
         Eigen::Matrix<double, 3, 1> n = VertexNormal(i);
 
-        // `σc` = CalcSigmaC(i)
-        double σc = CalcSigmaC(i);
+        // `σ_c` = CalcSigmaC(i)
+        double σ_c = CalcSigmaC(i);
 
         std::vector<int > DenoisePointset_0({i});
         if(DenoisePointset_0.size() > 1){
             sort(DenoisePointset_0.begin(), DenoisePointset_0.end());
             DenoisePointset_0.erase(unique(DenoisePointset_0.begin(), DenoisePointset_0.end() ), DenoisePointset_0.end());
         }
-        // neighbors = AdaptiveVertexNeighbor(i, {i}, `σc`)
-        std::vector<int > neighbors = AdaptiveVertexNeighbor(i, DenoisePointset_0, σc);
+        // neighbors = AdaptiveVertexNeighbor(i, {i}, `σ_c`)
+        std::vector<int > neighbors = AdaptiveVertexNeighbor(i, DenoisePointset_0, σ_c);
 
-        // `σs` = CalcSigmaS(i, neighbors)
-        double σs = CalcSigmaS(i, neighbors);
+        // `σ_s` = CalcSigmaS(i, neighbors)
+        double σ_s = CalcSigmaS(i, neighbors);
 
         double sum_6 = 0;
         for(int v : neighbors){
-                // `ws` = exp(-h²/(2`σs`²))
-            double t = (x.at(i) - x.at(v)).lpNorm<2>();
-                // `ws` = exp(-h²/(2`σs`²))
-            double h = (n).dot(x.at(v) - x.at(i));
-                // `ws` = exp(-h²/(2`σs`²))
-            double wc = exp(-pow(t, 2) / double((2 * pow(σc, 2))));
-                // `ws` = exp(-h²/(2`σs`²))
-            double ws = exp(-pow(h, 2) / double((2 * pow(σs, 2))));
-            sum_6 += (wc * ws) * h;
+            sum_6 += CalcS(i, v, n, σ_c, σ_s);
         }
-        // `ws` = exp(-h²/(2`σs`²))
+        // s = (sum_(v ∈ neighbors) CalcS(i, v, n, `σ_c`, `σ_s`))
         double s = (sum_6);
 
         double sum_7 = 0;
         for(int v : neighbors){
-                // `ws` = exp(-h²/(2`σs`²))
-            double t = (x.at(i) - x.at(v)).lpNorm<2>();
-                // `ws` = exp(-h²/(2`σs`²))
-            double h = (n).dot(x.at(v) - x.at(i));
-                // `ws` = exp(-h²/(2`σs`²))
-            double wc = exp(-pow(t, 2) / double((2 * pow(σc, 2))));
-                // `ws` = exp(-h²/(2`σs`²))
-            double ws = exp(-pow(h, 2) / double((2 * pow(σs, 2))));
-            sum_7 += wc * ws;
+            sum_7 += CalcNorm(i, v, n, σ_c, σ_s);
         }
-        // `ws` = exp(-h²/(2`σs`²))
+        // norm = (sum_(v ∈ neighbors) CalcNorm(i, v, n, `σ_c`, `σ_s`))
         double norm = (sum_7);
         return x.at(i) + n * (s / double(norm));    
     }
@@ -695,6 +719,8 @@ struct iheartla {
     
     }
 };
+
+
 
 
 

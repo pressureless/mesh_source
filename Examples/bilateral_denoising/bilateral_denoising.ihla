@@ -6,6 +6,14 @@ VertexNormal(i) = w/||w|| where i ∈ ℤ vertices,
 w = (sum_(f ∈ FaceNeighbors(i)) (x_j- x_i)×(x_k-x_i)
 where j, k = NeighborVerticesInFace(f, i) )
 
+CalcNorm(i, v, n, `σ_c`, `σ_s`) = `w_c`⋅`w_s` where i,v,`σ_c`, `σ_s` ∈ ℤ vertices, n ∈ ℝ³,
+t = ||x_i - x_v||,
+h = <n, x_v - x_i>, 
+`w_c` = exp(-t²/(2`σ_c`²)),
+`w_s` = exp(-h²/(2`σ_s`²))
+
+CalcS(i, v, n, `σ_c`, `σ_s`) = CalcNorm(i, v, n, `σ_c`,`σ_s`)⋅h where i,v,`σ_c`, `σ_s` ∈ ℤ vertices, n ∈ ℝ³,
+h = <n, x_v - x_i>
 
 
 DenoisePoint(i) = x_i + n⋅(s/norm)  where i ∈ ℤ vertices,
@@ -13,8 +21,8 @@ n = VertexNormal(i),
 `σ_c` = CalcSigmaC(i),
 neighbors = AdaptiveVertexNeighbor(i, {i}, `σ_c`),
 `σ_s` = CalcSigmaS(i, neighbors),
-s = (sum_(v ∈ neighbors) (`w_c`⋅`w_s`)⋅h where t = ||x_i - x_v||, h = <n, x_v - x_i>, `w_c` = exp(-t²/(2`σ_c`²)) , `w_s` = exp(-h²/(2`σ_s`²))),
-norm = (sum_(v ∈ neighbors) `w_c`⋅`w_s` where t = ||x_i - x_v||, h = <n, x_v - x_i>, `w_c` = exp(-t²/(2`σ_c`²)) , `w_s` = exp(-h²/(2`σ_s`²)))
+s = (sum_(v ∈ neighbors) CalcS(i, v, n, `σ_c`, `σ_s`)),
+norm = (sum_(v ∈ neighbors) CalcNorm(i, v, n, `σ_c`, `σ_s`))
  
 
 CalcSigmaC(i) = min({||x_i - x_v|| for v ∈ VertexOneRing(i)}) where i ∈ ℤ vertices
