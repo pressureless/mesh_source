@@ -794,7 +794,7 @@ int main(int argc, const char * argv[]) {
 
     // igl::readOBJ("/Users/pressure/Documents/git/meshtaichi/vertex_normal/models/bunny.obj", meshV, meshF);
     // Initialize triangle mesh
-    triangle_mesh.initialize(meshV, meshF);
+    triangle_mesh.initialize(meshF);
     // Initialize polyscope
     polyscope::init();  
     polyscope::registerSurfaceMesh("my mesh", meshV, meshF);
