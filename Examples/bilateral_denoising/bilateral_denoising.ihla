@@ -7,6 +7,7 @@ w = (sum_(f ∈ FaceNeighbors(i)) (x_j- x_i)×(x_k-x_i)
 where j, k = NeighborVerticesInFace(f, i) )
 
 
+
 DenoisePoint(i) = x_i + n⋅(s/norm)  where i ∈ ℤ vertices,
 n = VertexNormal(i),
 `σ_c` = CalcSigmaC(i),
@@ -21,7 +22,7 @@ CalcSigmaC(i) = min({||x_i - x_v|| for v ∈ VertexOneRing(i)}) where i ∈ ℤ 
 CalcSigmaS(i, N) = {sqrt(offset) + 1.0E-12 if sqrt(offset) < 1.0E-12
 	sqrt(offset) otherwise where i ∈ ℤ vertices, N ∈ {ℤ} vertices,
 n = VertexNormal(i),
-avg = (sum_(v ∈ N) t where t = sqrt(((x_v - x_i)⋅n)²))/|N|,
+avg = (sum_(v ∈ N) t/|N| where t = sqrt(((x_v - x_i)⋅n)²)),
 sqs = (sum_(v ∈ N) (t-avg)² where t = sqrt(((x_v - x_i)⋅n)²)),
 offset = sqs / |N|
 
