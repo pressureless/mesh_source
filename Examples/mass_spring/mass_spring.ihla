@@ -5,6 +5,7 @@ m ∈ ℝ: mass
 damping ∈ ℝ: mass
 K ∈ ℝ: stiffness
 dt ∈ ℝ: step size
+bottom ∈ ℝ
 
 
 e(i, j) = ||x_i - x_j|| where i,j ∈ ℤ vertices
@@ -19,5 +20,9 @@ vn = v_i exp(-dt damping) + dt f
 applyForces(i, v, f, xn) = tuple(vn, xnn) where i ∈ ℤ vertices, v_i ∈ ℝ^3, f_i ∈ ℝ^3,xn_i ∈ ℝ^3,
 a = f_i / m,
 vn = v_i + a dt,
-xnn = xn_i + vn dt
+vnn = { (0, -vn_2, 0) if xn_i,2 < bottom
+     vn otherwise,
+xnnn = { (xn_i,1, bottom, xn_i,3) if xn_i,2 < bottom
+     xn_i otherwise,
+xnn = xnnn + vnn dt
 
