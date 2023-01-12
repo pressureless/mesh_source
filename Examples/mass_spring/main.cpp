@@ -24,14 +24,14 @@ double bottom_z = 0;
 
 
 /*
-FaceNeighbors, VertexOneRing, OppositeVertices, OrientedVertices from Neighborhoods(M)
+VertexOneRing from Neighborhoods(M)
 M ∈ mesh
 x_i ∈ ℝ^3: original positions
 m ∈ ℝ: mass
-damping ∈ ℝ: mass
+damping ∈ ℝ: damping
 K ∈ ℝ: stiffness
 dt ∈ ℝ: step size
-bottom ∈ ℝ
+bottom ∈ ℝ: ground height
 
 
 e(i, j) = ||x_i - x_j|| where i,j ∈ ℤ vertices
@@ -187,28 +187,6 @@ struct iheartla {
             std::set_difference(lhs_diff_1.begin(), lhs_diff_1.end(), rhs_diff_1.begin(), rhs_diff_1.end(), std::back_inserter(difference_1));
             return difference_1;    
         }
-        std::vector<int > FaceNeighbors(
-            const int & v)
-        {
-            assert( std::binary_search(V.begin(), V.end(), v) );
-            std::vector<int > FaceNeighborsset_0({v});
-            if(FaceNeighborsset_0.size() > 1){
-                sort(FaceNeighborsset_0.begin(), FaceNeighborsset_0.end());
-                FaceNeighborsset_0.erase(unique(FaceNeighborsset_0.begin(), FaceNeighborsset_0.end() ), FaceNeighborsset_0.end());
-            }
-            return nonzeros((B0 * B1).transpose() * M.vertices_to_vector(FaceNeighborsset_0));    
-        }
-        std::vector<int > FaceNeighbors_0(
-            const int & e)
-        {
-            assert( std::binary_search(E.begin(), E.end(), e) );
-            std::vector<int > FaceNeighbors_0set_0({e});
-            if(FaceNeighbors_0set_0.size() > 1){
-                sort(FaceNeighbors_0set_0.begin(), FaceNeighbors_0set_0.end());
-                FaceNeighbors_0set_0.erase(unique(FaceNeighbors_0set_0.begin(), FaceNeighbors_0set_0.end() ), FaceNeighbors_0set_0.end());
-            }
-            return nonzeros(B1.transpose() * M.edges_to_vector(FaceNeighbors_0set_0));    
-        }
         int EdgeIndex(
             const int & i,
             const int & j)
@@ -349,20 +327,20 @@ struct iheartla {
                 Diamondset_0.erase(unique(Diamondset_0.begin(), Diamondset_0.end() ), Diamondset_0.end());
             }
         std::vector<int > tetset;
-            return std::tuple<std::vector<int >,std::vector<int >,std::vector<int >,std::vector<int > >{ Vertices_2(e),Diamondset_0,FaceNeighbors_0(e),tetset };    
+            return std::tuple<std::vector<int >,std::vector<int >,std::vector<int >,std::vector<int > >{ Vertices_2(e),Diamondset_0,Faces_1(e),tetset };    
         }
         std::tuple< int, int > OppositeVertices(
             const int & e)
         {
             assert( std::binary_search(E.begin(), E.end(), e) );
             std::vector<int > difference_4;
-            const std::vector<int >& lhs_diff_4 = Vertices_1(FaceNeighbors_0(e));
+            const std::vector<int >& lhs_diff_4 = Vertices_1(Faces_1(e));
             const std::vector<int >& rhs_diff_4 = Vertices_2(e);
             difference_4.reserve(lhs_diff_4.size());
             std::set_difference(lhs_diff_4.begin(), lhs_diff_4.end(), rhs_diff_4.begin(), rhs_diff_4.end(), std::back_inserter(difference_4));
             std::vector<int >& stdv_4 = difference_4;
             Eigen::VectorXi vec_4(Eigen::Map<Eigen::VectorXi>(&stdv_4[0], stdv_4.size()));
-            // evec = vec(Vertices(FaceNeighbors(e)) \ Vertices(e))
+            // evec = vec(Vertices(Faces(e)) \ Vertices(e))
             Eigen::VectorXi evec = vec_4;
             return std::tuple<int,int >{ evec[1-1],evec[2-1] };    
         }
@@ -600,26 +578,11 @@ struct iheartla {
         }
     };
     Neighborhoods _Neighborhoods;
-    std::vector<int > FaceNeighbors(int p0){
-        return _Neighborhoods.FaceNeighbors(p0);
-    };
-    std::vector<int > FaceNeighbors_0(int p0){
-        return _Neighborhoods.FaceNeighbors_0(p0);
-    };
     std::vector<int > VertexOneRing(int p0){
         return _Neighborhoods.VertexOneRing(p0);
     };
     std::vector<int > VertexOneRing(std::vector<int > p0){
         return _Neighborhoods.VertexOneRing(p0);
-    };
-    std::tuple< int, int > OppositeVertices(int p0){
-        return _Neighborhoods.OppositeVertices(p0);
-    };
-    std::tuple< int, int, int > OrientedVertices(int p0){
-        return _Neighborhoods.OrientedVertices(p0);
-    };
-    std::tuple< int, int > OrientedVertices(int p0,int p1,int p2){
-        return _Neighborhoods.OrientedVertices(p0,p1,p2);
     };
     iheartla(
         const TriangleMesh & M,
@@ -645,6 +608,8 @@ struct iheartla {
     
     }
 };
+
+
 
 
 

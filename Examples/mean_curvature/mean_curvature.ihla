@@ -1,4 +1,4 @@
-FaceNeighbors, EdgeIndex, VertexOneRing, OppositeVertices, OrientedVertices, NeighborVerticesInFace from Neighborhoods(M)
+Faces, EdgeIndex, VertexOneRing, OppositeVertices, OrientedVertices, NeighborVerticesInFace from Neighborhoods(M)
 M ∈ mesh
 
 t ∈ ℝ: step length
@@ -32,7 +32,7 @@ sin = ||(x_oj - x_k)×(x_oi-x_k)||
 
 
 Ax(i, x) = x_i - t w K  where i ∈ ℤ vertices, x_i ∈ ℝ^3,
-A = (sum_(f ∈ FaceNeighbors(i)) area(f, i, x)),
+A = (sum_(f ∈ Faces(i)) area(f, i, x)),
 w = { 1/(2A) if A≠0
       0      otherwise,
 K = (sum_(j ∈ VertexOneRing(i)) max(`cot(α)` + `cot(β)`,0)(x_j - x_i) 

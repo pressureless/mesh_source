@@ -1,14 +1,10 @@
-VertexOneRing, FaceNeighbors from Neighborhoods(M)
+VertexOneRing, Faces from Neighborhoods(M)
 M ∈ mesh
 x_i ∈ ℝ^3  
 
 
-Min(a, b) = { a  if a < b
-	          b  otherwise where a,b∈ ℝ
-
-
 UpdateStep(v0, v1, v2, d) = { p if s_1,1 < 0 and s_2,1 < 0 
-			Min(d_(v1)+||x1||, d_(v2)+||x2||) otherwise where v0,v1,v2 ∈ ℤ vertices, d_i ∈ ℝ,
+			min(d_(v1)+||x1||, d_(v2)+||x2||) otherwise where v0,v1,v2 ∈ ℤ vertices, d_i ∈ ℝ,
 x1 = x_(v1) - x_(v0),
 x2 = x_(v2) - x_(v0),
 X = [x1 x2],
@@ -31,8 +27,10 @@ GetLevelSequence(U) = { sequence(U, n) if |n| ≠ 0
 n = GetNextLevel(U)
 
 
+
+
 GetDistanceForV(V, v, d) =  where V_i  ∈  {ℤ} vertices,v ∈ ℤ vertices,d_i  ∈  ℝ,
-newD = {UpdateStep(v, v1, v2, d) for f ∈ FaceNeighbors(v)}
+newD = {UpdateStep(v, v1, v2, d) for f ∈ Faces(v)}
 
 
 

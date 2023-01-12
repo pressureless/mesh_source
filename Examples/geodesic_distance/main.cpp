@@ -16,17 +16,13 @@
 #include "polyscope/polyscope.h"
 #include "polyscope/surface_mesh.h"
 /*
-VertexOneRing, FaceNeighbors from Neighborhoods(M)
+VertexOneRing, Faces from Neighborhoods(M)
 M ∈ mesh
 x_i ∈ ℝ^3  
 
 
-Min(a, b) = { a  if a < b
-              b  otherwise where a,b∈ ℝ
-
-
 UpdateStep(v0, v1, v2, d) = { p if s_1,1 < 0 and s_2,1 < 0 
-            Min(d_(v1)+||x1||, d_(v2)+||x2||) otherwise where v0,v1,v2 ∈ ℤ vertices, d_i ∈ ℝ,
+            min(d_(v1)+||x1||, d_(v2)+||x2||) otherwise where v0,v1,v2 ∈ ℤ vertices, d_i ∈ ℝ,
 x1 = x_(v1) - x_(v0),
 x2 = x_(v2) - x_(v0),
 X = [x1 x2],
@@ -48,6 +44,7 @@ GetLevelSequence(U) = { sequence(U, n) if |n| ≠ 0
                         U otherwise where U_i  ∈  {ℤ} vertices,
 n = GetNextLevel(U)
 
+
  
 
 */
@@ -62,19 +59,6 @@ n = GetNextLevel(U)
 struct iheartla {
 
     std::vector<Eigen::Matrix<double, 3, 1>> x;
-    double Min(
-        const double & a,
-        const double & b)
-    {
-        double Min_ret;
-        if(a < b){
-            Min_ret = a;
-        }
-        else{
-            Min_ret = b;
-        }
-        return Min_ret;    
-    }
     double UpdateStep(
         const int & v0,
         const int & v1,
@@ -120,7 +104,7 @@ struct iheartla {
             UpdateStep_ret = p;
         }
         else{
-            UpdateStep_ret = Min(d.at(v1) + (x1).lpNorm<2>(), d.at(v2) + (x2).lpNorm<2>());
+            UpdateStep_ret = std::min({d.at(v1) + (x1).lpNorm<2>(), d.at(v2) + (x2).lpNorm<2>()});
         }
         return UpdateStep_ret;    
     }
@@ -219,28 +203,6 @@ struct iheartla {
             difference_1.reserve(lhs_diff_1.size());
             std::set_difference(lhs_diff_1.begin(), lhs_diff_1.end(), rhs_diff_1.begin(), rhs_diff_1.end(), std::back_inserter(difference_1));
             return difference_1;    
-        }
-        std::vector<int > FaceNeighbors(
-            const int & v)
-        {
-            assert( std::binary_search(V.begin(), V.end(), v) );
-            std::vector<int > FaceNeighborsset_0({v});
-            if(FaceNeighborsset_0.size() > 1){
-                sort(FaceNeighborsset_0.begin(), FaceNeighborsset_0.end());
-                FaceNeighborsset_0.erase(unique(FaceNeighborsset_0.begin(), FaceNeighborsset_0.end() ), FaceNeighborsset_0.end());
-            }
-            return nonzeros((B0 * B1).transpose() * M.vertices_to_vector(FaceNeighborsset_0));    
-        }
-        std::vector<int > FaceNeighbors_0(
-            const int & e)
-        {
-            assert( std::binary_search(E.begin(), E.end(), e) );
-            std::vector<int > FaceNeighbors_0set_0({e});
-            if(FaceNeighbors_0set_0.size() > 1){
-                sort(FaceNeighbors_0set_0.begin(), FaceNeighbors_0set_0.end());
-                FaceNeighbors_0set_0.erase(unique(FaceNeighbors_0set_0.begin(), FaceNeighbors_0set_0.end() ), FaceNeighbors_0set_0.end());
-            }
-            return nonzeros(B1.transpose() * M.edges_to_vector(FaceNeighbors_0set_0));    
         }
         int EdgeIndex(
             const int & i,
@@ -382,20 +344,20 @@ struct iheartla {
                 Diamondset_0.erase(unique(Diamondset_0.begin(), Diamondset_0.end() ), Diamondset_0.end());
             }
         std::vector<int > tetset;
-            return std::tuple<std::vector<int >,std::vector<int >,std::vector<int >,std::vector<int > >{ Vertices_2(e),Diamondset_0,FaceNeighbors_0(e),tetset };    
+            return std::tuple<std::vector<int >,std::vector<int >,std::vector<int >,std::vector<int > >{ Vertices_2(e),Diamondset_0,Faces_1(e),tetset };    
         }
         std::tuple< int, int > OppositeVertices(
             const int & e)
         {
             assert( std::binary_search(E.begin(), E.end(), e) );
             std::vector<int > difference_4;
-            const std::vector<int >& lhs_diff_4 = Vertices_1(FaceNeighbors_0(e));
+            const std::vector<int >& lhs_diff_4 = Vertices_1(Faces_1(e));
             const std::vector<int >& rhs_diff_4 = Vertices_2(e);
             difference_4.reserve(lhs_diff_4.size());
             std::set_difference(lhs_diff_4.begin(), lhs_diff_4.end(), rhs_diff_4.begin(), rhs_diff_4.end(), std::back_inserter(difference_4));
             std::vector<int >& stdv_4 = difference_4;
             Eigen::VectorXi vec_4(Eigen::Map<Eigen::VectorXi>(&stdv_4[0], stdv_4.size()));
-            // evec = vec(Vertices(FaceNeighbors(e)) \ Vertices(e))
+            // evec = vec(Vertices(Faces(e)) \ Vertices(e))
             Eigen::VectorXi evec = vec_4;
             return std::tuple<int,int >{ evec[1-1],evec[2-1] };    
         }
@@ -639,11 +601,14 @@ struct iheartla {
     std::vector<int > VertexOneRing(std::vector<int > p0){
         return _Neighborhoods.VertexOneRing(p0);
     };
-    std::vector<int > FaceNeighbors(int p0){
-        return _Neighborhoods.FaceNeighbors(p0);
+    std::vector<int > Faces(std::tuple< std::vector<int >, std::vector<int >, std::vector<int >, std::vector<int > > p0){
+        return _Neighborhoods.Faces(p0);
     };
-    std::vector<int > FaceNeighbors_0(int p0){
-        return _Neighborhoods.FaceNeighbors_0(p0);
+    std::vector<int > Faces_0(int p0){
+        return _Neighborhoods.Faces_0(p0);
+    };
+    std::vector<int > Faces_1(int p0){
+        return _Neighborhoods.Faces_1(p0);
     };
     iheartla(
         const TriangleMesh & M,
@@ -659,6 +624,8 @@ struct iheartla {
     
     }
 };
+
+
 
 
 
@@ -749,7 +716,7 @@ int main(int argc, const char * argv[]) {
         // print_set(v_set);
         for (int v: v_set)
         {
-            std::vector<int> f_set = ihla.FaceNeighbors(v);
+            std::vector<int> f_set = ihla.Faces_0(v);
             for (int f: f_set)
             {
                 std::tuple< int, int > v_tuple = ihla._Neighborhoods.NeighborVerticesInFace(f, v);
@@ -758,7 +725,7 @@ int main(int argc, const char * argv[]) {
                 // std::cout<<"f: "<<f<<", v:("<<v<<", "<<v1<<", "<<v2<<")"<<std::endl;
                 double updated = ihla.UpdateStep(v, v1, v2, distance);
                 // std::cout<<"updated: "<<updated<<std::endl;
-                new_distance[v] = ihla.Min(new_distance[v], updated);
+                new_distance[v] = std::min(new_distance[v], updated);
             }
         }
         //

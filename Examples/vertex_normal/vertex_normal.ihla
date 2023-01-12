@@ -1,6 +1,6 @@
-FaceNeighbors, NeighborVerticesInFace from Neighborhoods(M)
+Faces, NeighborVerticesInFace from Neighborhoods(M)
 M ∈ mesh
 x_i ∈ ℝ^3  
 
-VertexNormal(i) = (sum_(f ∈ FaceNeighbors(i)) (x_j- x_i)×(x_k-x_i)/(||x_j-x_i||² ||x_k-x_i||²) 
+VertexNormal(i) = (sum_(f ∈ Faces(i)) (x_j- x_i)×(x_k-x_i)/(||x_j-x_i||² ||x_k-x_i||²) 
 where j, k = NeighborVerticesInFace(f, i) ) where i ∈ ℤ vertices

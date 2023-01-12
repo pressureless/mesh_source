@@ -1,4 +1,4 @@
-FaceNeighbors, VertexOneRing, OppositeVertices, OrientedVertices from Neighborhoods(M)
+VertexOneRing from Neighborhoods(M)
 M ∈ mesh
 x_i ∈ ℝ^3: original positions
 m ∈ ℝ: mass
