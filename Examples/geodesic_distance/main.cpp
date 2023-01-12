@@ -47,6 +47,9 @@ GetRangeLevel(U, a, b) = ∪_(i=a)^b U_i where U_j  ∈  {ℤ} vertices, a,b ∈
 GetLevelSequence(U) = { sequence(U, n) if |n| ≠ 0
                         U otherwise where U_i  ∈  {ℤ} vertices,
 n = GetNextLevel(U)
+
+ 
+
 */
 #include <Eigen/Core>
 #include <Eigen/QR>
@@ -125,20 +128,12 @@ struct iheartla {
         const std::vector<std::vector<int >> & U)
     {
         const long dim_2 = U.size();
-        std::cout<<"current GetNextLevel: "<<std::endl;
-        std::cout<<"U size: "<<U.size()<<std::endl;
-        for (int i = 0; i < U.size(); ++i)
-        {
-           std::cout<<"current level: "<<i<<", size:"<<U[i].size()<<std::endl;
-           for (int j = 0; j < U[i].size(); ++j)
-           {
-               std::cout<<U[i][j]<<", ";
-           }
-            std::cout<<std::endl;
-        }
         std::vector<int > union_0;
+        std::vector<int > tmp;
         for(int i=1; i<=U.size(); i++){
-            std::set_union(union_0.begin(), union_0.end(), U.at(i-1).begin(), U.at(i-1).end(), std::back_inserter(union_0));
+            std::set_union(union_0.begin(), union_0.end(), U.at(i-1).begin(), U.at(i-1).end(), std::back_inserter(tmp));
+            union_0.assign(tmp.begin(), tmp.end());
+            tmp.clear();
         }
         // s = ∪_i U_i
         std::vector<int > s = union_0;
@@ -146,8 +141,8 @@ struct iheartla {
         // v = VertexOneRing(s)
         std::vector<int > v = VertexOneRing(s);
         std::vector<int > difference;
-        std::vector<int > lhs_diff = v;
-        std::vector<int > rhs_diff = s;
+        const std::vector<int >& lhs_diff = v;
+        const std::vector<int >& rhs_diff = s;
         difference.reserve(lhs_diff.size());
         std::set_difference(lhs_diff.begin(), lhs_diff.end(), rhs_diff.begin(), rhs_diff.end(), std::back_inserter(difference));
         return difference;    
@@ -159,8 +154,11 @@ struct iheartla {
     {
         const long dim_3 = U.size();
         std::vector<int > union_1;
+        std::vector<int > tmp_1;
         for(int i=a; i<=b; i++){
-            std::set_union(union_1.begin(), union_1.end(), U.at(i).begin(), U.at(i).end(), std::back_inserter(union_1));
+            std::set_union(union_1.begin(), union_1.end(), U.at(i).begin(), U.at(i).end(), std::back_inserter(tmp_1));
+            union_1.assign(tmp_1.begin(), tmp_1.end());
+            tmp_1.clear();
         }
         return union_1;    
     }
@@ -674,10 +672,6 @@ struct iheartla {
 
 
 
-
-
-
-
 void print_distance(std::vector<double>& distance){
     std::cout<<"current distance:"<<std::endl;
     for (int m = 0; m < distance.size(); ++m)
@@ -714,6 +708,7 @@ int main(int argc, const char * argv[]) {
     } 
  
     int cur = 316;
+    // cur = 0;
     std::vector<std::vector<int> > U;
     std::vector<int> origin;
     origin.push_back(cur);
@@ -724,6 +719,12 @@ int main(int argc, const char * argv[]) {
     {
         U.push_back(next);
         next = ihla.GetNextLevel(U);
+        // next = new std::vector<int>();
+        // for (int i = 0; i < ret.size(); ++i)
+        // {
+        //     next->push_back(ret[i]);
+        // }
+
     } while (next.size() != 0);
 
     for (int i = 0; i < U.size(); ++i)

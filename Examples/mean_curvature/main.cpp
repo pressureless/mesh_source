@@ -17,7 +17,6 @@
 #include "dec_util.h"
 #include "polyscope/polyscope.h"
 #include "polyscope/surface_mesh.h"
-
 /*
 FaceNeighbors, EdgeIndex, VertexOneRing, OppositeVertices, OrientedVertices, NeighborVerticesInFace from Neighborhoods(M)
 M ∈ mesh
@@ -52,55 +51,11 @@ cos = (x_oj - x_k)⋅(x_oi-x_k),
 sin = ||(x_oj - x_k)×(x_oi-x_k)||
 
 
-Ax(i, x) = x_i - t K  where i ∈ ℤ vertices, x_i ∈ ℝ^3,
+Ax(i, x) = x_i - t w K  where i ∈ ℤ vertices, x_i ∈ ℝ^3,
 A = (sum_(f ∈ FaceNeighbors(i)) area(f, i, x)),
 w = { 1/(2A) if A≠0
       0      otherwise,
-K = w(sum_(j ∈ VertexOneRing(i)) max(`cot(α)` + `cot(β)`,0)(x_j - x_i) 
-where k, l = OppositeVertices(EdgeIndex(i,j)),
-`cot(α)` = cot(k, j, i, x),
-`cot(β)` = cot(l, i, j, x) )
-
-*/
-/*
-FaceNeighbors, EdgeIndex, VertexOneRing, OppositeVertices, OrientedVertices, NeighborVerticesInFace from Neighborhoods(M)
-M ∈ mesh
-
-t ∈ ℝ: step length
-
-clamp(v) = { -bound if v < -bound
-             bound if v > bound
-         v otherwise where v ∈ ℝ,
-bound = 19.1
-
-area(f, p, x) = { 0 if A=0
-        ½A if dotp < 0
-                  ¼A if dotq <0 or dotr <0
-                  ⅛(cotq ||pr||² + cotr ||pq||² ) otherwise where f ∈ ℤ faces, x_i ∈ ℝ^3, p ∈ ℤ vertices,
-q,r = NeighborVerticesInFace(f, p),
-pq = x_q - x_p,
-qr = x_r - x_q,
-pr = x_r - x_p,
-A = ½||pq×pr||,
-dotp = pq ⋅ pr,
-dotq = (x_q-x_r) ⋅ pq,
-dotr = qr⋅ pr,
-cotq = clamp(dotq/(2A)),
-cotr = clamp(dotr/(2A))
-
- 
-cot(k, j, i, x) = { clamp(cos/sin) if sin≠0
-                    0 otherwise where i,j,k ∈ ℤ vertices, x_i ∈ ℝ^3 ,
-oj, oi = OrientedVertices(k, j, i),
-cos = (x_oj - x_k)⋅(x_oi-x_k),
-sin = ||(x_oj - x_k)×(x_oi-x_k)||
-
-
-Ax(i, x) = x_i - t K  where i ∈ ℤ vertices, x_i ∈ ℝ^3,
-A = (sum_(f ∈ FaceNeighbors(i)) area(f, i, x)),
-w = { 1/(2A) if A≠0
-      0      otherwise,
-K = w(sum_(j ∈ VertexOneRing(i)) max(`cot(α)` + `cot(β)`,0)(x_j - x_i) 
+K = (sum_(j ∈ VertexOneRing(i)) max(`cot(α)` + `cot(β)`,0)(x_j - x_i) 
 where k, l = OppositeVertices(EdgeIndex(i,j)),
 `cot(α)` = cot(k, j, i, x),
 `cot(β)` = cot(l, i, j, x) )
@@ -246,12 +201,12 @@ struct iheartla {
             double cotβ = cot(l, i, j, x);
             sum_1 += std::max({double(cotα + cotβ), double(0)}) * (x.at(j) - x.at(i));
         }
-        // K = w(sum_(j ∈ VertexOneRing(i)) max(`cot(α)` + `cot(β)`,0)(x_j - x_i) 
+        // K = (sum_(j ∈ VertexOneRing(i)) max(`cot(α)` + `cot(β)`,0)(x_j - x_i) 
     // where k, l = OppositeVertices(EdgeIndex(i,j)),
     // `cot(α)` = cot(k, j, i, x),
     // `cot(β)` = cot(l, i, j, x) )
-        Eigen::Matrix<double, 3, 1> K = w * (sum_1);
-        return x.at(i) - t * K;    
+        Eigen::Matrix<double, 3, 1> K = (sum_1);
+        return x.at(i) - t * w * K;    
     }
     struct Neighborhoods {
         std::vector<int > V;
@@ -746,6 +701,8 @@ struct iheartla {
     
     }
 };
+
+
 
 
 

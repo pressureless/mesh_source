@@ -2,10 +2,10 @@ FaceNeighbors, VertexOneRing, OppositeVertices, OrientedVertices from Neighborho
 M ∈ mesh
 x_i ∈ ℝ^3: original positions
 m ∈ ℝ: mass
-damping ∈ ℝ: mass
+damping ∈ ℝ: damping
 K ∈ ℝ: stiffness
 dt ∈ ℝ: step size
-bottom ∈ ℝ
+bottom ∈ ℝ: ground height
 
 
 e(i, j) = ||x_i - x_j|| where i,j ∈ ℤ vertices

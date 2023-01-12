@@ -25,13 +25,13 @@ VertexNormal(i) = w/||w|| where i ∈ ℤ vertices,
 w = (sum_(f ∈ FaceNeighbors(i)) (x_j- x_i)×(x_k-x_i)
 where j, k = NeighborVerticesInFace(f, i) )
 
-CalcNorm(i, v, n, `σ_c`, `σ_s`) = `w_c`⋅`w_s` where i,v ∈ ℤ vertices,`σ_c`, `σ_s` ∈ℝ, n ∈ ℝ³,
+CalcNorm(i, v, n, `σ_c`, `σ_s`) = `w_c`⋅`w_s` where i,v ∈ ℤ vertices,`σ_c`, `σ_s` ∈ ℝ, n ∈ ℝ³,
 t = ||x_i - x_v||,
 h = <n, x_v - x_i>, 
 `w_c` = exp(-t²/(2`σ_c`²)),
 `w_s` = exp(-h²/(2`σ_s`²))
 
-CalcS(i, v, n, `σ_c`, `σ_s`) = CalcNorm(i, v, n, `σ_c`,`σ_s`)⋅h where i,v ∈ ℤ vertices,`σ_c`, `σ_s` ∈ℝ, n ∈ ℝ³,
+CalcS(i, v, n, `σ_c`, `σ_s`) = CalcNorm(i, v, n, `σ_c`,`σ_s`)⋅h where i,v ∈ ℤ vertices,`σ_c`, `σ_s` ∈ ℝ, n ∈ ℝ³,
 h = <n, x_v - x_i>
 
 
@@ -47,7 +47,7 @@ norm = (sum_(v ∈ neighbors) CalcNorm(i, v, n, `σ_c`, `σ_s`))
 CalcSigmaC(i) = min({||x_i - x_v|| for v ∈ VertexOneRing(i)}) where i ∈ ℤ vertices
 
 CalcSigmaS(i, N) = {sqrt(offset) + 1.0E-12 if sqrt(offset) < 1.0E-12
-	sqrt(offset) otherwise where i ∈ ℤ vertices, N ∈ {ℤ} vertices,
+    sqrt(offset) otherwise where i ∈ ℤ vertices, N ∈ {ℤ} vertices,
 n = VertexNormal(i),
 avg = (sum_(v ∈ N) t/|N| where t = sqrt(((x_v - x_i)⋅n)²)),
 sqs = (sum_(v ∈ N) (t-avg)² where t = sqrt(((x_v - x_i)⋅n)²)),
@@ -719,9 +719,6 @@ struct iheartla {
     
     }
 };
-
-
-
 
 
 
