@@ -1,8 +1,10 @@
+MeshSets from MeshConnectivity
 NeighborVerticesInFace, Faces, VertexOneRing from Neighborhoods(M)
 M ∈ mesh
 x_i ∈ ℝ^3 
 
-VertexNormal(i) = w/||w|| where i ∈ ℤ vertices,
+V, E, F = MeshSets( M )
+VertexNormal(i) = w/||w|| where i ∈ V,
 w = (sum_(f ∈ Faces(i)) (x_j- x_i)×(x_k-x_i)
 where j, k = NeighborVerticesInFace(f, i) )
 
@@ -16,7 +18,7 @@ CalcS(i, v, n, `σ_c`, `σ_s`) = CalcNorm(i, v, n, `σ_c`,`σ_s`)⋅h where i,v 
 h = <n, x_v - x_i>
 
 
-DenoisePoint(i) = x_i + n⋅(s/norm)  where i ∈ ℤ vertices,
+DenoisePoint(i) = x_i + n⋅(s/norm)  where i ∈ V,
 n = VertexNormal(i),
 `σ_c` = CalcSigmaC(i),
 neighbors = AdaptiveVertexNeighbor(i, {i}, `σ_c`),
@@ -25,10 +27,10 @@ s = (sum_(v ∈ neighbors) CalcS(i, v, n, `σ_c`, `σ_s`)),
 norm = (sum_(v ∈ neighbors) CalcNorm(i, v, n, `σ_c`, `σ_s`))
  
 
-CalcSigmaC(i) = min({||x_i - x_v|| for v ∈ VertexOneRing(i)}) where i ∈ ℤ vertices
+CalcSigmaC(i) = min({||x_i - x_v|| for v ∈ VertexOneRing(i)}) where i ∈ V
 
 CalcSigmaS(i, N) = {sqrt(offset) + 1.0E-12 if sqrt(offset) < 1.0E-12
-	sqrt(offset) otherwise where i ∈ ℤ vertices, N ∈ {ℤ} vertices,
+	sqrt(offset) otherwise where i ∈ V, N ⊂ V,
 n = VertexNormal(i),
 avg = (sum_(v ∈ N) t/|N| where t = sqrt(((x_v - x_i)⋅n)²)),
 sqs = (sum_(v ∈ N) (t-avg)² where t = sqrt(((x_v - x_i)⋅n)²)),
@@ -36,6 +38,6 @@ offset = sqs / |N|
 
 
 AdaptiveVertexNeighbor(i, n, σ) = { n  if |n|=|target| 
-                                           AdaptiveVertexNeighbor(i, target, σ) otherwise where i ∈ ℤ vertices, σ ∈ ℝ, n ∈ {ℤ} vertices,
+                                           AdaptiveVertexNeighbor(i, target, σ) otherwise where i ∈ V, σ ∈ ℝ, n ⊂ V,
 target = {v for v ∈ VertexOneRing(n) if ||x_i-x_v||< 2σ} ∪ n
 

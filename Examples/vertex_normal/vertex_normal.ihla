@@ -1,6 +1,8 @@
+MeshSets from MeshConnectivity
 Faces, NeighborVerticesInFace from Neighborhoods(M)
 M ∈ mesh
 x_i ∈ ℝ^3  
+V, E, F = MeshSets( M )
 
 VertexNormal(i) = (sum_(f ∈ Faces(i)) (x_j- x_i)×(x_k-x_i)/(||x_j-x_i||² ||x_k-x_i||²) 
-where j, k = NeighborVerticesInFace(f, i) ) where i ∈ ℤ vertices
+where j, k = NeighborVerticesInFace(f, i) ) where i ∈ V

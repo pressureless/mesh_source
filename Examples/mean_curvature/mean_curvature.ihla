@@ -1,7 +1,9 @@
+MeshSets from MeshConnectivity
 Faces, EdgeIndex, VertexOneRing, OppositeVertices, OrientedVertices, NeighborVerticesInFace from Neighborhoods(M)
 M ∈ mesh
 
 t ∈ ℝ: step length
+V, E, F = MeshSets( M )
 
 clamp(v) = { -bound if v < -bound
              bound if v > bound
@@ -11,7 +13,7 @@ bound = 19.1
 area(f, p, x) = { 0 if A=0
 		½A if dotp < 0
                   ¼A if dotq <0 or dotr <0
-                  ⅛(cotq ||pr||² + cotr ||pq||² ) otherwise where f ∈ ℤ faces, x_i ∈ ℝ^3, p ∈ ℤ vertices,
+                  ⅛(cotq ||pr||² + cotr ||pq||² ) otherwise where f ∈ F, x_i ∈ ℝ^3, p ∈ V,
 q,r = NeighborVerticesInFace(f, p),
 pq = x_q - x_p,
 qr = x_r - x_q,
@@ -25,13 +27,13 @@ cotr = clamp(dotr/(2A))
 
  
 cot(k, j, i, x) = { clamp(cos/sin) if sin≠0
-                    0 otherwise where i,j,k ∈ ℤ vertices, x_i ∈ ℝ^3 ,
+                    0 otherwise where i,j,k ∈ V, x_i ∈ ℝ^3 ,
 oj, oi = OrientedVertices(k, j, i),
 cos = (x_oj - x_k)⋅(x_oi-x_k),
 sin = ||(x_oj - x_k)×(x_oi-x_k)||
 
 
-Ax(i, x) = x_i - t w K  where i ∈ ℤ vertices, x_i ∈ ℝ^3,
+Ax(i, x) = x_i - t w K  where i ∈ V, x_i ∈ ℝ^3,
 A = (sum_(f ∈ Faces(i)) area(f, i, x)),
 w = { 1/(2A) if A≠0
       0      otherwise,

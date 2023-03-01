@@ -1,10 +1,11 @@
+MeshSets from MeshConnectivity
 VertexOneRing, Faces from Neighborhoods(M)
 M ∈ mesh
 x_i ∈ ℝ^3  
-
+V, E, F = MeshSets( M )
 
 UpdateStep(v0, v1, v2, d) = { p if s_1,1 < 0 and s_2,1 < 0 
-			min(d_(v1)+||x1||, d_(v2)+||x2||) otherwise where v0,v1,v2 ∈ ℤ vertices, d_i ∈ ℝ,
+			min(d_(v1)+||x1||, d_(v2)+||x2||) otherwise where v0,v1,v2 ∈ V, d_i ∈ ℝ,
 x1 = x_(v1) - x_(v0),
 x2 = x_(v2) - x_(v0),
 X = [x1 x2],
@@ -15,16 +16,17 @@ p = (`1`ᵀQt + sqrt((`1`ᵀQt)² - `1`ᵀQ`1` ⋅ (tᵀQt - 1)))/ (`1`ᵀQ`1`),
 n = XQ(t- p ⋅`1`),
 s = QXᵀn
 
-GetNextLevel(U) = v - s where U_i  ∈  {ℤ} vertices,
+GetNextLevel(U) = v - s where U_i ⊂ V,
 s = ∪_i U_i,
 v = VertexOneRing(s)
 
-GetRangeLevel(U, a, b) = ∪_(i=a)^b U_i where U_j  ∈  {ℤ} vertices, a,b ∈ ℤ index
+GetRangeLevel(U, a, b) = ∪_(i=a)^b U_i where U_j ⊂ V, a,b ∈ ℤ index
 
 
 GetLevelSequence(U) = { sequence(U, n) if |n| ≠ 0
-                        U otherwise where U_i  ∈  {ℤ} vertices,
+                        U otherwise where U_i ⊂ V,
 n = GetNextLevel(U)
+
 
 
 

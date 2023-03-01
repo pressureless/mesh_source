@@ -1,23 +1,25 @@
+MeshSets from MeshConnectivity
 VertexOneRing from Neighborhoods(M)
-M ∈ mesh
+M ∈ mesh 
 x_i ∈ ℝ^3: original positions
 m ∈ ℝ: mass
 damping ∈ ℝ: damping
 K ∈ ℝ: stiffness
 dt ∈ ℝ: step size
 bottom ∈ ℝ: ground height
+V, E, F = MeshSets( M )
 
 
-e(i, j) = ||x_i - x_j|| where i,j ∈ ℤ vertices
+e(i, j) = ||x_i - x_j|| where i,j ∈ V
 
-computeInternalForces(i, v, xn) = tuple(vn, f+(0.0, -98.0, 0.0))  where i ∈ ℤ vertices, v_i ∈ ℝ^3, xn_i ∈ ℝ^3,
+computeInternalForces(i, v, xn) = tuple(vn, f+(0.0, -98.0, 0.0))  where i ∈ V, v_i ∈ ℝ^3, xn_i ∈ ℝ^3,
 f = (sum_(j ∈ VertexOneRing(i)) (-K) (||disp|| - e(i, j)) dir
 where disp = xn_i - xn_j,
 dir = disp/||disp||),
 vn = v_i exp(-dt damping) + dt f
 
 
-applyForces(i, v, f, xn) = tuple(vn, xnn) where i ∈ ℤ vertices, v_i ∈ ℝ^3, f_i ∈ ℝ^3,xn_i ∈ ℝ^3,
+applyForces(i, v, f, xn) = tuple(vn, xnn) where i ∈ V, v_i ∈ ℝ^3, f_i ∈ ℝ^3,xn_i ∈ ℝ^3,
 a = f_i / m,
 vn = v_i + a dt,
 vnn = { (0, -vn_2, 0) if xn_i,2 < bottom
