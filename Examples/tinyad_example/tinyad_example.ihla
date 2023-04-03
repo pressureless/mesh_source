@@ -1,0 +1,20 @@
+MeshSets from MeshConnectivity
+NeighborVerticesInFace, Faces, VertexOneRing, OrientedVertices from Neighborhoods(M)
+M ∈ mesh
+x̄_i ∈ ℝ^2 
+
+
+V, E, F = MeshSets(M)
+
+A_i,j,k = ½ |[x̄_j-x̄_i x̄_k-x̄_i]| where i,j,k ∈ V
+
+S(f, x) = A_abc (‖J‖² + ‖J⁻¹‖²) where f ∈ F, x_i ∈ ℝ^2,
+a, b, c = OrientedVertices(f),
+J = [x_b-x_a x_c-x_a][x̄_b-x̄_a x̄_c-x̄_a]⁻¹
+
+Energy(x) = sum_(i ∈ F) S(i, x) where  x_i ∈ ℝ^2 
+
+H = ∂²Energy/∂x²
+
+
+
