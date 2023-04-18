@@ -7,7 +7,7 @@ if (CMAKE_BINARY_DIR STREQUAL CMAKE_SOURCE_DIR)
     message(FATAL_ERROR "Source and build directories cannot be the same. Go use the /build directory.")
 endif()
 
-set(CMAKE_BUILD_TYPE "Debug")
+set(CMAKE_BUILD_TYPE "Release")
 ### Configure output locations
 set(CMAKE_ARCHIVE_OUTPUT_DIRECTORY ${CMAKE_BINARY_DIR}/lib)
 set(CMAKE_LIBRARY_OUTPUT_DIRECTORY ${CMAKE_BINARY_DIR}/lib)
@@ -63,6 +63,7 @@ endif()
 
 # Find Eigen
 find_package(Eigen3 3.3 REQUIRED NO_MODULE)
+find_package(autodiff REQUIRED NO_MODULE)
 
 # Add polyscope
 message("\n\n == CMAKE recursively building Polyscope\n")
@@ -83,6 +84,7 @@ add_subdirectory("../../deps/polyscope" deps/polyscope)
 # Create an executable
 set(SRCS 
   main.cpp
+  ../../src/Connectivity.cpp
   ../../src/TriangleMesh.cpp
   ../../src/dec_util.cpp
   ../../src/MeshHelper.cpp
@@ -97,4 +99,4 @@ target_include_directories(main PUBLIC "${CMAKE_CURRENT_SOURCE_DIR}/../../deps/p
 
 
 # Link settings
-target_link_libraries(main polyscope Eigen3::Eigen)
+target_link_libraries(main polyscope Eigen3::Eigen autodiff::autodiff)
