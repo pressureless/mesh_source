@@ -7,7 +7,7 @@ if (CMAKE_BINARY_DIR STREQUAL CMAKE_SOURCE_DIR)
     message(FATAL_ERROR "Source and build directories cannot be the same. Go use the /build directory.")
 endif()
 
-set(CMAKE_BUILD_TYPE "Debug")
+set(CMAKE_BUILD_TYPE "Release")
 ### Configure output locations
 set(CMAKE_ARCHIVE_OUTPUT_DIRECTORY ${CMAKE_BINARY_DIR}/lib)
 set(CMAKE_LIBRARY_OUTPUT_DIRECTORY ${CMAKE_BINARY_DIR}/lib)
@@ -39,8 +39,7 @@ if ("${CMAKE_CXX_COMPILER_ID}" MATCHES "Clang" OR "${CMAKE_CXX_COMPILER_ID}" STR
   SET(CMAKE_CXX_FLAGS_DEBUG          "${CMAKE_CXX_FLAGS_DEBUG} -g3")
   SET(CMAKE_CXX_FLAGS_MINSIZEREL     "-Os -DNDEBUG")
   SET(CMAKE_CXX_FLAGS_RELEASE        "-march=native -O3 -DNDEBUG")
-  set(CMAKE_CXX_FLAGS_RELEASE "-O3")
-  SET(CMAKE_CXX_FLAGS_RELWITHDEBINFO "-O3 -g")
+  SET(CMAKE_CXX_FLAGS_RELWITHDEBINFO "-O2 -g")
 elseif ("${CMAKE_CXX_COMPILER_ID}" STREQUAL "MSVC")
   # using Visual Studio C++
   message("Using Visual Studio compiler flags")
@@ -87,6 +86,7 @@ set(SRCS
   main.cpp
   ../../src/Connectivity.cpp
   ../../src/TriangleMesh.cpp
+  ../../src/Tetrahedron.cpp
   ../../src/dec_util.cpp
   ../../src/MeshHelper.cpp
 )

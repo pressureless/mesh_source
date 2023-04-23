@@ -1,12 +1,13 @@
 vec, inversevec, diag, svd from linearalgebra
-MeshSets from MeshConnectivity
+ElementSets from MeshConnectivity
 NeighborVerticesInFace, Faces, VertexOneRing, OrientedVertices from Neighborhoods(M)
-M ∈ mesh
+M : TriangleMesh
 x̄_i ∈ ℝ^3 : rest pos in 3D
 x_i ∈ ℝ^2 : current pos in 2D
+ε ∈ ℝ : eps
 
 
-V, E, F = MeshSets(M)
+V, E, F = ElementSets(M)
 
 S(f, x) = { 0 if |m| <= 0
     A (‖J‖² + ‖J⁻¹‖²) otherwise where f ∈ F, x_i ∈ ℝ^2,
@@ -22,20 +23,20 @@ mr = [br-ar cr-ar],
 A = ½ |mr|,
 J = m mr⁻¹
 
-psd(x) = u diag(ps, rows, cols)  vᵀ where x ∈ ℝ^(p×p),
+psd(x) = u diag(ps)  vᵀ where x ∈ ℝ^(p×p),
 u, sigma, v = svd(x),
 ps_i = { sigma_i if sigma_i > 0
-	 0 otherwise,
-rows, cols = #x
+	 0 otherwise
 
 
 Energy(x) = sum_(i ∈ F) S(i, x) where  x_i ∈ ℝ^2 
 
-e = Energy(x)
+e = Energy(x) 
 
 H = sum_(i ∈ F) psd(∂²S(i, x)/∂x²)
 
 G = ∂e/∂x 
 d = H⁻¹ (-G)
 
-y = inversevec(vec(x) + 0.1 d, x)
+y = { inversevec(vec(x) + 0.1 d, x) if √(-d⋅G) > ε
+      x otherwise
