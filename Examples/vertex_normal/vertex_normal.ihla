@@ -1,8 +1,34 @@
-MeshSets from MeshConnectivity
-Faces, NeighborVerticesInFace from Neighborhoods(M)
-M ∈ mesh
+arccos, atan2 from trigonometry
+ElementSets from MeshConnectivity
+Faces, Vertices, Edges,OppositeFaces, OppositeVertices, NeighborVerticesInFace, OrientedVertices from Neighborhoods(M)
+M : TriangleMesh
 x_i ∈ ℝ^3  
-V, E, F = MeshSets( M )
+V, E, F = ElementSets( M )
 
 VertexNormal(i) = (sum_(f ∈ Faces(i)) (x_j- x_i)×(x_k-x_i)/(||x_j-x_i||² ||x_k-x_i||²) 
 where j, k = NeighborVerticesInFace(f, i) ) where i ∈ V
+
+θ(i, f) = arccos((x_j-x_i)⋅(x_k-x_i)/(‖x_j-x_i‖ ‖x_k-x_i‖)) where i ∈ V, f ∈ F,
+j, k = NeighborVerticesInFace(f, i)
+
+area(f) = ½ ‖(x_j-x_i)×(x_k-x_i)‖ where f ∈ F,
+i, j, k = OrientedVertices(f)
+
+N(f) = ((x_j- x_i)×(x_k-x_i))/(2area(f)) where f ∈ F,
+i,j,k = OrientedVertices(f)
+
+l(e) = ‖x_j - x_i‖ where e ∈ E, 
+i, j = Vertices(e)
+
+ϕ(e) = π - atan2(‖`N_1`×`N_1`‖, `N_1`⋅`N_2`) where e ∈ E, 
+`f_1`, `f_2` = OppositeFaces(e),
+`N_1` = N(`f_1`),
+`N_2` = N(`f_2`)
+ 
+KN(i) = 1/2 (sum_(e ∈ Edges(i)) ϕ_e/l_e (x_j - x_i) where v=Vertices(e) - {i}, j=v_1) where i ∈ V
+ 
+HN(v) = 1/2 (sum_(e ∈ Edges(v))(`cot(α)` + `cot(β)`) 
+where i,j = Vertices(e), 
+k,p = OppositeVertices(e), 
+`cot(α)`=(x_i - x_k)⋅(x_j-x_k)/||(x_i - x_k)×(x_j-x_k)||,  
+`cot(β)`=(x_j - x_p)⋅(x_i-x_p)/||(x_j - x_p)×(x_i-x_p)|| ) where v ∈ V

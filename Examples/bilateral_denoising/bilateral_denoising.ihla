@@ -1,9 +1,9 @@
-MeshSets from MeshConnectivity
+ElementSets from MeshConnectivity
 NeighborVerticesInFace, Faces, VertexOneRing from Neighborhoods(M)
-M ∈ mesh
+M : TriangleMesh
 x_i ∈ ℝ^3 
 
-V, E, F = MeshSets( M )
+V, E, F = ElementSets( M )
 VertexNormal(i) = w/||w|| where i ∈ V,
 w = (sum_(f ∈ Faces(i)) (x_j- x_i)×(x_k-x_i)
 where j, k = NeighborVerticesInFace(f, i) )

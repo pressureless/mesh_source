@@ -1,13 +1,13 @@
-MeshSets from MeshConnectivity
+ElementSets from MeshConnectivity
 VertexOneRing from Neighborhoods(M)
-M ∈ mesh 
+M : TriangleMesh
 x_i ∈ ℝ^3: original positions
 m ∈ ℝ: mass
 damping ∈ ℝ: damping
 K ∈ ℝ: stiffness
 dt ∈ ℝ: step size
 bottom ∈ ℝ: ground height
-V, E, F = MeshSets( M )
+V, E, F = ElementSets( M )
 
 
 e(i, j) = ||x_i - x_j|| where i,j ∈ V

@@ -123,12 +123,12 @@ Eigen::MatrixXi T;
 // Eigen::MatrixXi FF; // #F-by-3 indices into V
 Tetrahedron tet_mesh;
 double eps = 1e-2;
-double weight = 1000;
+double weight = 1e5;
 std::vector<int> bc;
 std::vector<Eigen::Matrix<double, 3, 1>> bp;
 
 void step(){
-    iheartmesh ihla(tet_mesh, x̄, x, bc, bp, eps, weight);
+    iheartmesh ihla(tet_mesh, x̄, x, bc, bp, weight, eps);
     std::cout<<"e is "<<ihla.e<<std::endl;
     // std::vector<Eigen::Matrix<double, 2, 1>> y = ihla.y;
     for (int i = 0; i < ihla.y.size(); ++i)
@@ -153,11 +153,59 @@ void myCallback()
     }
 }
 
+template<class DT = autodiff::var, class MatrixD = Eigen::Matrix<autodiff::var, Eigen::Dynamic, Eigen::Dynamic>, class VectorD = Eigen::Matrix<autodiff::var, Eigen::Dynamic, 1>>
+struct iheartmesh1 {
+    DT z;
+    Eigen::VectorXd m;
+    Eigen::Matrix<DT, 3, 3> A;
+    autodiff::ArrayXvar new_A;
+    iheartmesh1(
+        const double & c,
+        const Eigen::Matrix<double, 3, 1> & x,
+        const Eigen::Matrix<double, 3, 1> & y,
+        const Eigen::Matrix<double, 3, 3> & A)
+    {
+    
+        new_A.resize(3*3);
+        for (int i = 0; i < A.rows(); ++i)
+        {
+            for (int j = 0; j < A.cols(); ++j)
+            {
+                new_A(i*A.rows()+j) = A(i, j);
+                this->A(i, j) = new_A(i*A.rows()+j);
+            }
+        }
+        // z = xᵀ A x
+        z = (DT)(x.transpose() * this->A * x);
+        // m = ∂z/∂A
+        m = gradient(z, this->new_A);
+    }
+};
+
+void check(){
+    double c = rand() % 10;
+    Eigen::Matrix<double, 3, 1> x = Eigen::VectorXd::Random(3);
+    Eigen::Matrix<double, 3, 1> y = Eigen::VectorXd::Random(3);
+    Eigen::Matrix<double, 3, 3> A = Eigen::MatrixXd::Random(3, 3);
+
+    auto z = y.unaryExpr<double(*)(double)>(&std::sin);
+    A(0, 1) = A(1, 0);
+    A(0, 2) = A(2, 0);
+    A(1, 2) = A(2, 1);
+    Eigen::Matrix<double, 3, 1> G = 2 * A * x ;
+    iheartmesh1 a(c, x, y, A);
+    std::cout<<"res: "<<a.m<<std::endl;
+    std::cout<<"G: "<<x*x.transpose()<<std::endl;
+    std::cout<<"z: "<<z<<std::endl;
+}
+
 
 int main(int argc, const char * argv[]) {
+    srand((int)time(NULL));
     // igl::readOBJ("../../../../models/armadillo_cut_low.obj", V, F);
     // igl::readOBJ("../../../models/cube.obj", V, F);
-
+    check();
+    return 0;
 
     // igl::copyleft::tetgen::tetrahedralize(V, F,"pq1.414Y", VV, TT, FF);
 
@@ -170,20 +218,28 @@ int main(int argc, const char * argv[]) {
 
     tet_mesh.initialize(T);
     bc.push_back(0);
-    bc.push_back(24);
+    bc.push_back(10);
 
     Eigen::Matrix<double, 3, 1> x0;
     x0 << -1, -1, 0.7;
+    Eigen::Matrix<double, 3, 1> x10;
+    x10 << -0.75, -0.25, 0.65; 
     Eigen::Matrix<double, 3, 1> x24;
     x24 << 1, 0, 0;
     bp.push_back(x0);
-    bp.push_back(x24);
+    bp.push_back(x10);
     std::cout<<"V is:"<<V<<std::endl;
     for (int i = 0; i < V.rows(); ++i)
     {
         x.push_back(V.row(i));
         x̄.push_back(V.row(i));
     }
+ 
+    // x[0] = x0;
+    // x[10] = x10;
+
+
+
     // std::cout<<"x.size is:"<<x.size()<<std::endl;
     // std::cout<<"x̄.size is:"<<x̄.size()<<std::endl;
 

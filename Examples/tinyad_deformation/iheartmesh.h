@@ -1,5 +1,5 @@
 /*
-vec, inversevec from linearalgebra
+vec, inversevec, diag, svd from linearalgebra
 ElementSets from MeshConnectivity
 NeighborVerticesInFace, Faces, Vertices, VertexOneRing, OrientedVertices from TetrahderonNeighborhoods(M)
 M : TetrahedralMesh
@@ -14,17 +14,21 @@ V, E, F, C = ElementSets(M)
 
 vol_i,j,k,l = ⅙ |[x̄_j-x̄_i x̄_k-x̄_i x̄_l-x̄_i]| where i,j,k,l ∈ V
 
+psd(x) = u diag(ps)  vᵀ where x ∈ ℝ^(p×p),
+u, sigma, v = svd(x),
+ps_i = { sigma_i if sigma_i > 0
+     0 otherwise
+
 S(s, x) = vol_abcd (‖J‖² + ‖J⁻¹‖²) where s ∈ C, x_i ∈ ℝ^3,
 a, b, c, d = Vertices(s),
 J = [x_b-x_a x_c-x_a x_d-x_a][x̄_b-x̄_a x̄_c-x̄_a x̄_d-x̄_a]⁻¹
 
+E2 = w sum_j ‖bp_j - x_(bx_j)‖
 
-Energy(x) = sum_(i ∈ C) S(i, x) + w sum_j ‖bp_j - x_(bx_j)‖ where  x_i ∈ ℝ^3 
-
-e = Energy(x)
+e = sum_(i ∈ C) S(i, x) + E2
 
 G = ∂e/∂x
-H = ∂²e/∂x²
+H = sum_(i ∈ C) psd(∂²S(i, x)/∂x²) + ∂²E2/∂x²
 
 d = H⁻¹ (-G)
 
@@ -50,18 +54,16 @@ struct iheartmesh {
     std::vector<int > E;
     std::vector<int > F;
     std::vector<int > C;
+    DT E2;
     DT e;
     Eigen::VectorXd G;
-    Eigen::SparseMatrix<double> H;
+    MatrixD H;
     VectorD d;
     std::vector<Eigen::Matrix<DT, 3, 1>> y;
     Tetrahedron M;
     std::vector<Eigen::Matrix<double, 3, 1>> x̄;
     std::vector<Eigen::Matrix<DT, 3, 1>> x;
     autodiff::ArrayXvar new_x;
-    double w;
-    std::vector<Eigen::Matrix<double, 3, 1>> bp;
-    std::vector<int> bx;
     DT vol(
         const int & i,
         const int & j,
@@ -77,6 +79,33 @@ struct iheartmesh {
         vol_0 << this->x̄.at(j) - this->x̄.at(i), this->x̄.at(k) - this->x̄.at(i), this->x̄.at(l) - this->x̄.at(i);
         return (1/DT(6)) * (vol_0).determinant();    
     }
+    MatrixD psd(
+        const MatrixD & x)
+    {
+        const long p = x.cols();
+        assert( x.rows() == p );
+
+        Eigen::BDCSVD<Eigen::MatrixXd> svd(to_double(x), Eigen::ComputeFullU | Eigen::ComputeFullV);
+        // u, sigma, v = svd(x)
+        std::tuple< MatrixD, VectorD, MatrixD > rhs_1 = std::tuple< MatrixD, VectorD, MatrixD >(svd.matrixU(), svd.singularValues(), svd.matrixV());
+        MatrixD u = std::get<0>(rhs_1);
+        VectorD sigma = std::get<1>(rhs_1);
+        MatrixD v = std::get<2>(rhs_1);
+
+        // ps_i = { sigma_i if sigma_i > 0
+        //   0 otherwise
+        VectorD ps;
+        ps.resize(p);
+        for( int i=1; i<=p; i++){
+            if(sigma[i-1] > 0){
+                ps[i-1] = sigma[i-1];
+            }
+            else{
+                ps[i-1] = 0;
+            }
+        }
+        return u * (ps).asDiagonal() * v.transpose();    
+    }
     DT S(
         const int & s,
         const std::vector<Eigen::Matrix<DT, 3, 1>> & x)
@@ -85,11 +114,11 @@ struct iheartmesh {
         assert( std::binary_search(C.begin(), C.end(), s) );
 
         // a, b, c, d = Vertices(s)
-        std::vector<int > rhs_1 = Vertices_2(s);
-        int a = rhs_1[0];
-        int b = rhs_1[1];
-        int c = rhs_1[2];
-        int d = rhs_1[3];
+        std::vector<int > rhs_2 = Vertices_2(s);
+        int a = rhs_2[0];
+        int b = rhs_2[1];
+        int c = rhs_2[2];
+        int d = rhs_2[3];
 
         // J = [x_b-x_a x_c-x_a x_d-x_a][x̄_b-x̄_a x̄_c-x̄_a x̄_d-x̄_a]⁻¹
         Eigen::Matrix<DT, 3, 3> J_0;
@@ -98,20 +127,6 @@ struct iheartmesh {
         J_1 << this->x̄.at(b) - this->x̄.at(a), this->x̄.at(c) - this->x̄.at(a), this->x̄.at(d) - this->x̄.at(a);
         Eigen::Matrix<DT, 3, 3> J = J_0 * J_1.inverse();
         return vol(a, b, c, d) * (pow((J).norm(), 2) + pow((J.inverse()).norm(), 2));    
-    }
-    DT Energy(
-        const std::vector<Eigen::Matrix<DT, 3, 1>> & x)
-    {
-        const long dim_3 = x.size();
-        DT sum_0 = 0;
-        for(int i : this->C){
-            sum_0 += S(i, x);
-        }
-        DT sum_1 = 0;
-        for(int j=1; j<=bp.size(); j++){
-            sum_1 += (this->bp.at(j-1) - x.at(this->bx.at(j-1))).template lpNorm<2>();
-        }
-        return sum_0 + this->w * sum_1;    
     }
         struct TetrahderonNeighborhoods {
         std::vector<int > V;
@@ -720,36 +735,50 @@ struct iheartmesh {
         {
             this->x[i] = new_x.segment(3*i, 3);
         }
-        this->w = w;
-        this->bp = bp;
-        this->bx = bx;
-        // e = Energy(x)
-        e = Energy(this->x);
+        // E2 = w sum_j ‖bp_j - x_(bx_j)‖
+        DT sum_0 = 0;
+        for(int j=1; j<=bp.size(); j++){
+            sum_0 += (bp.at(j-1) - this->x.at(bx.at(j-1))).template lpNorm<2>();
+        }
+        E2 = w * sum_0;
+        // e = sum_(i ∈ C) S(i, x) + E2
+        DT sum_1 = 0;
+        for(int i : this->C){
+            sum_1 += S(i, this->x);
+        }
+        e = sum_1 + E2;
         // G = ∂e/∂x
         G = gradient(e, this->new_x);
-        // H = ∂²e/∂x²
-        H = hessian(e, this->new_x).sparseView();
+        // H = sum_(i ∈ C) psd(∂²S(i, x)/∂x²) + ∂²E2/∂x²
+        MatrixD sum_2 = MatrixD::Zero(3*dim_1, 3*dim_1);
+        for(int i : this->C){
+            sum_2 += psd(hessian(S(i, this->x), this->new_x).sparseView());
+        }
+        H = sum_2 + psd(hessian(E2, this->new_x).sparseView());
         // d = H⁻¹ (-G)
-        Eigen::SimplicialLLT <Eigen::SparseMatrix<double>> solver;
-        solver.compute(H);
-        d = solver.solve((-G));
+        d = (to_double(H)).colPivHouseholderQr().solve(to_double((-G)));
         // y = { inversevec(vec(x) + 0.1 d, x) if √(-d⋅G) > ε
         //       x otherwise
-        if(sqrt((-(d).dot(G))) > ε){
+        var eep = sqrt((-(d).dot(G)));
+        std::cout<<"eep: "<<eep<<std::endl;
+        if(eep > ε){
+            std::cout<<"updated"<<std::endl;
             VectorD vec(dim_1*3);
             for (int i = 0; i < this->x.size(); ++i)
             {
                 vec.segment(3*i, 3) = this->x[i];
             }
             std::vector<Eigen::Matrix<DT, 3, 1>> inversevec(dim_1);
-            VectorD param = vec + 0.1 * d;
+            VectorD param = vec + 1e-16 * d;
             for (int i = 0; i < this->x.size(); ++i)
             {
                 inversevec[i] = param.segment(3*i, 3);
             }
             y = inversevec;
+            std::cout<<"y0: "<<y[0]<<std::endl;
         }
         else{
+            std::cout<<"the same"<<std::endl;
             y = this->x;
         }
     }

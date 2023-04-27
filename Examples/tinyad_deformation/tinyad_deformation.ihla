@@ -38,5 +38,60 @@ H = ∂²e/∂x²
 
 d = H⁻¹ (-G)
 
-y = { inversevec(vec(x) + 0.1 d, x) if √(-d⋅G) > ε
+y = { vec⁻¹_x(vec(x) + 0.1 d) if √(-d⋅G) > ε
+      x otherwise
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+vec, inversevec, diag, svd from linearalgebra
+ElementSets from MeshConnectivity
+NeighborVerticesInFace, Faces, Vertices, VertexOneRing, OrientedVertices from TetrahderonNeighborhoods(M)
+M : TetrahedralMesh
+x̄_i ∈ ℝ^3 : rest pos
+x_i ∈ ℝ^3 : current pos
+bx_j ∈ ℤ index: boundary indices
+bp_j ∈ ℝ^3 : boundary positions
+w ∈ ℝ : penalty
+ε ∈ ℝ : eps
+
+V, E, F, C = ElementSets(M)
+
+vol_i,j,k,l = ⅙ |[x̄_j-x̄_i x̄_k-x̄_i x̄_l-x̄_i]| where i,j,k,l ∈ V
+
+psd(x) = u diag(ps)  vᵀ where x ∈ ℝ^(p×p),
+u, sigma, v = svd(x),
+ps_i = { sigma_i if sigma_i > 0
+	 0 otherwise
+
+S(s, x) = vol_abcd (‖J‖² + ‖J⁻¹‖²) where s ∈ C, x_i ∈ ℝ^3,
+a, b, c, d = Vertices(s),
+J = [x_b-x_a x_c-x_a x_d-x_a][x̄_b-x̄_a x̄_c-x̄_a x̄_d-x̄_a]⁻¹
+
+E2 = w sum_j ‖bp_j - x_(bx_j)‖
+
+e = sum_(i ∈ C) S(i, x) + E2
+
+G = ∂e/∂x
+H = sum_(i ∈ C) psd(∂²S(i, x)/∂x²) + psd(∂²E2/∂x²)
+
+d = H⁻¹ (-G)
+
+y = { vec⁻¹_x(vec(x) + 0.1 d) if √(-d⋅G) > ε
       x otherwise

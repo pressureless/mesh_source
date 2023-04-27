@@ -1,9 +1,9 @@
-MeshSets from MeshConnectivity
+ElementSets from MeshConnectivity
 Faces, EdgeIndex, VertexOneRing, OppositeVertices, OrientedVertices, NeighborVerticesInFace from Neighborhoods(M)
-M ∈ mesh
+M : TriangleMesh
 
 t ∈ ℝ: step length
-V, E, F = MeshSets( M )
+V, E, F = ElementSets( M )
 
 clamp(v) = { -bound if v < -bound
              bound if v > bound

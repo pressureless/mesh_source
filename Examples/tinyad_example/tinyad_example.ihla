@@ -38,5 +38,5 @@ H = sum_(i ∈ F) psd(∂²S(i, x)/∂x²)
 G = ∂e/∂x 
 d = H⁻¹ (-G)
 
-y = { inversevec(vec(x) + 0.1 d, x) if √(-d⋅G) > ε
+y = { vec⁻¹_x(vec(x) + 0.1 d) if √(-d⋅G) > ε
       x otherwise

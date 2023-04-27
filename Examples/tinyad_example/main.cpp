@@ -176,8 +176,9 @@ int main(int argc, const char * argv[]) {
     // igl::readOBJ("../../../../models/armadillo_cut_low.obj", V, F);
     // igl::readOBJ("../../../models/armadillo_cut_low.obj", V, F);
     // igl::readOBJ("../../../models/bunny_cut.obj", V, F);
-    // igl::readOBJ("../../../models/small_disk.obj", V, F);
-    igl::readOBJ("../../../models/camel-head.obj", V, F);
+    // igl::readOBJ("../../../models/snail.obj", V, F);
+    // igl::readOBJ("../../../models/camel-head.obj", V, F);
+    igl::readOBJ("/Users/pressure/Downloads/mesh_source/models/camel-head_54.obj", V, F);
     // std::ifstream input_file("../../../models/1004826.stl");
     // igl::readSTL(input_file, V, F, N);
     P = tutte_embedding(V, F); // #V-by-2 2D vertex positions

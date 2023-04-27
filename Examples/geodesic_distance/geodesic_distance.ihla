@@ -1,8 +1,8 @@
-MeshSets from MeshConnectivity
+ElementSets from MeshConnectivity
 VertexOneRing, Faces from Neighborhoods(M)
-M ∈ mesh
+M : TriangleMesh
 x_i ∈ ℝ^3  
-V, E, F = MeshSets( M )
+V, E, F = ElementSets( M )
 
 UpdateStep(v0, v1, v2, d) = { p if s_1,1 < 0 and s_2,1 < 0 
 			min(d_(v1)+||x1||, d_(v2)+||x2||) otherwise where v0,v1,v2 ∈ V, d_i ∈ ℝ,
