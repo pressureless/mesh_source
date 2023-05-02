@@ -1,0 +1,29 @@
+arccos, atan2 from trigonometry
+ElementSets from MeshConnectivity
+Faces, Vertices, Edges,OppositeFaces, NeighborVerticesInFace, OrientedVertices from Neighborhoods(M)
+M : TriangleMesh
+x_i ∈ ℝ³ 
+V, E, F = ElementSets( M )
+
+θ(i, f) = arccos((x_j-x_i)⋅(x_k-x_i)/(‖x_j-x_i‖ ‖x_k-x_i‖)) where i ∈ V, f ∈ F,
+j, k = NeighborVerticesInFace(f, i)
+
+area(f) = ½ ‖(x_j-x_i)×(x_k-x_i)‖ where f ∈ F,
+i, j, k = OrientedVertices(f)
+
+A(i) = sum_(f ∈ Faces(i)) area(f) where i ∈ V
+
+N(f) = ((x_j- x_i)×(x_k-x_i))/(2area(f)) where f ∈ F,
+i,j,k = OrientedVertices(f)
+
+K(i) = (2π - sum_(f ∈ Faces(i)) θ_i,f)/A_i where i ∈ V
+
+l(e) = ‖x_j - x_i‖ where e ∈ E, 
+i, j = Vertices(e)
+
+ϕ(e) = π - atan2(‖`N_1`×`N_1`‖, `N_1`⋅`N_2`) where e ∈ E, 
+`f_1`, `f_2` = OppositeFaces(e),
+`N_1` = N(`f_1`),
+`N_2` = N(`f_2`)
+
+H(i) = 1/4 sum_(e ∈ Edges(i)) l_e ϕ_e where i ∈ V

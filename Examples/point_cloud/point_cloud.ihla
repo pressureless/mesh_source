@@ -1,0 +1,20 @@
+svd from linearalgebra
+ElementSets from MeshConnectivity
+VertexOneRing from PointcloudNeighborhoods(M)
+M : PointCloud 
+x_i ∈ ℝ^3 
+
+V, E = ElementSets( M )
+Normal(v) = sigma_3 where v ∈ V,
+N = VertexOneRing(v),
+p̄ = (sum_(n ∈ N) x_n)/|N|,
+d = {x_v-p̄ for v ∈ N},
+s = sequence(d),
+m_ij = s_i,j,
+u, sigma, vv = svd(m)
+
+ 
+cov(v) = sum_(n ∈ N) (x_v-p̄)(x_v-p̄)ᵀ where v ∈ V,
+N = VertexOneRing(v),
+p̄ = (sum_(n ∈ N) x_n)/|N|
+

@@ -1,0 +1,17 @@
+atan2 from trigonometry
+ElementSets from MeshConnectivity
+OrientedVertices from Neighborhoods(M)
+M : TriangleMesh
+x_i ∈ ℝ³ 
+V, E, F = ElementSets( M )
+ 
+Ω_f(p) = 2 atan2(|[𝐚 𝐛 𝐜]|, (abc+(𝐚⋅𝐛)c+(𝐛⋅𝐜)a+(𝐜⋅𝐚)b)) where f ∈ F, p ∈ ℝ³,
+i, j, k = OrientedVertices(f),
+𝐚 = x_i - p,
+𝐛 = x_j - p,
+𝐜 = x_k - p,
+a = ‖𝐚‖,
+b = ‖𝐛‖,
+c = ‖𝐜‖
+
+w(p) = 1/(4π) sum_(f ∈ F) Ω_f(p) where p ∈ ℝ³
