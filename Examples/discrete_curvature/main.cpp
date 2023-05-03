@@ -38,15 +38,22 @@ int main(int argc, const char * argv[]) {
     iheartmesh ihla(triangle_mesh, P);
     std::vector<Eigen::Matrix<double, 3, 1>> N;
     std::vector<double> gaussian_curvature;
+    std::vector<double> mean_curvature;
     for (int i = 0; i < meshV.rows(); ++i)
     {
         // Eigen::Matrix<double, 3, 1> n = ihla.VertexNormal(i);
         // N.push_back(n);
-        double k = ihla.K(i);
-        gaussian_curvature.push_back(k);
-        std::cout<<"i:"<<i<<", k: "<<k<<std::endl;
+        double gauss = ihla.K(i);
+        gaussian_curvature.push_back(gauss);
+        // mean curvature
+        double k = ihla.H(i);
+        mean_curvature.push_back(k);
+        // std::cout<<"i:"<<i<<", k: "<<k<<std::endl;  
     } 
-    polyscope::getSurfaceMesh("my mesh")->addVertexDistanceQuantity("GaussianCurvature", gaussian_curvature); 
+    // polyscope::getSurfaceMesh("my mesh")->addVertexDistanceQuantity("GaussianCurvature", gaussian_curvature); 
+
+    polyscope::getSurfaceMesh("my mesh")->addVertexScalarQuantity("gaussian curvature", gaussian_curvature);
+    polyscope::getSurfaceMesh("my mesh")->addVertexScalarQuantity("mean curvature", mean_curvature);
     polyscope::show();
     return 0;
 }
