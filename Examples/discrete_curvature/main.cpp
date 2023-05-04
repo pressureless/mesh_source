@@ -23,6 +23,8 @@ int main(int argc, const char * argv[]) {
     Eigen::MatrixXi meshF;
     // igl::readOBJ("/Users/pressure/Downloads/mesh_source/models/cube.obj", meshV, meshF);
     igl::readOBJ("../../../models/small_bunny.obj", meshV, meshF);
+    // igl::readOBJ("../../../models/cactus.obj", meshV, meshF);
+    // igl::readOBJ("../../../models/cartoon-elephant.obj", meshV, meshF);
     // igl::readOBJ("/Users/pressure/Documents/git/meshtaichi/vertex_normal/models/bunny.obj", meshV, meshF);
     // Initialize triangle mesh
     TriangleMesh triangle_mesh;
@@ -45,6 +47,7 @@ int main(int argc, const char * argv[]) {
         // N.push_back(n);
         double gauss = ihla.K(i);
         gaussian_curvature.push_back(gauss);
+        // std::cout<<"i:"<<i<<", gauss: "<<gauss<<std::endl;  
         // mean curvature
         double k = ihla.H(i);
         mean_curvature.push_back(k);

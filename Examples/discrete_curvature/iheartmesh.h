@@ -9,15 +9,13 @@ V, E, F = ElementSets( M )
 θ(i, f) = arccos((x_j-x_i)⋅(x_k-x_i)/(‖x_j-x_i‖ ‖x_k-x_i‖)) where i ∈ V, f ∈ F,
 j, k = NeighborVerticesInFace(f, i)
 
+K(i) = 2π - sum_(f ∈ Faces(i)) θ_i,f where i ∈ V
+
 area(f) = ½ ‖(x_j-x_i)×(x_k-x_i)‖ where f ∈ F,
 i, j, k = OrientedVertices(f)
 
-A(i) = ⅓ sum_(f ∈ Faces(i)) area(f) where i ∈ V
-
 N(f) = ((x_j- x_i)×(x_k-x_i))/(2area(f)) where f ∈ F,
 i,j,k = OrientedVertices(f)
-
-K(i) = (2π - sum_(f ∈ Faces(i)) θ_i,f)/A_i where i ∈ V
 
 l(i, j) = ‖x_j - x_i‖ where i,j ∈ V
 
@@ -62,6 +60,17 @@ struct iheartmesh {
         int k = std::get<1>(rhs_1);
         return acos(((this->x.at(j) - this->x.at(i))).dot((this->x.at(k) - this->x.at(i))) / double(((this->x.at(j) - this->x.at(i)).template lpNorm<2>() * (this->x.at(k) - this->x.at(i)).template lpNorm<2>())));    
     }
+    double K(
+        const int & i)
+    {
+        assert( std::binary_search(V.begin(), V.end(), i) );
+
+        double sum_0 = 0;
+        for(int f : Faces_0(i)){
+            sum_0 += θ(i, f);
+        }
+        return 2 * M_PI - sum_0;    
+    }
     double area(
         const int & f)
     {
@@ -74,17 +83,6 @@ struct iheartmesh {
         int k = std::get<2>(rhs_2);
         return (1/double(2)) * (((this->x.at(j) - this->x.at(i))).cross((this->x.at(k) - this->x.at(i)))).template lpNorm<2>();    
     }
-    double A(
-        const int & i)
-    {
-        assert( std::binary_search(V.begin(), V.end(), i) );
-
-        double sum_0 = 0;
-        for(int f : Faces_0(i)){
-            sum_0 += area(f);
-        }
-        return (1/double(3)) * sum_0;    
-    }
     Eigen::Matrix<double, 3, 1> N(
         const int & f)
     {
@@ -96,17 +94,6 @@ struct iheartmesh {
         int j = std::get<1>(rhs_3);
         int k = std::get<2>(rhs_3);
         return (((this->x.at(j) - this->x.at(i))).cross((this->x.at(k) - this->x.at(i)))) / double((2 * area(f)));    
-    }
-    double K(
-        const int & i)
-    {
-        assert( std::binary_search(V.begin(), V.end(), i) );
-
-        double sum_1 = 0;
-        for(int f : Faces_0(i)){
-            sum_1 += θ(i, f);
-        }
-        return (2 * M_PI - sum_1) / double(A(i));    
     }
     double l(
         const int & i,
@@ -144,11 +131,11 @@ struct iheartmesh {
     {
         assert( std::binary_search(V.begin(), V.end(), i) );
 
-        double sum_2 = 0;
+        double sum_1 = 0;
         for(int j : this->VertexOneRing(i)){
-            sum_2 += l(i, j) * ϕ(i, j);
+            sum_1 += l(i, j) * ϕ(i, j);
         }
-        return 1 / double(4) * sum_2;    
+        return 1 / double(4) * sum_1;    
     }
     using DT_ = double;
     using MatrixD_ = Eigen::MatrixXd;

@@ -8,15 +8,13 @@ V, E, F = ElementSets( M )
 θ(i, f) = arccos((x_j-x_i)⋅(x_k-x_i)/(‖x_j-x_i‖ ‖x_k-x_i‖)) where i ∈ V, f ∈ F,
 j, k = NeighborVerticesInFace(f, i)
 
+K(i) = 2π - sum_(f ∈ Faces(i)) θ_i,f where i ∈ V
+
 area(f) = ½ ‖(x_j-x_i)×(x_k-x_i)‖ where f ∈ F,
 i, j, k = OrientedVertices(f)
 
-A(i) = ⅓ sum_(f ∈ Faces(i)) area(f) where i ∈ V
-
 N(f) = ((x_j- x_i)×(x_k-x_i))/(2area(f)) where f ∈ F,
 i,j,k = OrientedVertices(f)
-
-K(i) = (2π - sum_(f ∈ Faces(i)) θ_i,f)/A_i where i ∈ V
 
 l(i, j) = ‖x_j - x_i‖ where i,j ∈ V
 
