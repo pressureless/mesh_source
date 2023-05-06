@@ -29,7 +29,11 @@
 #include "polyscope/surface_mesh.h"
 #include <autodiff/reverse/var.hpp>
 #include <autodiff/reverse/var/eigen.hpp>
+#include <ctime>
+#include <chrono>
 using namespace autodiff;
+
+int start;
 
 inline Eigen::MatrixXd tutte_embedding(
     const Eigen::MatrixXd& _V,
@@ -149,6 +153,8 @@ void step(){
         xx(1,0) = tmp; 
         x[i] = xx;
     }
+    // std::cout<<"gradient is:"<<ihla.G<<std::endl;
+    // std::cout<<"H is:"<<ihla.H<<std::endl;
     polyscope::getSurfaceMesh("my mesh")->updateVertexPositions2D(x);
 }
 
@@ -161,7 +167,10 @@ void myCallback()
     // ImGui::SameLine();
     if (ImGui::Button("One step")){
         std::cout<<"one step"<<std::endl;
+        start = std::chrono::duration_cast<std::chrono::seconds>(std::chrono::system_clock::now().time_since_epoch()).count();
         step();
+        auto end = std::chrono::duration_cast<std::chrono::seconds>(std::chrono::system_clock::now().time_since_epoch()).count();
+        std::cout <<end-start<< " seconds"<<std::endl;
     } 
     if (ImGui::Button("Five steps")){
         for (int i = 0; i < 5; ++i)
