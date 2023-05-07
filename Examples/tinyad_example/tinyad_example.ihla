@@ -70,7 +70,7 @@ M : TriangleMesh
 x̄_i ∈ ℝ^3 : rest pos in 3D
 x_i ∈ ℝ^2 : current pos in 2D
 ε ∈ ℝ : eps
-psd : ℝ^(p×p) -> ℝ^(p×p)
+psd : ℝ^(p×p) -> ℝ^(p×p) sparse
 
 V, E, F = ElementSets(M)
 
@@ -102,3 +102,42 @@ G = ∂e/∂x
 
 
 
+
+
+
+
+vec, inversevec, diag, svd from linearalgebra
+ElementSets from MeshConnectivity
+NeighborVerticesInFace, Faces, VertexOneRing, OrientedVertices from Neighborhoods(M)
+M : TriangleMesh
+x̄_i ∈ ℝ^3 : rest pos in 3D
+x_i ∈ ℝ^2 : current pos in 2D
+ε ∈ ℝ : eps
+psd : ℝ^(p×p) -> ℝ^(p×p) sparse
+
+V, E, F = ElementSets(M)
+
+get(f) = [br-ar cr-ar] where f ∈ F,
+a, b, c = OrientedVertices(f),
+n = (x̄_b-x̄_a)×(x̄_c-x̄_a),
+b1 = (x̄_b-x̄_a)/||x̄_b-x̄_a||,
+b2 = (n × b1)/||n × b1||,
+ar = (0, 0),
+br = ((x̄_b-x̄_a)⋅b1, 0),
+cr = ((x̄_c-x̄_a)⋅b1, (x̄_c-x̄_a)⋅b2)
+
+
+S(f, x) = { 0 if |m| <= 0
+    A (‖J‖² + ‖J⁻¹‖²) otherwise where f ∈ F, x_i ∈ ℝ^2,
+a, b, c = OrientedVertices(f),
+m = [x_b-x_a x_c-x_a],
+mr = get(f),
+A = ½ |mr|,
+J = m mr⁻¹
+
+e = sum_(i ∈ F) S(i, x)
+
+H = sum_(i ∈ F) psd(∂²S(i, x)/∂x²)
+
+G = ∂e/∂x  
+ 

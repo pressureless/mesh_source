@@ -1,4 +1,5 @@
 /*
+
 vec, inversevec, diag, svd from linearalgebra
 ElementSets from MeshConnectivity
 NeighborVerticesInFace, Faces, VertexOneRing, OrientedVertices from Neighborhoods(M)
@@ -6,7 +7,7 @@ M : TriangleMesh
 x̄_i ∈ ℝ^3 : rest pos in 3D
 x_i ∈ ℝ^2 : current pos in 2D
 ε ∈ ℝ : eps
-
+psd : ℝ^(p×p) -> ℝ^(p×p) sparse
 
 V, E, F = ElementSets(M)
 
@@ -24,23 +25,12 @@ mr = [br-ar cr-ar],
 A = ½ |mr|,
 J = m mr⁻¹
 
-psd(x) = u diag(ps)  vᵀ where x ∈ ℝ^(p×p),
-u, sigma, v = svd(x),
-ps_i = { sigma_i if sigma_i > 0
-     0 otherwise
-
-
-Energy(x) = sum_(i ∈ F) S(i, x) where  x_i ∈ ℝ^2 
-
-e = Energy(x) 
+e = sum_(i ∈ F) S(i, x)
 
 H = sum_(i ∈ F) psd(∂²S(i, x)/∂x²)
 
-G = ∂e/∂x 
-d = H⁻¹ (-G)
-
-y = { vec⁻¹_x(vec(x) + 0.1 d) if √(-d⋅G) > ε
-      x otherwise
+G = ∂e/∂x  
+ 
 */
 #include <Eigen/Core>
 #include <Eigen/QR>
@@ -62,10 +52,8 @@ struct iheartmesh {
     std::vector<int > E;
     std::vector<int > F;
     DT e;
-    MatrixD H;
+    Eigen::SparseMatrix<double> H;
     Eigen::VectorXd G;
-    VectorD d;
-    std::vector<Eigen::Matrix<DT, 2, 1>> y;
     TriangleMesh M;
     std::vector<Eigen::Matrix<DT, 2, 1>> x;
     autodiff::ArrayXvar new_x;
@@ -116,7 +104,7 @@ struct iheartmesh {
 
         // mr = [br-ar cr-ar]
         Eigen::Matrix<REAL, 2, 2> mr_0;
-        mr_0 << br - (ar).cast<REAL>(), cr - (ar).cast<REAL>();
+        mr_0 << br - (ar).template cast<REAL>(), cr - (ar).template cast<REAL>();
         Eigen::Matrix<REAL, 2, 2> mr = mr_0;
 
         // A = ½ |mr|
@@ -131,50 +119,6 @@ struct iheartmesh {
             S_ret = A * (pow((J).norm(), 2) + pow((J.inverse()).norm(), 2));
         }
         return S_ret;    
-    }
-    template<typename REAL>
-    Eigen::Matrix<REAL, Eigen::Dynamic, Eigen::Dynamic> psd(
-        const Eigen::Matrix<REAL, Eigen::Dynamic, Eigen::Dynamic> & x)
-    {
-        const long p = x.cols();
-        assert( x.rows() == p );
-
-        Eigen::BDCSVD<Eigen::MatrixXd> svd(to_double(x), Eigen::ComputeFullU | Eigen::ComputeFullV);
-        // u, sigma, v = svd(x)
-        std::tuple< Eigen::Matrix<REAL, Eigen::Dynamic, Eigen::Dynamic>, Eigen::Matrix<REAL, Eigen::Dynamic, 1>, Eigen::Matrix<REAL, Eigen::Dynamic, Eigen::Dynamic> > rhs_2 = std::tuple< Eigen::Matrix<REAL, Eigen::Dynamic, Eigen::Dynamic>, Eigen::Matrix<REAL, Eigen::Dynamic, 1>, Eigen::Matrix<REAL, Eigen::Dynamic, Eigen::Dynamic> >(svd.matrixU(), svd.singularValues(), svd.matrixV());
-        Eigen::Matrix<REAL, Eigen::Dynamic, Eigen::Dynamic> u = std::get<0>(rhs_2);
-        Eigen::Matrix<REAL, Eigen::Dynamic, 1> sigma = std::get<1>(rhs_2);
-        Eigen::Matrix<REAL, Eigen::Dynamic, Eigen::Dynamic> v = std::get<2>(rhs_2);
-
-        // ps_i = { sigma_i if sigma_i > 0
-        //   0 otherwise
-        Eigen::Matrix<REAL, Eigen::Dynamic, 1> ps;
-        ps.resize(p);
-        for( int i=1; i<=p; i++){
-            if(sigma[i-1] > 0){
-                ps[i-1] = sigma[i-1];
-                std::cout<<"sigma[i-1]:"<<sigma[i-1]<<std::endl;
-            }
-            else{
-                ps[i-1] = 0;
-                std::cout<<"sigma[i-1]:"<<sigma[i-1]<<std::endl;
-            }
-        }
-        Eigen::Matrix<REAL, Eigen::Dynamic, Eigen::Dynamic> res = u * (ps).asDiagonal() * v.transpose();  
-
-        std::cout<<"vec normal:"<<(res-x).norm()<<std::endl;
-        return res;  
-    }
-    template<typename REAL>
-    REAL Energy(
-        const std::vector<Eigen::Matrix<REAL, 2, 1>> & x)
-    {
-        const long dim_2 = x.size();
-        REAL sum_0 = 0;
-        for(int i : this->F){
-            sum_0 += S(i, x);
-        }
-        return sum_0;    
     }
     using DT_ = double;
     using MatrixD_ = Eigen::MatrixXd;
@@ -769,7 +713,8 @@ struct iheartmesh {
         const TriangleMesh & M,
         const std::vector<Eigen::Matrix<double, 3, 1>> & x̄,
         const std::vector<Eigen::Matrix<double, 2, 1>> & x,
-        const double & ε)
+        const double & ε,
+        const std::function<Eigen::SparseMatrix<double>(Eigen::MatrixXd)> & psd)
     :
     _Neighborhoods(M)
     {
@@ -795,41 +740,20 @@ struct iheartmesh {
             this->x[i] = new_x.segment(2*i, 2);
         }
         this->x̄ = x̄;
-        // e = Energy(x)
-        e = Energy(this->x);
-        // H = sum_(i ∈ F) psd(∂²S(i, x)/∂x²)
-        MatrixD sum_1 = MatrixD::Zero(2*dim_0, 2*dim_0);
+        // e = sum_(i ∈ F) S(i, x)
+        DT sum_0 = 0;
         for(int i : this->F){
-            Eigen::MatrixXd hess = hessian(S(i, this->x), this->new_x);
-            Eigen::MatrixXd psd_hess = psd(hess);
-            double normal = (psd_hess - hess).norm();
-            std::cout<<"i:"<<i<<", normal:"<<normal<<std::endl;
-            sum_1 += psd_hess;
+            sum_0 += S(i, this->x);
+        }
+        e = sum_0;
+        // H = sum_(i ∈ F) psd(∂²S(i, x)/∂x²)
+        Eigen::SparseMatrix<double> sum_1(2*dim_0, 2*dim_0);
+        for(int i : this->F){
+            sum_1 += psd(hessian(S(i, this->x), this->new_x));
         }
         H = sum_1;
         // G = ∂e/∂x
         G = gradient(e, this->new_x);
-        // d = H⁻¹ (-G)
-        d = (to_double(H)).colPivHouseholderQr().solve(to_double((-G)));
-        // y = { vec⁻¹_x(vec(x) + 0.1 d) if √(-d⋅G) > ε
-        //       x otherwise
-        if(sqrt((-(d).dot(G))) > ε){
-            VectorD vec(dim_0*2);
-            for (int i = 0; i < this->x.size(); ++i)
-            {
-                vec.segment(2*i, 2) = this->x[i];
-            }
-            std::vector<Eigen::Matrix<DT, 2, 1>> inversevec(dim_0);
-            VectorD param = vec + 0.1 * d;
-            for (int i = 0; i < this->x.size(); ++i)
-            {
-                inversevec[i] = param.segment(2*i, 2);
-            }
-            y = inversevec;
-        }
-        else{
-            y = this->x;
-        }
     }
 };
 

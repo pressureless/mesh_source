@@ -9,32 +9,47 @@ bx_j ∈ ℤ index: boundary indices
 bp_j ∈ ℝ^3 : boundary positions
 w ∈ ℝ : penalty
 ε ∈ ℝ : eps
+psd : ℝ^(p×p) -> ℝ^(p×p) sparse
 
 V, E, F, C = ElementSets(M)
 
 vol_i,j,k,l = ⅙ |[x̄_j-x̄_i x̄_k-x̄_i x̄_l-x̄_i]| where i,j,k,l ∈ V
 
-psd(x) = u diag(ps)  vᵀ where x ∈ ℝ^(p×p),
-u, sigma, v = svd(x),
-ps_i = { sigma_i if sigma_i > 0
-     0 otherwise
+S(s, x) = { 0 if |m| <= 0
+  vol_abcd (‖J‖² + ‖J⁻¹‖²) otherwise where s ∈ C, x_i ∈ ℝ^3,
+a, b, c, d = OrientedVertices(s),
+m = [x_b-x_a x_c-x_a x_d-x_a],
+mr = [x̄_b-x̄_a x̄_c-x̄_a x̄_d-x̄_a],
+J = m mr⁻¹
 
-S(s, x) = vol_abcd (‖J‖² + ‖J⁻¹‖²) where s ∈ C, x_i ∈ ℝ^3,
-a, b, c, d = Vertices(s),
-J = [x_b-x_a x_c-x_a x_d-x_a][x̄_b-x̄_a x̄_c-x̄_a x̄_d-x̄_a]⁻¹
+EXPS(s, x) = { 0 if |m| <= 0
+  vol_abcd exp(‖J‖² + ‖J⁻¹‖²) otherwise where s ∈ C, x_i ∈ ℝ^3,
+a, b, c, d = OrientedVertices(s),
+m = [x_b-x_a x_c-x_a x_d-x_a],
+mr = [x̄_b-x̄_a x̄_c-x̄_a x̄_d-x̄_a],
+J = m mr⁻¹
 
-E2 = w sum_j ‖bp_j - x_(bx_j)‖
+AMIPS(s, x) = { 0 if |m| <= 0
+  vol_abcd exp(½(‖J‖²/|J| + ½(|J|+|J⁻¹|))) otherwise where s ∈ C, x_i ∈ ℝ^3,
+a, b, c, d = OrientedVertices(s),
+m = [x_b-x_a x_c-x_a x_d-x_a],
+mr = [x̄_b-x̄_a x̄_c-x̄_a x̄_d-x̄_a],
+J = m mr⁻¹
+
+CAMIPS(s, x) = { 0 if |m| <= 0
+  vol_abcd (‖J‖²/|J|^⅔) otherwise where s ∈ C, x_i ∈ ℝ^3,
+a, b, c, d = OrientedVertices(s),
+m = [x_b-x_a x_c-x_a x_d-x_a],
+mr = [x̄_b-x̄_a x̄_c-x̄_a x̄_d-x̄_a],
+J = m mr⁻¹
+
+E2 = w sum_j ‖bp_j - x_(bx_j)‖²
 
 e = sum_(i ∈ C) S(i, x) + E2
 
 G = ∂e/∂x
-H = sum_(i ∈ C) psd(∂²S(i, x)/∂x²) + ∂²E2/∂x²
 
-d = H⁻¹ (-G)
-
-y = { inversevec(vec(x) + 0.1 d, x) if √(-d⋅G) > ε
-      x otherwise
-
+H = sum_(i ∈ C) psd(∂²S(i, x)/∂x²) + psd(∂²E2/∂x²)
 */
 #include <Eigen/Core>
 #include <Eigen/QR>
@@ -48,7 +63,9 @@ y = { inversevec(vec(x) + 0.1 d, x) if √(-d⋅G) > ε
 #include "type_helper.h"
 #include "Tetrahedron.h"
 
-template<class DT = autodiff::var, class MatrixD = Eigen::Matrix<autodiff::var, Eigen::Dynamic, Eigen::Dynamic>, class VectorD = Eigen::Matrix<autodiff::var, Eigen::Dynamic, 1>>
+using DT = autodiff::var;
+using MatrixD = Eigen::Matrix<autodiff::var, Eigen::Dynamic, Eigen::Dynamic>;
+using VectorD = Eigen::Matrix<autodiff::var, Eigen::Dynamic, 1>;
 struct iheartmesh {
     std::vector<int > V;
     std::vector<int > E;
@@ -57,14 +74,12 @@ struct iheartmesh {
     DT E2;
     DT e;
     Eigen::VectorXd G;
-    MatrixD H;
-    VectorD d;
-    std::vector<Eigen::Matrix<DT, 3, 1>> y;
+    Eigen::SparseMatrix<double> H;
     Tetrahedron M;
     std::vector<Eigen::Matrix<double, 3, 1>> x̄;
     std::vector<Eigen::Matrix<DT, 3, 1>> x;
     autodiff::ArrayXvar new_x;
-    DT vol(
+    double vol(
         const int & i,
         const int & j,
         const int & k,
@@ -75,60 +90,158 @@ struct iheartmesh {
         assert( std::binary_search(V.begin(), V.end(), k) );
         assert( std::binary_search(V.begin(), V.end(), l) );
 
-        Eigen::Matrix<DT, 3, 3> vol_0;
+        Eigen::Matrix<double, 3, 3> vol_0;
         vol_0 << this->x̄.at(j) - this->x̄.at(i), this->x̄.at(k) - this->x̄.at(i), this->x̄.at(l) - this->x̄.at(i);
-        return (1/DT(6)) * (vol_0).determinant();    
+        return (1/double(6)) * (vol_0).determinant();    
     }
-    MatrixD psd(
-        const MatrixD & x)
-    {
-        const long p = x.cols();
-        assert( x.rows() == p );
-
-        Eigen::BDCSVD<Eigen::MatrixXd> svd(to_double(x), Eigen::ComputeFullU | Eigen::ComputeFullV);
-        // u, sigma, v = svd(x)
-        std::tuple< MatrixD, VectorD, MatrixD > rhs_1 = std::tuple< MatrixD, VectorD, MatrixD >(svd.matrixU(), svd.singularValues(), svd.matrixV());
-        MatrixD u = std::get<0>(rhs_1);
-        VectorD sigma = std::get<1>(rhs_1);
-        MatrixD v = std::get<2>(rhs_1);
-
-        // ps_i = { sigma_i if sigma_i > 0
-        //   0 otherwise
-        VectorD ps;
-        ps.resize(p);
-        for( int i=1; i<=p; i++){
-            if(sigma[i-1] > 0){
-                ps[i-1] = sigma[i-1];
-            }
-            else{
-                ps[i-1] = 0;
-            }
-        }
-        return u * (ps).asDiagonal() * v.transpose();    
-    }
-    DT S(
+    template<typename REAL>
+    REAL S(
         const int & s,
-        const std::vector<Eigen::Matrix<DT, 3, 1>> & x)
+        const std::vector<Eigen::Matrix<REAL, 3, 1>> & x)
     {
         const long dim_2 = x.size();
         assert( std::binary_search(C.begin(), C.end(), s) );
 
-        // a, b, c, d = Vertices(s)
-        std::vector<int > rhs_2 = Vertices_2(s);
-        int a = rhs_2[0];
-        int b = rhs_2[1];
-        int c = rhs_2[2];
-        int d = rhs_2[3];
+        REAL S_ret;
+        // a, b, c, d = OrientedVertices(s)
+        std::tuple< int, int, int, int > rhs_1 = OrientedVertices_0(s);
+        int a = std::get<0>(rhs_1);
+        int b = std::get<1>(rhs_1);
+        int c = std::get<2>(rhs_1);
+        int d = std::get<3>(rhs_1);
 
-        // J = [x_b-x_a x_c-x_a x_d-x_a][x̄_b-x̄_a x̄_c-x̄_a x̄_d-x̄_a]⁻¹
-        Eigen::Matrix<DT, 3, 3> J_0;
-        J_0 << x.at(b) - x.at(a), x.at(c) - x.at(a), x.at(d) - x.at(a);
-        Eigen::Matrix<DT, 3, 3> J_1;
-        J_1 << this->x̄.at(b) - this->x̄.at(a), this->x̄.at(c) - this->x̄.at(a), this->x̄.at(d) - this->x̄.at(a);
-        Eigen::Matrix<DT, 3, 3> J = J_0 * J_1.inverse();
-        return vol(a, b, c, d) * (pow((J).norm(), 2) + pow((J.inverse()).norm(), 2));    
+        // m = [x_b-x_a x_c-x_a x_d-x_a]
+        Eigen::Matrix<REAL, 3, 3> m_0;
+        m_0 << x.at(b) - x.at(a), x.at(c) - x.at(a), x.at(d) - x.at(a);
+        Eigen::Matrix<REAL, 3, 3> m = m_0;
+
+        // mr = [x̄_b-x̄_a x̄_c-x̄_a x̄_d-x̄_a]
+        Eigen::Matrix<REAL, 3, 3> mr_0;
+        mr_0 << this->x̄.at(b) - this->x̄.at(a), this->x̄.at(c) - this->x̄.at(a), this->x̄.at(d) - this->x̄.at(a);
+        Eigen::Matrix<REAL, 3, 3> mr = mr_0;
+
+        // J = m mr⁻¹
+        Eigen::Matrix<REAL, 3, 3> J = m * mr.inverse();
+        if((m).determinant() <= 0){
+            S_ret = 0;
+        }
+        else{
+            S_ret = vol(a, b, c, d) * (pow((J).norm(), 2) + pow((J.inverse()).norm(), 2));
+        }
+        return S_ret;    
     }
-        struct TetrahderonNeighborhoods {
+    template<typename REAL>
+    REAL EXPS(
+        const int & s,
+        const std::vector<Eigen::Matrix<REAL, 3, 1>> & x)
+    {
+        const long dim_3 = x.size();
+        assert( std::binary_search(C.begin(), C.end(), s) );
+
+        REAL EXPS_ret;
+        // a, b, c, d = OrientedVertices(s)
+        std::tuple< int, int, int, int > rhs_2 = OrientedVertices_0(s);
+        int a = std::get<0>(rhs_2);
+        int b = std::get<1>(rhs_2);
+        int c = std::get<2>(rhs_2);
+        int d = std::get<3>(rhs_2);
+
+        // m = [x_b-x_a x_c-x_a x_d-x_a]
+        Eigen::Matrix<REAL, 3, 3> m_1;
+        m_1 << x.at(b) - x.at(a), x.at(c) - x.at(a), x.at(d) - x.at(a);
+        Eigen::Matrix<REAL, 3, 3> m = m_1;
+
+        // mr = [x̄_b-x̄_a x̄_c-x̄_a x̄_d-x̄_a]
+        Eigen::Matrix<REAL, 3, 3> mr_1;
+        mr_1 << this->x̄.at(b) - this->x̄.at(a), this->x̄.at(c) - this->x̄.at(a), this->x̄.at(d) - this->x̄.at(a);
+        Eigen::Matrix<REAL, 3, 3> mr = mr_1;
+
+        // J = m mr⁻¹
+        Eigen::Matrix<REAL, 3, 3> J = m * mr.inverse();
+        if((m).determinant() <= 0){
+            EXPS_ret = 0;
+        }
+        else{
+            EXPS_ret = vol(a, b, c, d) * exp(pow((J).norm(), 2) + pow((J.inverse()).norm(), 2));
+        }
+        return EXPS_ret;    
+    }
+    template<typename REAL>
+    REAL AMIPS(
+        const int & s,
+        const std::vector<Eigen::Matrix<REAL, 3, 1>> & x)
+    {
+        const long dim_4 = x.size();
+        assert( std::binary_search(C.begin(), C.end(), s) );
+
+        REAL AMIPS_ret;
+        // a, b, c, d = OrientedVertices(s)
+        std::tuple< int, int, int, int > rhs_3 = OrientedVertices_0(s);
+        int a = std::get<0>(rhs_3);
+        int b = std::get<1>(rhs_3);
+        int c = std::get<2>(rhs_3);
+        int d = std::get<3>(rhs_3);
+
+        // m = [x_b-x_a x_c-x_a x_d-x_a]
+        Eigen::Matrix<REAL, 3, 3> m_2;
+        m_2 << x.at(b) - x.at(a), x.at(c) - x.at(a), x.at(d) - x.at(a);
+        Eigen::Matrix<REAL, 3, 3> m = m_2;
+
+        // mr = [x̄_b-x̄_a x̄_c-x̄_a x̄_d-x̄_a]
+        Eigen::Matrix<REAL, 3, 3> mr_2;
+        mr_2 << this->x̄.at(b) - this->x̄.at(a), this->x̄.at(c) - this->x̄.at(a), this->x̄.at(d) - this->x̄.at(a);
+        Eigen::Matrix<REAL, 3, 3> mr = mr_2;
+
+        // J = m mr⁻¹
+        Eigen::Matrix<REAL, 3, 3> J = m * mr.inverse();
+        if((m).determinant() <= 0){
+            AMIPS_ret = 0;
+        }
+        else{
+            AMIPS_ret = vol(a, b, c, d) * exp((1/REAL(2)) * (pow((J).norm(), 2) / REAL((J).determinant()) + (1/REAL(2)) * ((J).determinant() + (J.inverse()).determinant())));
+        }
+        return AMIPS_ret;    
+    }
+    template<typename REAL>
+    REAL CAMIPS(
+        const int & s,
+        const std::vector<Eigen::Matrix<REAL, 3, 1>> & x)
+    {
+        const long dim_5 = x.size();
+        assert( std::binary_search(C.begin(), C.end(), s) );
+
+        REAL CAMIPS_ret;
+        // a, b, c, d = OrientedVertices(s)
+        std::tuple< int, int, int, int > rhs_4 = OrientedVertices_0(s);
+        int a = std::get<0>(rhs_4);
+        int b = std::get<1>(rhs_4);
+        int c = std::get<2>(rhs_4);
+        int d = std::get<3>(rhs_4);
+
+        // m = [x_b-x_a x_c-x_a x_d-x_a]
+        Eigen::Matrix<REAL, 3, 3> m_3;
+        m_3 << x.at(b) - x.at(a), x.at(c) - x.at(a), x.at(d) - x.at(a);
+        Eigen::Matrix<REAL, 3, 3> m = m_3;
+
+        // mr = [x̄_b-x̄_a x̄_c-x̄_a x̄_d-x̄_a]
+        Eigen::Matrix<REAL, 3, 3> mr_3;
+        mr_3 << this->x̄.at(b) - this->x̄.at(a), this->x̄.at(c) - this->x̄.at(a), this->x̄.at(d) - this->x̄.at(a);
+        Eigen::Matrix<REAL, 3, 3> mr = mr_3;
+
+        // J = m mr⁻¹
+        Eigen::Matrix<REAL, 3, 3> J = m * mr.inverse();
+        if((m).determinant() <= 0){
+            CAMIPS_ret = 0;
+        }
+        else{
+            CAMIPS_ret = vol(a, b, c, d) * (pow((J).norm(), 2) / REAL(pow((J).determinant(), (2/REAL(3)))));
+        }
+        return CAMIPS_ret;    
+    }
+    using DT_ = double;
+    using MatrixD_ = Eigen::MatrixXd;
+    using VectorD_ = Eigen::VectorXd;
+    struct TetrahderonNeighborhoods {
         std::vector<int > V;
         std::vector<int > E;
         std::vector<int > F;
@@ -177,20 +290,10 @@ struct iheartmesh {
         {
             assert( std::binary_search(V.begin(), V.end(), i) );
             assert( std::binary_search(V.begin(), V.end(), j) );
-            // eset = edgeset(NonZeros(`∂0`ᵀ IndicatorVector({i}))) ∩ vertexset(NonZeros(`∂0`ᵀ IndicatorVector({j})))
-            std::vector<int > EdgeIndexset_0({i});
-            if(EdgeIndexset_0.size() > 1){
-                sort(EdgeIndexset_0.begin(), EdgeIndexset_0.end());
-                EdgeIndexset_0.erase(unique(EdgeIndexset_0.begin(), EdgeIndexset_0.end() ), EdgeIndexset_0.end());
-            }
-            std::vector<int > EdgeIndexset_1({j});
-            if(EdgeIndexset_1.size() > 1){
-                sort(EdgeIndexset_1.begin(), EdgeIndexset_1.end());
-                EdgeIndexset_1.erase(unique(EdgeIndexset_1.begin(), EdgeIndexset_1.end() ), EdgeIndexset_1.end());
-            }
+            // eset = Edges(i) ∩ Edges(j)
             std::vector<int > intsect;
-            const std::vector<int >& lhs = nonzeros(this->dee0.transpose() * M.vertices_to_vector(EdgeIndexset_0));
-            const std::vector<int >& rhs_3 = nonzeros(this->dee0.transpose() * M.vertices_to_vector(EdgeIndexset_1));
+            const std::vector<int >& lhs = Edges_0(i);
+            const std::vector<int >& rhs_3 = Edges_0(j);
             intsect.reserve(std::min(lhs.size(), rhs_3.size()));
             std::set_intersection(lhs.begin(), lhs.end(), rhs_3.begin(), rhs_3.end(), std::back_inserter(intsect));
             std::vector<int > eset = intsect;
@@ -285,7 +388,7 @@ struct iheartmesh {
             assert( std::binary_search(F.begin(), F.end(), f) );
             // eset = { e for e ∈ Edges(f) if `∂1`_e,f `∂0`_v,e = -1}
             std::vector<int > NextVerticeInFaceset_0;
-            const std::vector<int >& range_3 = this->Edges(f);
+            const std::vector<int >& range_3 = Edges_1(f);
             NextVerticeInFaceset_0.reserve(range_3.size());
             for(int e : range_3){
                 if(this->dee1.coeff(e, f) * this->dee0.coeff(v, e) == -1){
@@ -304,7 +407,7 @@ struct iheartmesh {
                 NextVerticeInFaceset_1.erase(unique(NextVerticeInFaceset_1.begin(), NextVerticeInFaceset_1.end() ), NextVerticeInFaceset_1.end());
             }
             std::vector<int > difference_4;
-            const std::vector<int >& lhs_diff_4 = this->Vertices(eset);
+            const std::vector<int >& lhs_diff_4 = Vertices_1(eset);
             const std::vector<int >& rhs_diff_4 = NextVerticeInFaceset_1;
             difference_4.reserve(lhs_diff_4.size());
             std::set_difference(lhs_diff_4.begin(), lhs_diff_4.end(), rhs_diff_4.begin(), rhs_diff_4.end(), std::back_inserter(difference_4));
@@ -316,37 +419,48 @@ struct iheartmesh {
         {
             assert( std::binary_search(F.begin(), F.end(), f) );
             // vs = Vertices(f)
-            std::vector<int > vs = this->Vertices(f);
+            std::vector<int > vs = Vertices_0(f);
             // i,j = NeighborVerticesInFace(f, vs_1)
             std::tuple< int, int > rhs_4 = NeighborVerticesInFace(f, vs[1-1]);
             int i = std::get<0>(rhs_4);
             int j = std::get<1>(rhs_4);
             return std::tuple<int,int,int >{ vs[1-1],i,j };    
         }
-        std::tuple< std::vector<int >, std::vector<int >, std::vector<int >, std::vector<int > > Diamond(
-            const int & e)
+        std::tuple< int, int, int, int > OrientedVertices_0(
+            const int & c)
         {
-            assert( std::binary_search(E.begin(), E.end(), e) );
-            std::vector<int > Diamondset_0({e});
-            if(Diamondset_0.size() > 1){
-                sort(Diamondset_0.begin(), Diamondset_0.end());
-                Diamondset_0.erase(unique(Diamondset_0.begin(), Diamondset_0.end() ), Diamondset_0.end());
+            assert( std::binary_search(C.begin(), C.end(), c) );
+            // fset = Faces(c)
+            std::vector<int > fset = Faces_2(c);
+            // pfset = { f for f ∈ fset if `∂2`_f,c == 1 }
+            std::vector<int > OrientedVertices_0set_0;
+            const std::vector<int >& range_4 = fset;
+            OrientedVertices_0set_0.reserve(range_4.size());
+            for(int f : range_4){
+                if(this->dee2.coeff(f, c) == 1){
+                    OrientedVertices_0set_0.push_back(f);
+                }
             }
-        std::vector<int > tetset;
-            return std::tuple<std::vector<int >,std::vector<int >,std::vector<int >,std::vector<int > >{ this->Vertices(e),Diamondset_0,this->Faces(e),tetset };    
-        }
-        std::tuple< int, int > OppositeVertices(
-            const int & e)
-        {
-            assert( std::binary_search(E.begin(), E.end(), e) );
-            // eset = Vertices(Faces(e)) \ Vertices(e)
+            if(OrientedVertices_0set_0.size() > 1){
+                sort(OrientedVertices_0set_0.begin(), OrientedVertices_0set_0.end());
+                OrientedVertices_0set_0.erase(unique(OrientedVertices_0set_0.begin(), OrientedVertices_0set_0.end() ), OrientedVertices_0set_0.end());
+            }
+            std::vector<int > pfset = OrientedVertices_0set_0;
+            // i,j,k = OrientedVertices(pfset_1)
+            std::tuple< int, int, int > rhs_5 = OrientedVertices(pfset[1-1]);
+            int i = std::get<0>(rhs_5);
+            int j = std::get<1>(rhs_5);
+            int k = std::get<2>(rhs_5);
+            // remain = Vertices(c) - Vertices(pfset_1)
             std::vector<int > difference_5;
-            const std::vector<int >& lhs_diff_5 = this->Vertices(this->Faces(e));
-            const std::vector<int >& rhs_diff_5 = this->Vertices(e);
+            const std::vector<int >& lhs_diff_5 = Vertices_2(c);
+            const std::vector<int >& rhs_diff_5 = Vertices_0(pfset[1-1]);
             difference_5.reserve(lhs_diff_5.size());
             std::set_difference(lhs_diff_5.begin(), lhs_diff_5.end(), rhs_diff_5.begin(), rhs_diff_5.end(), std::back_inserter(difference_5));
-            std::vector<int > eset = difference_5;
-            return std::tuple<int,int >{ eset[1-1],eset[2-1] };    
+            std::vector<int > remain = difference_5;
+            // l = remain_1
+            int l = remain[1-1];
+            return std::tuple<int,int,int,int >{ l,i,j,k };    
         }
         int FaceIndex(
             const int & i,
@@ -365,35 +479,35 @@ struct iheartmesh {
                 FaceIndexset_0.erase(unique(FaceIndexset_0.begin(), FaceIndexset_0.end() ), FaceIndexset_0.end());
             }
             std::vector<int > iface = nonzeros(ufv * M.vertices_to_vector(FaceIndexset_0));
-            // jface = faceset(NonZeros(ufv  IndicatorVector({j})))
+            // V, E, F, C = ElementSets( M )0
             std::vector<int > FaceIndexset_1({j});
             if(FaceIndexset_1.size() > 1){
                 sort(FaceIndexset_1.begin(), FaceIndexset_1.end());
                 FaceIndexset_1.erase(unique(FaceIndexset_1.begin(), FaceIndexset_1.end() ), FaceIndexset_1.end());
             }
             std::vector<int > jface = nonzeros(ufv * M.vertices_to_vector(FaceIndexset_1));
-            // V, E, F, C = ElementSets( M )0
+            // V, E, F, C = ElementSets( M )1
             std::vector<int > FaceIndexset_2({k});
             if(FaceIndexset_2.size() > 1){
                 sort(FaceIndexset_2.begin(), FaceIndexset_2.end());
                 FaceIndexset_2.erase(unique(FaceIndexset_2.begin(), FaceIndexset_2.end() ), FaceIndexset_2.end());
             }
             std::vector<int > kface = nonzeros(ufv * M.vertices_to_vector(FaceIndexset_2));
-            // V, E, F, C = ElementSets( M )1
+            // V, E, F, C = ElementSets( M )2
             std::vector<int > intsect_1;
             const std::vector<int >& lhs_1 = jface;
-            const std::vector<int >& rhs_5 = kface;
-            intsect_1.reserve(std::min(lhs_1.size(), rhs_5.size()));
-            std::set_intersection(lhs_1.begin(), lhs_1.end(), rhs_5.begin(), rhs_5.end(), std::back_inserter(intsect_1));
+            const std::vector<int >& rhs_6 = kface;
+            intsect_1.reserve(std::min(lhs_1.size(), rhs_6.size()));
+            std::set_intersection(lhs_1.begin(), lhs_1.end(), rhs_6.begin(), rhs_6.end(), std::back_inserter(intsect_1));
             std::vector<int > intsect_2;
             const std::vector<int >& lhs_2 = iface;
-            const std::vector<int >& rhs_6 = intsect_1;
-            intsect_2.reserve(std::min(lhs_2.size(), rhs_6.size()));
-            std::set_intersection(lhs_2.begin(), lhs_2.end(), rhs_6.begin(), rhs_6.end(), std::back_inserter(intsect_2));
+            const std::vector<int >& rhs_7 = intsect_1;
+            intsect_2.reserve(std::min(lhs_2.size(), rhs_7.size()));
+            std::set_intersection(lhs_2.begin(), lhs_2.end(), rhs_7.begin(), rhs_7.end(), std::back_inserter(intsect_2));
             std::vector<int > fset = intsect_2;
             return fset[1-1];    
         }
-        std::tuple< int, int > OrientedVertices(
+        std::tuple< int, int > OrientedVertices_1(
             const int & i,
             const int & j,
             const int & k)
@@ -401,11 +515,14 @@ struct iheartmesh {
             assert( std::binary_search(V.begin(), V.end(), i) );
             assert( std::binary_search(V.begin(), V.end(), j) );
             assert( std::binary_search(V.begin(), V.end(), k) );
-            // V, E, F, C = ElementSets( M )4
+            // V, E, F, C = ElementSets( M )5
             int f = FaceIndex(i, j, k);
             return NeighborVerticesInFace(f, i);    
         }
-            struct FundamentalTetrahedronAccessors {
+        using DT = double;
+        using MatrixD = Eigen::MatrixXd;
+        using VectorD = Eigen::VectorXd;
+        struct FundamentalTetrahedronAccessors {
             std::vector<int > V;
             std::vector<int > E;
             std::vector<int > F;
@@ -695,8 +812,11 @@ struct iheartmesh {
     std::tuple< int, int, int > OrientedVertices(int p0){
         return _TetrahderonNeighborhoods.OrientedVertices(p0);
     };
-    std::tuple< int, int > OrientedVertices(int p0,int p1,int p2){
-        return _TetrahderonNeighborhoods.OrientedVertices(p0,p1,p2);
+    std::tuple< int, int, int, int > OrientedVertices_0(int p0){
+        return _TetrahderonNeighborhoods.OrientedVertices_0(p0);
+    };
+    std::tuple< int, int > OrientedVertices_1(int p0,int p1,int p2){
+        return _TetrahderonNeighborhoods.OrientedVertices_1(p0,p1,p2);
     };
     iheartmesh(
         const Tetrahedron & M,
@@ -705,7 +825,8 @@ struct iheartmesh {
         const std::vector<int> & bx,
         const std::vector<Eigen::Matrix<double, 3, 1>> & bp,
         const double & w,
-        const double & ε)
+        const double & ε,
+        const std::function<Eigen::SparseMatrix<double>(Eigen::MatrixXd)> & psd)
     :
     _TetrahderonNeighborhoods(M)
     {
@@ -725,6 +846,7 @@ struct iheartmesh {
         assert( bp.size() == dim_0 );
         this->M = M;
         this->x̄ = x̄;
+    std::cout<<"resize"<<std::endl;
         new_x.resize(dim_1*3);
         for (int i = 0; i < x.size(); ++i)
         {
@@ -735,52 +857,35 @@ struct iheartmesh {
         {
             this->x[i] = new_x.segment(3*i, 3);
         }
-        // E2 = w sum_j ‖bp_j - x_(bx_j)‖
+    std::cout<<"resize finish"<<std::endl;
+        // E2 = w sum_j ‖bp_j - x_(bx_j)‖²
         DT sum_0 = 0;
         for(int j=1; j<=bp.size(); j++){
-            sum_0 += (bp.at(j-1) - this->x.at(bx.at(j-1))).template lpNorm<2>();
+            sum_0 += pow((bp.at(j-1) - this->x.at(bx.at(j-1))).template lpNorm<2>(), 2);
         }
         E2 = w * sum_0;
+    std::cout<<"E2 finish"<<std::endl;
         // e = sum_(i ∈ C) S(i, x) + E2
         DT sum_1 = 0;
         for(int i : this->C){
             sum_1 += S(i, this->x);
         }
+    std::cout<<"E1 finish"<<std::endl;
         e = sum_1 + E2;
         // G = ∂e/∂x
         G = gradient(e, this->new_x);
-        // H = sum_(i ∈ C) psd(∂²S(i, x)/∂x²) + ∂²E2/∂x²
-        MatrixD sum_2 = MatrixD::Zero(3*dim_1, 3*dim_1);
+    std::cout<<"G finish"<<std::endl;
+        // H = sum_(i ∈ C) psd(∂²S(i, x)/∂x²) + psd(∂²E2/∂x²)
+        Eigen::SparseMatrix<double> sum_2(3*dim_1, 3*dim_1);
         for(int i : this->C){
-            sum_2 += psd(hessian(S(i, this->x), this->new_x).sparseView());
+            sum_2 += psd(hessian(S(i, this->x), this->new_x));
         }
-        H = sum_2 + psd(hessian(E2, this->new_x).sparseView());
-        // d = H⁻¹ (-G)
-        d = (to_double(H)).colPivHouseholderQr().solve(to_double((-G)));
-        // y = { inversevec(vec(x) + 0.1 d, x) if √(-d⋅G) > ε
-        //       x otherwise
-        var eep = sqrt((-(d).dot(G)));
-        std::cout<<"eep: "<<eep<<std::endl;
-        if(eep > ε){
-            std::cout<<"updated"<<std::endl;
-            VectorD vec(dim_1*3);
-            for (int i = 0; i < this->x.size(); ++i)
-            {
-                vec.segment(3*i, 3) = this->x[i];
-            }
-            std::vector<Eigen::Matrix<DT, 3, 1>> inversevec(dim_1);
-            VectorD param = vec + 1e-16 * d;
-            for (int i = 0; i < this->x.size(); ++i)
-            {
-                inversevec[i] = param.segment(3*i, 3);
-            }
-            y = inversevec;
-            std::cout<<"y0: "<<y[0]<<std::endl;
-        }
-        else{
-            std::cout<<"the same"<<std::endl;
-            y = this->x;
-        }
+    std::cout<<"psd finish"<<std::endl;
+        H = sum_2 + psd(hessian(E2, this->new_x));
     }
 };
- 
+
+
+
+
+
