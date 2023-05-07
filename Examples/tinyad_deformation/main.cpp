@@ -95,6 +95,9 @@ Eigen::SparseMatrix<double > psd(
     if (col_index != 12 || row_index != 12)
     {
         std::cout<<"col_index: "<<col_index<<", row_index:"<<row_index<<std::endl;
+        Eigen::MatrixXd new_x = x;
+        Eigen::MatrixXd res = project_positive_definite(new_x);
+        return res.sparseView();
         return mat;  
     }
     // assert(col_index == 6 && row_index == 6);
@@ -205,7 +208,7 @@ bool step(){
 
 
     std::cout<<"H is "<<H<<std::endl; 
-    std::cout<<"d is "<<d<<std::endl; 
+    // std::cout<<"d is "<<d<<std::endl; 
     Eigen::VectorXd vec_x(x.size()*3);
     for (int i = 0; i < x.size(); ++i)
     {
@@ -225,14 +228,14 @@ bool step(){
     };
     //
     if (-0.5 * d.dot(g) > convergence_eps){
-    std::cout<<"threshold is  "<<-0.5 * d.dot(g)<<std::endl; 
+    // std::cout<<"threshold is  "<<-0.5 * d.dot(g)<<std::endl; 
         vec_x = my_line_search(vec_x, d, to_double(ihla.e), g, energy_func);
-        std::cout<<"vec_x:"<<vec_x<<std::endl;
+        // std::cout<<"vec_x:"<<vec_x<<std::endl;
         for (int i = 0; i < x.size(); ++i)
         {
             x[i] = vec_x.segment(3*i, 3);
         }
-        std::cout<<"x updated"<<std::endl;
+        // std::cout<<"x updated:"<<vec_x<<std::endl;
     }
     else{
         has_updated = false;
@@ -305,53 +308,10 @@ int main(int argc, const char * argv[]) {
 
 
 
-    // std::cout<<"x.size is:"<<x.size()<<std::endl;
-    // std::cout<<"x̄.size is:"<<x̄.size()<<std::endl;
-
-    // std::vector<Eigen::Matrix<double, 2, 1>> P;
-    // Eigen::Matrix<double, 2, 1> P0;
-    // P0 << 0.2, 1;
-    // Eigen::Matrix<double, 2, 1> P1;
-    // P1 << 1, 0.4;
-    // Eigen::Matrix<double, 2, 1> P2;
-    // P2 << 1.3, 2;
-    // Eigen::Matrix<double, 2, 1> P3;
-    // P3 << 2, 1.4; 
-    // P.push_back(P0);
-    // P.push_back(P1);
-    // P.push_back(P2);
-    // P.push_back(P3);
-
-    // std::vector<Eigen::Matrix<double, 2, 1>> x;
-    // std::vector<Eigen::Matrix<double, 2, 1>> x̄;
-    // for (int i = 0; i < P.size(); ++i)
-    // {
-    //     x.push_back(P[i]);
-    //     x̄.push_back(P[i]);
-    // }
-
-    // Eigen::MatrixXi Tet(2,3);
-    // Tet <<
-    // 0,1,2,
-    // 2,1,3; 
-
-
-
     polyscope::init();  
     polyscope::registerSurfaceMesh("my mesh", V, F);
     polyscope::state::userCallback = myCallback;
     polyscope::getSurfaceMesh("my mesh")->updateVertexPositions(x);
-
-    // update();
-    // iheartmesh ihla(triangle_mesh, P); 
-    // // std::cout<<"before"<<std::endl;
-
-    // std::cout<<"nn:\n"<<std::endl;
-    // i, j, k = ihla.Vertices(0);
-    // // print_set();
-    // std::cout<<"i:"<<i<<", j:"<<j<<", k:"<<k<<std::endl;
-    // std::cout<<"nn:\n"<<P[0]<<std::endl;
-    // polyscope::getSurfaceMesh("my mesh")->addVertexVectorQuantity("VertexNormal", N); 
     polyscope::show();
     return 0;
 }

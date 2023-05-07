@@ -198,7 +198,9 @@ Eigen::SparseMatrix<double > psd(
     if (col_index != 6 || row_index != 6)
     {
         std::cout<<"col_index: "<<col_index<<", row_index:"<<row_index<<std::endl;
-        return mat;  
+        Eigen::MatrixXd new_x = x;
+        Eigen::MatrixXd res = project_positive_definite(new_x);
+        return res.sparseView();
     }
     // assert(col_index == 6 && row_index == 6);
     // std::cout<<"local_mat is:"<<local_mat<<std::endl;
@@ -385,8 +387,8 @@ int main(int argc, const char * argv[]) {
     // igl::readOBJ("../../../models/bunny_cut.obj", V, F);
     // igl::readOBJ("../../../models/snail.obj", V, F);
     // igl::readOBJ("../../../models/camel-head.obj", V, F);
-    igl::readOFF("../../../models/camelhead.off", V, F);
-    // igl::readOBJ("/Users/pressure/Downloads/mesh_source/models/camel-head_54.obj", V, F);
+    // igl::readOFF("../../../models/camelhead.off", V, F);
+    igl::readOBJ("/Users/pressure/Downloads/mesh_source/models/camel-head_54.obj", V, F);
     // std::ifstream input_file("../../../models/1004826.stl");
     // igl::readSTL(input_file, V, F, N);
     P = tutte_embedding(V, F); // #V-by-2 2D vertex positions
