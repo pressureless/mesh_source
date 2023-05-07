@@ -62,7 +62,7 @@ Eigen::SparseMatrix<double > psd(
     const Eigen::MatrixXd & x)
 {
     Eigen::SparseMatrix<double > mat = x.sparseView();
-    return mat;
+    // return mat;
     // get local hessian matrix
     Eigen::MatrixXd local_mat = Eigen::MatrixXd::Zero(12, 12);
     std::vector<int> row_map({-1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1});
@@ -98,7 +98,7 @@ Eigen::SparseMatrix<double > psd(
         Eigen::MatrixXd new_x = x;
         Eigen::MatrixXd res = project_positive_definite(new_x);
         return res.sparseView();
-        return mat;  
+        // return mat;  
     }
     // assert(col_index == 6 && row_index == 6);
     // std::cout<<"local_mat is:"<<local_mat<<std::endl;
@@ -207,7 +207,7 @@ bool step(){
     Eigen::VectorXd d = cg_solver.compute(param).solve(-g);
 
 
-    std::cout<<"H is "<<H<<std::endl; 
+    // std::cout<<"H is "<<H<<std::endl; 
     // std::cout<<"d is "<<d<<std::endl; 
     Eigen::VectorXd vec_x(x.size()*3);
     for (int i = 0; i < x.size(); ++i)
@@ -228,7 +228,7 @@ bool step(){
     };
     //
     if (-0.5 * d.dot(g) > convergence_eps){
-    // std::cout<<"threshold is  "<<-0.5 * d.dot(g)<<std::endl; 
+    std::cout<<"threshold is  "<<-0.5 * d.dot(g)<<std::endl; 
         vec_x = my_line_search(vec_x, d, to_double(ihla.e), g, energy_func);
         // std::cout<<"vec_x:"<<vec_x<<std::endl;
         for (int i = 0; i < x.size(); ++i)
@@ -247,9 +247,21 @@ bool step(){
 
 void myCallback()
 {
-    if (ImGui::Button("Run/Stop Simulation"))
+    if (ImGui::Button("One step"))
     {
         step();
+    }
+    if (ImGui::Button("Run/Stop Simulation"))
+    {
+        for (int i = 0; i < 1000; ++i)
+        {
+            bool updated = step();
+            if (!updated)
+            {
+                break;
+            }
+        }
+        
     }
 }
 
@@ -261,7 +273,11 @@ int main(int argc, const char * argv[]) {
     // check();
     // return 0;
     // igl::copyleft::tetgen::tetrahedralize(V, F,"pq1.414Y", VV, TT, FF);
-    igl::readMESH("../../../models/cube_26v.1.mesh", V, T, F);
+    // igl::readMESH("../../../models/cube_26v.1.mesh", V, T, F);
+    igl::readMESH("../../../models/cube_36.1.mesh", V, T, F);
+    // igl::readMESH("/Users/pressure/Downloads/cube9.1.mesh", V, T, F);
+    // igl::readOBJ("/Users/pressure/Downloads/cube9.obj", V, T);
+    // igl::readMESH("../../../models/cube_1538.1.mesh", V, T, F);
     // std::cout<<"V rows:"<<VV.rows()<<std::endl;
     // std::cout<<"TT rows:"<<TT.rows()<<", cols:"<<TT.cols()<<std::endl;
     // std::cout<<"TT:"<<TT<<std::endl;
@@ -278,25 +294,21 @@ int main(int argc, const char * argv[]) {
     // }
     // Eigen::MatrixXd bbp(84, 3); 
     // bbp << -1.28603, -0.713969, -0.206107, -1.25743, -0.742572, -0.235497, -1.22882, -0.771175, -0.264886, -1.20022, -0.799779, -0.294275, -1.17162, -0.828382, -0.323664, -1.14302, -0.856985, -0.353054, -1.11441, -0.885588, -0.382443, -1.08581, -0.914191, -0.411832, -1.05721, -0.942794, -0.441221, -1.0286, -0.971397, -0.470611, -1, -1, -0.5, -0.971397, -1.0286, -0.529389, -0.942794, -1.05721, -0.558779, -0.914191, -1.08581, -0.588168, -0.885588, -1.11441, -0.617557, -0.856985, -1.14302, -0.646946, -0.828382, -1.17162, -0.676336, -0.799779, -1.20022, -0.705725, -0.771175, -1.22882, -0.735114, -0.742572, -1.25743, -0.764503, -0.713969, -1.28603, -0.793893, 0.286031, -0.286031, -0.206107, 0.257428, -0.257428, -0.235497, 0.228825, -0.228825, -0.264886, 0.200221, -0.200221, -0.294275, 0.171618, -0.171618, -0.323664, 0.143015, -0.143015, -0.353054, 0.114412, -0.114412, -0.382443, 0.0858092, -0.0858092, -0.411832, 0.0572061, -0.0572061, -0.441221, 0.0286031, -0.0286031, -0.470611, 0, 0, -0.5, -0.0286031, 0.0286031, -0.529389, -0.0572061, 0.0572061, -0.558779, -0.0858092, 0.0858092, -0.588168, -0.114412, 0.114412, -0.617557, -0.143015, 0.143015, -0.646946, -0.171618, 0.171618, -0.676336, -0.200221, 0.200221, -0.705725, -0.228825, 0.228825, -0.735114, -0.257428, 0.257428, -0.764503, -0.286031, 0.286031, -0.793893, -0, -0.75, -0, -0, -0.75, -0.0375, -0, -0.75, -0.075, -0, -0.75, -0.1125, -0, -0.75, -0.15, -0, -0.75, -0.1875, -0, -0.75, -0.225, -0, -0.75, -0.2625, -0, -0.75, -0.3, -0, -0.75, -0.3375, -0, -0.75, -0.375, -0, -0.75, -0.4125, -0, -0.75, -0.45, -0, -0.75, -0.4875, -0, -0.75, -0.525, -0, -0.75, -0.5625, -0, -0.75, -0.6, -0, -0.75, -0.6375, -0, -0.75, -0.675, -0, -0.75, -0.7125, -0, -0.75, -0.75, -0.75, -0, -0, -0.75, -0, -0.0375, -0.75, -0, -0.075, -0.75, -0, -0.1125, -0.75, -0, -0.15, -0.75, -0, -0.1875, -0.75, -0, -0.225, -0.75, -0, -0.2625, -0.75, -0, -0.3, -0.75, -0, -0.3375, -0.75, -0, -0.375, -0.75, -0, -0.4125, -0.75, -0, -0.45, -0.75, -0, -0.4875, -0.75, -0, -0.525, -0.75, -0, -0.5625, -0.75, -0, -0.6, -0.75, -0, -0.6375, -0.75, -0, -0.675, -0.75, -0, -0.7125, -0.75, -0, -0.75;
-    // bp.resize(84);
-    // for (int i = 0; i < bbp.rows(); ++i)
-    // {
-    //     bp[i] = bbp.row(i);
-    // }
+    
 
-    tet_mesh.initialize(T);
-    bc.push_back(0);
-    bc.push_back(10);
+    // tet_mesh.initialize(T);
+    // bc.push_back(0);
+    // bc.push_back(10);
 
-    Eigen::Matrix<double, 3, 1> x0;
-    x0 << -1, -1, 0.7;
-    Eigen::Matrix<double, 3, 1> x10;
-    x10 << -0.75, -0.25, 0.65; 
-    Eigen::Matrix<double, 3, 1> x24;
-    x24 << 1, 0, 0;
-    bp.push_back(x0);
-    bp.push_back(x10);
-    std::cout<<"V is:"<<V<<std::endl;
+    // Eigen::Matrix<double, 3, 1> x0;
+    // x0 << -1, -1, 0.7;
+    // Eigen::Matrix<double, 3, 1> x10;
+    // x10 << -0.75, -0.25, 0.65; 
+    // Eigen::Matrix<double, 3, 1> x24;
+    // x24 << 1, 0, 0;
+    // bp.push_back(x0);
+    // bp.push_back(x10);
+    // std::cout<<"V is:"<<V<<std::endl;
     for (int i = 0; i < V.rows(); ++i)
     {
         x.push_back(V.row(i));
@@ -306,6 +318,150 @@ int main(int argc, const char * argv[]) {
     // x[0] = x0;
     // x[10] = x10;
 
+
+    std::vector<int> line_indices({80, 79, 78, 77, 76, 75, 74, 73, 72,
+    8, 7, 6, 5, 4, 3, 2, 1, 0,
+    728, 727, 726, 725, 724, 723, 722, 721, 720,
+    656, 655,  654,  653,  652,  651,  650, 649, 648});
+    // manualy set points
+    std::vector<int> line1_indices({5, 349, 79, 346, 16, 343, 76, 342, 4});
+    Eigen::MatrixXd line1_pos(9, 3); 
+    line1_pos<< 0.5,   0.6,   -0.4,
+                0.375, 0.6,   -0.4,
+                0.25,  0.6,   -0.4,
+                0.125,  0.6,   -0.4,
+                0,  0.6,   -0.4,
+                -0.125,  0.6,   -0.4,
+                -0.25,  0.6,   -0.4,
+                -0.375,  0.6,   -0.4,
+                -0.5,  0.6,   -0.4;
+    // x[line1_indices[0]](0) = 0.5; x[line1_indices[0]](1) = 0.6; x[line1_indices[0]](2) = -0.4;  
+    // x[line1_indices[1]](0) = 0.375; x[line1_indices[1]](1) = 0.6; x[line1_indices[1]](2) = -0.4;  
+    // x[line1_indices[2]](0) = 0.25; x[line1_indices[2]](1) = 0.6; x[line1_indices[2]](2) = -0.4;  
+    // x[line1_indices[3]](0) = 0.125; x[line1_indices[3]](1) = 0.6; x[line1_indices[3]](2) = -0.4;  
+    // x[line1_indices[4]](0) = 0; x[line1_indices[4]](1) = 0.6; x[line1_indices[4]](2) = -0.4;  
+    // x[line1_indices[5]](0) = -0.125; x[line1_indices[5]](1) = 0.6; x[line1_indices[5]](2) = -0.4;  
+    // x[line1_indices[6]](0) = -0.25; x[line1_indices[6]](1) = 0.6; x[line1_indices[6]](2) = -0.4;
+    // x[line1_indices[7]](0) = -0.375; x[line1_indices[7]](1) = 0.6; x[line1_indices[7]](2) = -0.4;
+    // x[line1_indices[8]](0) = -0.5; x[line1_indices[8]](1) = 0.6; x[line1_indices[8]](2) = -0.4;
+    std::vector<int> line2_indices({7, 365, 87, 362, 20, 259, 84, 258, 6});
+    Eigen::MatrixXd line2_pos(9, 3); 
+    line2_pos<< 0,   -0.4,   0,
+                0, -0.4249,   0.1,
+                0,  -0.4499,   0.2,
+                0,  -0.475,   0.3,
+                0,  -0.5,   0.4,
+                0,  -0.5249,   0.5,
+                0,  -0.5499,   0.6,
+                0,  -0.575,   0.7,
+                0,  -0.6,   0.8;
+    // x[line2_indices[0]](0) = 0; x[line2_indices[0]](1) = -0.4; x[line2_indices[0]](2) = 0;  
+    // x[line2_indices[1]](0) = 0; x[line2_indices[1]](1) = -0.4249; x[line2_indices[1]](2) = 0.1;  
+    // x[line2_indices[2]](0) = 0; x[line2_indices[2]](1) = -0.4499; x[line2_indices[2]](2) = 0.2;  
+    // x[line2_indices[3]](0) = 0; x[line2_indices[3]](1) = -0.475; x[line2_indices[3]](2) = 0.3;  
+    // x[line2_indices[4]](0) = 0; x[line2_indices[4]](1) = -0.5; x[line2_indices[4]](2) = 0.4;  
+    // x[line2_indices[5]](0) = 0; x[line2_indices[5]](1) = -0.5249; x[line2_indices[5]](2) = 0.5;  
+    // x[line2_indices[6]](0) = 0; x[line2_indices[6]](1) = -0.5499; x[line2_indices[6]](2) = 0.6; 
+    // x[line2_indices[7]](0) = 0; x[line2_indices[7]](1) = -0.575; x[line2_indices[7]](2) = 0.7; 
+    // x[line2_indices[8]](0) = 0; x[line2_indices[8]](1) = -0.6; x[line2_indices[8]](2) = 0.8; 
+    std::vector<int> line3_indices({3, 333, 71, 330, 12, 327, 68, 326, 2});
+    Eigen::MatrixXd line3_pos(9, 3); 
+    line3_pos<< 0.5,   0.8,   0.5,
+                0.375, 0.75,   0.5,
+                0.25,  0.7,   0.5,
+                0.125,  0.65,   0.5,
+                0,  0.6,   0.5,
+                -0.125,  0.55,   0.5,
+                -0.25,  0.5,   0.5,
+                -0.375,  0.45,   0.5,
+                -0.5,  0.4,   0.5;
+    // x[line3_indices[0]](0) = 0.5; x[line3_indices[0]](1) = 0.8; x[line3_indices[0]](2) = 0.5;  
+    // x[line3_indices[1]](0) = 0.375; x[line3_indices[1]](1) = 0.75; x[line3_indices[1]](2) = 0.5;  
+    // x[line3_indices[2]](0) = 0.25; x[line3_indices[2]](1) = 0.7; x[line3_indices[2]](2) = 0.5;  
+    // x[line3_indices[3]](0) = 0.125; x[line3_indices[3]](1) = 0.65; x[line3_indices[3]](2) = 0.5;  
+    // x[line3_indices[4]](0) = 0; x[line3_indices[4]](1) = 0.6; x[line3_indices[4]](2) = 0.5;  
+    // x[line3_indices[5]](0) = -0.125; x[line3_indices[5]](1) = 0.55; x[line3_indices[5]](2) = 0.5;  
+    // x[line3_indices[6]](0) = -0.25; x[line3_indices[6]](1) = 0.5; x[line3_indices[6]](2) = 0.5; 
+    // x[line3_indices[7]](0) = -0.375; x[line3_indices[7]](1) = 0.45; x[line3_indices[7]](2) = 0.5; 
+    // x[line3_indices[8]](0) = -0.5; x[line3_indices[8]](1) = 0.4; x[line3_indices[8]](2) = 0.5;
+    std::vector<int> line4_indices({1, 319, 64, 318, 8, 316, 62, 314, 0});
+    Eigen::MatrixXd line4_pos(9, 3); 
+    line4_pos<< 0.5,   -0.5,   0.6,
+                0.375, -0.5,   0.6,
+                0.25,  -0.5,   0.6,
+                0.125,  -0.5,   0.6,
+                0,  -0.5,   0.6,
+                -0.125,  -0.5,   0.6,
+                -0.25,  -0.5,   0.6,
+                -0.375,  -0.5,   0.6,
+                -0.5,  -0.5,   0.6;
+    // x[line4_indices[0]](0) = 0.5; x[line4_indices[0]](1) = -0.5; x[line4_indices[0]](2) = 0.6;  
+    // x[line4_indices[1]](0) = 0.375; x[line4_indices[1]](1) = -0.5; x[line4_indices[1]](2) = 0.6;  
+    // x[line4_indices[2]](0) = 0.25; x[line4_indices[2]](1) = -0.5; x[line4_indices[2]](2) = 0.6;  
+    // x[line4_indices[3]](0) = 0.125; x[line4_indices[3]](1) = -0.5; x[line4_indices[3]](2) = 0.6;  
+    // x[line4_indices[4]](0) = 0; x[line4_indices[4]](1) = -0.5; x[line4_indices[4]](2) = 0.6;  
+    // x[line4_indices[5]](0) = -0.125; x[line4_indices[5]](1) = -0.5; x[line4_indices[5]](2) = 0.6;  
+    // x[line4_indices[6]](0) = -0.25; x[line4_indices[6]](1) = -0.5; x[line4_indices[6]](2) = 0.6;
+    // x[line4_indices[7]](0) = -0.375; x[line4_indices[7]](1) = -0.5; x[line4_indices[7]](2) = 0.6;
+    // x[line4_indices[8]](0) = -0.5; x[line4_indices[8]](1) = -0.5; x[line4_indices[8]](2) = 0.6;
+
+    // x[](0) = 0; x[](1) = 0; x[](2) = 0; 
+    int v_cnt = 27;
+    Eigen::MatrixXd line_pos(v_cnt, 3); 
+    line_pos<< 0.5,   0.6,   -0.4,   // line 1
+                0.375, 0.6,   -0.4,
+                0.25,  0.6,   -0.4,
+                0.125,  0.6,   -0.4,
+                0,  0.6,   -0.4,
+                -0.125,  0.6,   -0.4,
+                -0.25,  0.6,   -0.4,
+                -0.375,  0.6,   -0.4,
+                -0.5,  0.6,   -0.4,
+                // 0,   -0.4,   0,       //  line 2
+                // 0, -0.4249,   0.1,
+                // 0,  -0.4499,   0.2,
+                // 0,  -0.475,   0.3,
+                // 0,  -0.5,   0.4,
+                // 0,  -0.5249,   0.5,
+                // 0,  -0.5499,   0.6,
+                // 0,  -0.575,   0.7,
+                // 0,  -0.6,   0.8, 
+                0.5,   0.8,   0.5,    //  line 3
+                0.375, 0.75,   0.5,
+                0.25,  0.7,   0.5,
+                0.125,  0.65,   0.5,
+                0,  0.6,   0.5,
+                -0.125,  0.55,   0.5,
+                -0.25,  0.5,   0.5,
+                -0.375,  0.45,   0.5,
+                -0.5,  0.4,   0.5,
+                0.5,   -0.5,   0.6,   //   line 4
+                0.375, -0.5,   0.6,
+                0.25,  -0.5,   0.6,
+                0.125,  -0.5,   0.6,
+                0,  -0.5,   0.6,
+                -0.125,  -0.5,   0.6,
+                -0.25,  -0.5,   0.6,
+                -0.375,  -0.5,   0.6,
+                -0.5,  -0.5,   0.6;
+    // for (int i = 0; i < line_indices.size(); ++i)
+    // {
+    //     x[line_indices[i]] = line_pos.row(i);
+    // }
+    Eigen::VectorXi bcc(v_cnt); bcc<< 80, 79, 78, 77, 76, 75, 74, 73, 72,
+    // 8, 7, 6, 5, 4, 3, 2, 1, 0,
+    728, 727, 726, 725, 724, 723, 722, 721, 720,
+    656, 655,  654,  653,  652,  651,  650, 649, 648;
+    bc.resize(v_cnt);
+    for (int i = 0; i < bcc.rows(); ++i)
+    {
+        bc[i] = bcc(i);
+    }
+    bp.resize(line_pos.rows());
+    for (int i = 0; i < line_pos.rows(); ++i)
+    {
+        bp[i] = line_pos.row(i);
+    }
 
 
     polyscope::init();  

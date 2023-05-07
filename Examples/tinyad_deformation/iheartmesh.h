@@ -123,6 +123,7 @@ struct iheartmesh {
         // J = m mr⁻¹
         Eigen::Matrix<REAL, 3, 3> J = m * mr.inverse();
         if((m).determinant() <= 0){
+            std::cout<<"(m).determinant() is:"<<(m).determinant()<<std::endl;
             S_ret = 0;
         }
         else{
