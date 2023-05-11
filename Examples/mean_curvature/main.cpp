@@ -24,7 +24,7 @@ Eigen::MatrixXi meshF;
 TriangleMesh triangle_mesh;
 
 double cg_tolerance = 1e-6;
-int MAX_ITERATION = 100;
+int MAX_ITERATION = 10;
 double step = 1e-3;
 
 std::vector<Eigen::Matrix<double, 3, 1>> OriginalPosition;
@@ -203,7 +203,8 @@ void myCallback()
 int main(int argc, const char * argv[]) {
     // igl::readOBJ("/Users/pressure/Downloads/mesh_source/models/cube.obj", meshV, meshF);
     // igl::readOBJ("/Users/pressure/Downloads/mesh_source/models/small_bunny.obj", meshV, meshF);
-    igl::readOBJ("../../../../models/sphere3.obj", meshV, meshF);
+    // igl::readOBJ("../../../models/sphere3.obj", meshV, meshF);
+    igl::readOBJ("../../../models/sphere.obj", meshV, meshF);
     // igl::readOBJ("../../../../models/small_disk.obj", meshV, meshF);
     // igl::readOBJ("/Users/pressure/Downloads/mesh_source/models/sphere.obj", meshV, meshF);
     // igl::readOBJ("/Users/pressure/Downloads/libigl-polyscope-project/input/sphere.obj", meshV, meshF);

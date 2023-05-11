@@ -63,6 +63,7 @@ endif()
 
 # Find Eigen
 find_package(Eigen3 3.3 REQUIRED NO_MODULE)
+find_package(autodiff REQUIRED NO_MODULE)
 
 # Add polyscope
 message("\n\n == CMAKE recursively building Polyscope\n")
@@ -98,4 +99,4 @@ target_include_directories(main PUBLIC "${CMAKE_CURRENT_SOURCE_DIR}/../../deps/p
 
 
 # Link settings
-target_link_libraries(main polyscope Eigen3::Eigen)
+target_link_libraries(main polyscope Eigen3::Eigen autodiff::autodiff)

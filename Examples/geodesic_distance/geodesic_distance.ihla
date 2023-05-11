@@ -31,6 +31,15 @@ n = GetNextLevel(U)
 
 
 
+
+
+
+
+
+
+
+
+
 GetDistanceForV(V, v, d) =  where V_i  ∈  {ℤ} vertices,v ∈ ℤ vertices,d_i  ∈  ℝ,
 newD = {UpdateStep(v, v1, v2, d) for f ∈ Faces(v)}
 

@@ -1,23 +1,23 @@
 /*
 svd from linearalgebra
 ElementSets from MeshConnectivity
-VertexOneRing from PointcloudNeighborhoods(M)
+VertexOneRing from PointCloudNeighborhoods(M)
 M : PointCloud 
 x_i ∈ ℝ^3 
 
 V, E = ElementSets( M )
-Normal(v) = sigma_3 where v ∈ V,
+
+Normal(v) = vv_*,3 where v ∈ V,
 N = VertexOneRing(v),
-p̄ = (sum_(n ∈ N) x_n)/|N|,
+p̄ = (∑_(n ∈ N) x_n)/|N|,
 d = {x_v-p̄ for v ∈ N},
-s = sequence(d),
-m_ij = s_i,j,
-u, sigma, vv = svd(m)
+m_i,* = d_i,
+u, `∑`, vv = svd(m)
 
  
-cov(v) = sum_(n ∈ N) (x_v-p̄)(x_v-p̄)ᵀ where v ∈ V,
+cov(v) = ∑_(n ∈ N) (x_v-p̄)(x_v-p̄)ᵀ where v ∈ V,
 N = VertexOneRing(v),
-p̄ = (sum_(n ∈ N) x_n)/|N|
+p̄ = (∑_(n ∈ N) x_n)/|N|
 
 
 */
@@ -39,7 +39,7 @@ struct iheartmesh {
     std::vector<int > E;
     PointCloud M;
     std::vector<Eigen::Matrix<double, 3, 1>> x;
-    double Normal(
+    Eigen::Matrix<double, 3, 1> Normal(
         const int & v)
     {
         assert( std::binary_search(V.begin(), V.end(), v) );
@@ -47,7 +47,7 @@ struct iheartmesh {
         // N = VertexOneRing(v)
         std::vector<int > N = this->VertexOneRing(v);
 
-        // p̄ = (sum_(n ∈ N) x_n)/|N|
+        // p̄ = (∑_(n ∈ N) x_n)/|N|
         MatrixD sum_0 = MatrixD::Zero(3, 1);
         for(int n : N){
             sum_0 += this->x.at(n);
@@ -61,26 +61,37 @@ struct iheartmesh {
         for(int v : range){
             Normalset_0.push_back(this->x.at(v) - p̄);
         }
+        if(Normalset_0.size() > 1){
+            sort(Normalset_0.begin(), Normalset_0.end(), [](const Eigen::Matrix<double, 3, 1> &lhs_, const Eigen::Matrix<double, 3, 1> &rhs_)
+            {
+                for (int si=0; si<lhs_.rows(); si++) {
+                    if (lhs_(si) == rhs_(si)) {
+                        continue;
+                    }
+                    else if (lhs_(si) > rhs_(si)) {
+                        return false;
+                    }
+                    return true;
+                }
+                return false;
+            });
+            Normalset_0.erase(unique(Normalset_0.begin(), Normalset_0.end() ), Normalset_0.end());
+        }
         std::vector<Eigen::Matrix<double, 3, 1> > d = Normalset_0;
 
-        // s = sequence(d)
-        std::vector<Eigen::Matrix<double, 3, 1>> s = d;
-
-        // m_ij = s_i,j
-        Eigen::MatrixXd m = MatrixD::Zero(s.size(), 3);
-        for( int i=1; i<=s.size(); i++){
-            for( int j=1; j<=3; j++){
-                m(i-1, j-1) = s.at(i-1)[j-1];
-            }
+        // m_i,* = d_i
+        Eigen::MatrixXd m = MatrixD::Zero(d.size(), 3);
+        for( int i=1; i<=d.size(); i++){
+            m.row(i-1) = d[i-1];
         }
 
         Eigen::BDCSVD<Eigen::MatrixXd> svd(to_double(m), Eigen::ComputeFullU | Eigen::ComputeFullV);
-        // u, sigma, vv = svd(m)
+        // u, `∑`, vv = svd(m)
         std::tuple< Eigen::MatrixXd, Eigen::VectorXd, Eigen::Matrix<double, 3, 3> > rhs_1 = std::tuple< Eigen::MatrixXd, Eigen::VectorXd, Eigen::Matrix<double, 3, 3> >(svd.matrixU(), svd.singularValues(), svd.matrixV());
         Eigen::MatrixXd u = std::get<0>(rhs_1);
-        Eigen::VectorXd sigma = std::get<1>(rhs_1);
+        Eigen::VectorXd n_ary_summation = std::get<1>(rhs_1);
         Eigen::Matrix<double, 3, 3> vv = std::get<2>(rhs_1);
-        return sigma[3-1];    
+        return vv.col(3-1);    
     }
     Eigen::Matrix<double, 3, 3> cov(
         const int & v)
@@ -90,7 +101,7 @@ struct iheartmesh {
         // N = VertexOneRing(v)
         std::vector<int > N = this->VertexOneRing(v);
 
-        // p̄ = (sum_(n ∈ N) x_n)/|N|
+        // p̄ = (∑_(n ∈ N) x_n)/|N|
         MatrixD sum_1 = MatrixD::Zero(3, 1);
         for(int n : N){
             sum_1 += this->x.at(n);
@@ -105,7 +116,7 @@ struct iheartmesh {
     using DT_ = double;
     using MatrixD_ = Eigen::MatrixXd;
     using VectorD_ = Eigen::VectorXd;
-    struct PointcloudNeighborhoods {
+    struct PointCloudNeighborhoods {
         std::vector<int > V;
         std::vector<int > E;
         Eigen::SparseMatrix<int> dee0;
@@ -170,7 +181,7 @@ struct iheartmesh {
         using DT = double;
         using MatrixD = Eigen::MatrixXd;
         using VectorD = Eigen::VectorXd;
-        struct FundamentalPointcloudAccessors {
+        struct FundamentalPointCloudAccessors {
             std::vector<int > V;
             std::vector<int > E;
             Eigen::SparseMatrix<int> dee0;
@@ -213,7 +224,7 @@ struct iheartmesh {
                 }
                 return nonzeros(this->B0.transpose() * M.vertices_to_vector(Edges_0set_0));    
             }
-            FundamentalPointcloudAccessors(const PointCloud & M)
+            FundamentalPointCloudAccessors(const PointCloud & M)
             {
                 // V, E = ElementSets( M )
                 std::tuple< std::vector<int >, std::vector<int > > rhs = M.ElementSets();
@@ -228,25 +239,25 @@ struct iheartmesh {
                 B0 = M.UnsignedBoundaryMatrices();
             }
         };
-        FundamentalPointcloudAccessors _FundamentalPointcloudAccessors;
+        FundamentalPointCloudAccessors _FundamentalPointCloudAccessors;
         std::vector<int > Vertices(std::tuple< std::vector<int >, std::vector<int >, std::vector<int >, std::vector<int > > p0){
-            return _FundamentalPointcloudAccessors.Vertices(p0);
+            return _FundamentalPointCloudAccessors.Vertices(p0);
         };
         std::vector<int > Vertices(int p0){
-            return _FundamentalPointcloudAccessors.Vertices(p0);
+            return _FundamentalPointCloudAccessors.Vertices(p0);
         };
         std::vector<int > Vertices(std::vector<int > p0){
-            return _FundamentalPointcloudAccessors.Vertices(p0);
+            return _FundamentalPointCloudAccessors.Vertices(p0);
         };
         std::vector<int > Edges(std::tuple< std::vector<int >, std::vector<int >, std::vector<int >, std::vector<int > > p0){
-            return _FundamentalPointcloudAccessors.Edges(p0);
+            return _FundamentalPointCloudAccessors.Edges(p0);
         };
         std::vector<int > Edges(int p0){
-            return _FundamentalPointcloudAccessors.Edges(p0);
+            return _FundamentalPointCloudAccessors.Edges(p0);
         };
-        PointcloudNeighborhoods(const PointCloud & M)
+        PointCloudNeighborhoods(const PointCloud & M)
         :
-        _FundamentalPointcloudAccessors(M)
+        _FundamentalPointCloudAccessors(M)
         {
             // V, E = ElementSets( M )
             std::tuple< std::vector<int >, std::vector<int > > rhs = M.ElementSets();
@@ -261,18 +272,18 @@ struct iheartmesh {
             B0 = M.UnsignedBoundaryMatrices();
         }
     };
-    PointcloudNeighborhoods _PointcloudNeighborhoods;
+    PointCloudNeighborhoods _PointCloudNeighborhoods;
     std::vector<int > VertexOneRing(int p0){
-        return _PointcloudNeighborhoods.VertexOneRing(p0);
+        return _PointCloudNeighborhoods.VertexOneRing(p0);
     };
     std::vector<int > VertexOneRing(std::vector<int > p0){
-        return _PointcloudNeighborhoods.VertexOneRing(p0);
+        return _PointCloudNeighborhoods.VertexOneRing(p0);
     };
     iheartmesh(
         const PointCloud & M,
         const std::vector<Eigen::Matrix<double, 3, 1>> & x)
     :
-    _PointcloudNeighborhoods(M)
+    _PointCloudNeighborhoods(M)
     {
         // V, E = ElementSets( M )
         std::tuple< std::vector<int >, std::vector<int > > rhs = M.ElementSets();
@@ -286,8 +297,4 @@ struct iheartmesh {
     
     }
 };
-
-
-
-
-
+ 

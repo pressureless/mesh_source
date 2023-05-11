@@ -63,6 +63,7 @@ endif()
 
 # Find Eigen
 find_package(Eigen3 3.3 REQUIRED NO_MODULE)
+find_package(autodiff REQUIRED NO_MODULE)
 
 # Add polyscope
 message("\n\n == CMAKE recursively building Polyscope\n")
@@ -83,7 +84,11 @@ add_subdirectory("deps/polyscope")
 # Create an executable
 set(SRCS 
   src/main.cpp
+  src/Connectivity.cpp
+  src/PointCloud.cpp
+  src/PolygonMesh.cpp
   src/TriangleMesh.cpp
+  src/Tetrahedron.cpp  
   src/dec_util.cpp
   src/MeshHelper.cpp
 )
@@ -97,4 +102,4 @@ target_include_directories(main PUBLIC "${CMAKE_CURRENT_SOURCE_DIR}/deps/polysco
 
 
 # Link settings
-target_link_libraries(main polyscope Eigen3::Eigen)
+target_link_libraries(main polyscope Eigen3::Eigen autodiff::autodiff)

@@ -55,38 +55,38 @@ bp_j ∈ ℝ^3 : boundary positions
 w ∈ ℝ : penalty
 ε ∈ ℝ : eps
 psd : ℝ^(p×p) -> ℝ^(p×p) sparse
+infinity: ℝ
 
 V, E, F, C = ElementSets(M)
 
 vol_i,j,k,l = ⅙ |[x̄_j-x̄_i x̄_k-x̄_i x̄_l-x̄_i]| where i,j,k,l ∈ V
 
-S(s, x) = { 0 if |m| <= 0
+mr(s) = [x̄_b-x̄_a x̄_c-x̄_a x̄_d-x̄_a] where s ∈ C,
+a, b, c, d = OrientedVertices(s)
+
+S(s, x) = { infinity if |m| <= 0
   vol_abcd (‖J‖² + ‖J⁻¹‖²) otherwise where s ∈ C, x_i ∈ ℝ^3,
 a, b, c, d = OrientedVertices(s),
 m = [x_b-x_a x_c-x_a x_d-x_a],
-mr = [x̄_b-x̄_a x̄_c-x̄_a x̄_d-x̄_a],
-J = m mr⁻¹
+J = m mr(s)⁻¹
 
-EXPS(s, x) = { 0 if |m| <= 0
+EXPS(s, x) = { infinity if |m| <= 0
   vol_abcd exp(‖J‖² + ‖J⁻¹‖²) otherwise where s ∈ C, x_i ∈ ℝ^3,
 a, b, c, d = OrientedVertices(s),
 m = [x_b-x_a x_c-x_a x_d-x_a],
-mr = [x̄_b-x̄_a x̄_c-x̄_a x̄_d-x̄_a],
-J = m mr⁻¹
+J = m mr(s)⁻¹
 
-AMIPS(s, x) = { 0 if |m| <= 0
+AMIPS(s, x) = { infinity if |m| <= 0
   vol_abcd exp(½(‖J‖²/|J| + ½(|J|+|J⁻¹|))) otherwise where s ∈ C, x_i ∈ ℝ^3,
 a, b, c, d = OrientedVertices(s),
 m = [x_b-x_a x_c-x_a x_d-x_a],
-mr = [x̄_b-x̄_a x̄_c-x̄_a x̄_d-x̄_a],
-J = m mr⁻¹
+J = m mr(s)⁻¹
 
-CAMIPS(s, x) = { 0 if |m| <= 0
+CAMIPS(s, x) = { infinity if |m| <= 0
   vol_abcd (‖J‖²/|J|^⅔) otherwise where s ∈ C, x_i ∈ ℝ^3,
 a, b, c, d = OrientedVertices(s),
 m = [x_b-x_a x_c-x_a x_d-x_a],
-mr = [x̄_b-x̄_a x̄_c-x̄_a x̄_d-x̄_a],
-J = m mr⁻¹
+J = m mr(s)⁻¹
 
 E2 = w sum_j ‖bp_j - x_(bx_j)‖²
 

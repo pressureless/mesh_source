@@ -24,12 +24,12 @@ int main(int argc, const char * argv[]) {
     Eigen::MatrixXi meshF;
     // igl::readOBJ("/Users/pressure/Downloads/mesh_source/models/cube.obj", meshV, meshF);
     igl::readOBJ("../../../models/small_bunny.obj", meshV, meshF);
+    // igl::readOBJ("../../../models/sphere.obj", meshV, meshF);
     // igl::readOBJ("/Users/pressure/Documents/git/meshtaichi/vertex_normal/models/bunny.obj", meshV, meshF);
     // Initialize triangle mesh
     // TriangleMesh triangle_mesh;
     // triangle_mesh.initialize(meshF);
     // Initialize polyscope
-    polyscope::init();   
     std::vector<Eigen::VectorXd> PN;
     std::vector<Eigen::Matrix<double, 3, 1>> P;
     for (int i = 0; i < meshV.rows(); ++i)
@@ -43,21 +43,30 @@ int main(int argc, const char * argv[]) {
     PointCloud pc(PN, neighbors);
     iheartmesh ihla(pc, P);
     std::vector<Eigen::Matrix<double, 3, 3>> cov;
+
+    // std::cout<<"v:"<<meshV.rows()<<std::endl;
+
+    std::vector<Eigen::VectorXd> point_normals(meshV.rows());
+
+    #pragma omp parallel for schedule(static) num_threads(omp_get_thread_num())
     for (int i = 0; i < meshV.rows(); ++i)
     {
-        Eigen::Matrix<double, 3, 3> c = ihla.cov(i);
-        Eigen::EigenSolver<Eigen::MatrixXd> es(c);
-        double sigma = ihla.Normal(i);
-        // std::cout<<"eigenvalues:\n"<<es.eigenvalues()<<std::endl;
-        // std::cout<<"eigenvectors:\n"<<es.eigenvectors().col(2)<<std::endl;
-        // cov.push_back(c);
-        std::cout<<"sigma:\n"<<sigma<<std::endl;
+        Eigen::VectorXd n = ihla.Normal(i);
+
+        // Naive way to check whether we need to flip the normal (for convex .obj)
+        // if (P[i].dot(n) < 0)
+        // {
+        //     n = -n;
+        // }
+        point_normals[i] = n;
     } 
+    polyscope::init();   
     polyscope::PointCloud* psCloud = polyscope::registerPointCloud("really great points", P);
 
     // set some options
     psCloud->setPointRadius(0.01);
     psCloud->setPointRenderMode(polyscope::PointRenderMode::Sphere);
+    psCloud->addVectorQuantity("Normals", point_normals);
 
     // show
     polyscope::show();

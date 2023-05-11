@@ -1,6 +1,6 @@
 arccos, atan2 from trigonometry
 ElementSets from MeshConnectivity
-Faces, Vertices, Edges,OppositeFaces, OppositeVertices, NeighborVerticesInFace, OrientedVertices from Neighborhoods(M)
+Faces, Vertices, Edges,OppositeFaces, VertexOneRing, OrientedOppositeFaces, OppositeVertices, NeighborVerticesInFace, OrientedVertices, EdgeIndex from Neighborhoods(M)
 M : TriangleMesh
 x_i ∈ ℝ^3  
 V, E, F = ElementSets( M )
@@ -17,18 +17,25 @@ i, j, k = OrientedVertices(f)
 N(f) = ((x_j- x_i)×(x_k-x_i))/(2area(f)) where f ∈ F,
 i,j,k = OrientedVertices(f)
 
-l(e) = ‖x_j - x_i‖ where e ∈ E, 
-i, j = Vertices(e)
+l(i, j) = ‖x_j - x_i‖ where i,j ∈ V
 
-ϕ(e) = π - atan2(‖`N_1`×`N_1`‖, `N_1`⋅`N_2`) where e ∈ E, 
-`f_1`, `f_2` = OppositeFaces(e),
-`N_1` = N(`f_1`),
-`N_2` = N(`f_2`)
+ϕ(i, j) = atan2(e⋅(`n_1`×`n_2`), `n_1`⋅`n_2`) where i, j ∈ V, 
+e = (x_j-x_i)/||x_j-x_i||,
+`f_1`, `f_2` = OrientedOppositeFaces(i, j),
+`n_1` = N(`f_1`),
+`n_2` = N(`f_2`)
+
+cot(k, j, i) = cos/sin where i,j,k ∈ V,
+oj, oi = OrientedVertices(k, j, i),
+cos = (x_oj - x_k)⋅(x_oi-x_k),
+sin = ||(x_oj - x_k)×(x_oi-x_k)||
+
  
-KN(i) = 1/2 (sum_(e ∈ Edges(i)) ϕ_e/l_e (x_j - x_i) where v=Vertices(e) - {i}, j=v_1) where i ∈ V
- 
-HN(v) = 1/2 (sum_(e ∈ Edges(v))(`cot(α)` + `cot(β)`) 
-where i,j = Vertices(e), 
-k,p = OppositeVertices(e), 
-`cot(α)`=(x_i - x_k)⋅(x_j-x_k)/||(x_i - x_k)×(x_j-x_k)||,  
-`cot(β)`=(x_j - x_p)⋅(x_i-x_p)/||(x_j - x_p)×(x_i-x_p)|| ) where v ∈ V
+KN(i) = 1/2 (sum_(j ∈ VertexOneRing(i)) ϕ_ij/l_ij (x_j - x_i)) where i ∈ V
+
+
+HN(i) = 1/2 (sum_(j ∈ VertexOneRing(i))(`cot(α)` + `cot(β)`) (x_i - x_j) 
+where k, p = OppositeVertices(i, j),
+`cot(α)` = cot(k, j, i),
+`cot(β)` = cot(p, i, j) ) where i ∈ V
+

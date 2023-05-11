@@ -74,6 +74,7 @@ find_package(OpenMP)
 # Add polyscope
 message("\n\n == CMAKE recursively building Polyscope\n")
 add_subdirectory("../../deps/polyscope" deps/polyscope)
+add_subdirectory("../../deps/openmesh" deps/openmesh)
 
 # Add libIGL
 # With these lines commented out, we use libIGL in "header only" mode.  Uncomment to recurse and get the full package.
@@ -92,6 +93,7 @@ set(SRCS
   main.cpp
   ../../src/Connectivity.cpp
   ../../src/TriangleMesh.cpp
+  ../../src/PolygonMesh.cpp
   ../../src/PointCloud.cpp
   ../../src/dec_util.cpp
   ../../src/MeshHelper.cpp
@@ -103,7 +105,8 @@ add_executable(main "${SRCS}")
 target_include_directories(main PUBLIC "${CMAKE_CURRENT_SOURCE_DIR}/../../deps/libigl/include")
 target_include_directories(main PUBLIC "${CMAKE_CURRENT_SOURCE_DIR}/../../include/")
 target_include_directories(main PUBLIC "${CMAKE_CURRENT_SOURCE_DIR}/../../deps/polyscope/deps/args")
+target_include_directories(main PUBLIC ${OPENMESH_INCLUDE_DIRS})
 
 
 # Link settings
-target_link_libraries(main polyscope Eigen3::Eigen autodiff::autodiff OpenMP::OpenMP_CXX)
+target_link_libraries(main polyscope Eigen3::Eigen autodiff::autodiff OpenMeshCore OpenMP::OpenMP_CXX)

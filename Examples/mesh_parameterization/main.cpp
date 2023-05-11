@@ -51,92 +51,10 @@ inline Eigen::MatrixXd tutte_embedding(
   return P;
 }
 
-// double& operator +(double& lhs, const autodiff::var& rhs ) { 
-//     std::cout<<"called"<<std::endl;
-//     lhs = rhs.expr->val; 
-//     return lhs; 
-// }
-
-
-template <typename Derived>
-auto col_mat(
-        const Eigen::MatrixBase<Derived>& _v0,
-        const Eigen::MatrixBase<Derived>& _v1)
-{
-    using T = typename Derived::Scalar;
-    Eigen::Matrix<T, Derived::RowsAtCompileTime, 2 * Derived::ColsAtCompileTime> M;
-
-    M << _v0, _v1;
-
-    return M;
-}
-
-/**
- * Assemble matrix from column vectors.
- */
-template <typename Derived>
-auto col_mat(
-        const Eigen::MatrixBase<Derived>& _v0,
-        const Eigen::MatrixBase<Derived>& _v1,
-        const Eigen::MatrixBase<Derived>& _v2)
-{
-    using T = typename Derived::Scalar;
-    Eigen::Matrix<T, Derived::RowsAtCompileTime, 3 * Derived::ColsAtCompileTime> M;
-
-    M << _v0, _v1, _v2;
-
-    return M;
-}
-
-// void test(){
-//     Eigen::MatrixXi Tet(2,3);
-//     Tet <<
-//     0,1,2,
-//     2,1,3; 
-//     TriangleMesh triangle_mesh_0;
-//     triangle_mesh_0.initialize(Tet);
-
-//     std::vector<Eigen::Matrix<double, 2, 1>> P;
-//     Eigen::Matrix<double, 2, 1> P0;
-//     P0 << 0, 1;
-//     Eigen::Matrix<double, 2, 1> P1;
-//     P1 << 1, 0;
-//     Eigen::Matrix<double, 2, 1> P2;
-//     P2 << 1, 2;
-//     Eigen::Matrix<double, 2, 1> P3;
-//     P3 << 2, 1; 
-//     P.push_back(P0);
-//     P.push_back(P1);
-//     P.push_back(P2);
-//     P.push_back(P3);
-//     //
-//     std::vector<Eigen::Matrix<double, 2, 1>> x;
-//     Eigen::Matrix<double, 2, 1> x0;
-//     x0 << 0.2, 1;
-//     Eigen::Matrix<double, 2, 1> x1;
-//     x1 << 1.3, 0;
-//     Eigen::Matrix<double, 2, 1> x2;
-//     x2 << 1, 2.1;
-//     Eigen::Matrix<double, 2, 1> x3;
-//     x3 << 2.4, 1.1; 
-//     x.push_back(x0);
-//     x.push_back(x1);
-//     x.push_back(x2);
-//     x.push_back(x3);
-
-//     iheartmesh ihla(triangle_mesh_0, P);
-
-//     double energy = ihla.Energy(x);
-
-//     // vertex one ring
-//     std::cout<<"energy: "<<energy<<std::endl;
-// }
-
 Eigen::MatrixXd project_positive_definite(
         Eigen::MatrixXd& _H,
         const double& _eigenvalue_eps=default_hessian_projection_eps)
 {  
-        // std::cout<<"_H is: "<<_H<<std::endl;
         // Compute eigen-decomposition (of symmetric matrix)
         Eigen::SelfAdjointEigenSolver<Eigen::MatrixXd> eig(_H);
         Eigen::MatrixXd D = eig.eigenvalues().asDiagonal();
@@ -151,11 +69,9 @@ Eigen::MatrixXd project_positive_definite(
                 all_positive = false;
             }
         }
-
         // Do nothing if all eigenvalues were already at least eps
         if (all_positive)
             return _H;
-
         // Re-assemble matrix using clamped eigenvalues
         Eigen::MatrixXd res = eig.eigenvectors() * D * eig.eigenvectors().transpose();
         return res;
@@ -168,42 +84,39 @@ Eigen::SparseMatrix<double > psd(
     Eigen::SparseMatrix<double > mat = x.sparseView();
     // get local hessian matrix
     Eigen::MatrixXd local_mat = Eigen::MatrixXd::Zero(6, 6);
-    std::vector<int> row_map({-1, -1, -1, -1, -1, -1});
-    std::vector<int> col_map({-1, -1, -1, -1, -1, -1});
-    std::map<int, int> to_local_row_map;
-    std::map<int, int> to_local_col_map;
+    std::vector<int> dim_map({-1, -1, -1, -1, -1, -1});
+    std::map<int, int> to_local_map;
     int cnt = 0;
-    int row_index = 0;
-    int col_index = 0;
+    int dim_index = 0;
     for (int k=0; k<mat.outerSize(); ++k){
         for (SparseMatrix<double>::InnerIterator it(mat,k); it; ++it){
             int cur_row = it.row();   // row index
             int cur_col = it.col();   // col index (here it is equal to k)
-            if (to_local_row_map.find( cur_row ) == to_local_row_map.end() )
+            if (to_local_map.find( cur_row ) == to_local_map.end() )
             {
-                to_local_row_map[cur_row] = row_index;
-                row_map[row_index] = cur_row; 
-                row_index++;
+                to_local_map[cur_row] = dim_index;
+                dim_map[dim_index] = cur_row; 
+                dim_index++;
             }
-            if (to_local_col_map.find( cur_col ) == to_local_col_map.end())
+            if (to_local_map.find( cur_col ) == to_local_map.end())
             {
-                to_local_col_map[cur_col] = col_index;
-                col_map[col_index] = cur_col; 
-                col_index++;
+                to_local_map[cur_col] = dim_index;
+                dim_map[dim_index] = cur_col; 
+                dim_index++;
             } 
-            local_mat(to_local_row_map[cur_row], to_local_col_map[cur_col]) = it.value();
+            local_mat(to_local_map[cur_row], to_local_map[cur_col]) = it.value();
             cnt++;
         }
     }
-    if (col_index != 6 || row_index != 6)
+    if (dim_index != 6)
     {
-        std::cout<<"col_index: "<<col_index<<", row_index:"<<row_index<<std::endl;
+        std::cout<<"dim_index: "<<dim_index<<std::endl;
         Eigen::MatrixXd new_x = x;
         Eigen::MatrixXd res = project_positive_definite(new_x);
         return res.sparseView();
     }
     // assert(col_index == 6 && row_index == 6);
-    // std::cout<<"local_mat is:"<<local_mat<<std::endl;
+    // std::cout<<"local_mat is:\n"<<local_mat<<std::endl;
     //
     Eigen::MatrixXd projected_hessian = project_positive_definite(local_mat);
     // std::cout<<"rss is:"<<(projected_hessian-local_mat).norm()<<std::endl;
@@ -215,7 +128,7 @@ Eigen::SparseMatrix<double > psd(
     {
         for (int j = 0; j < 6; ++j)
         {
-            tripletList.push_back(Eigen::Triplet<double>(row_map[i], col_map[j], projected_hessian(i, j)));
+            tripletList.push_back(Eigen::Triplet<double>(dim_map[i], dim_map[j], projected_hessian(i, j)));
         } 
     }
     Eigen::SparseMatrix<double > proj_mat(mat.rows(), mat.cols());
@@ -231,7 +144,6 @@ Eigen::MatrixXi F; // #F-by-3 indices into V
 Eigen::MatrixXd P; // #V-by-2 3D vertex positions
 TriangleMesh triangle_mesh;
 double eps = 1e-2;
-
 
 
 bool armijo_condition(
@@ -270,10 +182,9 @@ Eigen::VectorXd my_line_search(
     {
         x_new = _x0 + s * _d;
         const double f_new = _eval(x_new);
-        std::cout<<"f_new:"<<f_new<<", i:"<<i<<std::endl;
         if (armijo_condition(_f, f_new, s, _d, _g, _armijo_const)){
-            std::cout<<"i:"<<i<<std::endl;
-            std::cout<<"x_new:"<<x_new<<std::endl;
+            // std::cout<<"i:"<<i<<std::endl;
+            // std::cout<<"x_new:"<<x_new<<std::endl;
             return x_new;
         }
 
@@ -290,7 +201,7 @@ Eigen::VectorXd my_line_search(
 
 bool step(){
     bool has_updated = true;
-    iheartmesh ihla(triangle_mesh, x̄, x, eps, psd);
+    iheartmesh ihla(triangle_mesh, x̄, x, eps, psd, INFINITY);
     std::cout<<"Cur energy is "<<ihla.e<<std::endl;
     Eigen::VectorXd g = ihla.G;
     Eigen::SparseMatrix<double> H = ihla.H;
@@ -310,8 +221,8 @@ bool step(){
     Eigen::VectorXd d = _solver.solve(-g);
 
 
-    std::cout<<"H is "<<H<<std::endl; 
-    std::cout<<"d is "<<d<<std::endl; 
+    // std::cout<<"H is "<<H<<std::endl; 
+    // std::cout<<"d is "<<d<<std::endl; 
     Eigen::VectorXd vec_x(x.size()*2);
     for (int i = 0; i < x.size(); ++i)
     {
@@ -332,12 +243,12 @@ bool step(){
     //
     if (-0.5 * d.dot(g) > convergence_eps){
         vec_x = my_line_search(vec_x, d, to_double(ihla.e), g, energy_func);
-        std::cout<<"vec_x:"<<vec_x<<std::endl;
+        // std::cout<<"vec_x:"<<vec_x<<std::endl;
         for (int i = 0; i < x.size(); ++i)
         {
             x[i] = vec_x.segment(2*i, 2);
         }
-        std::cout<<"x updated"<<std::endl;
+        // std::cout<<"x updated"<<std::endl;
     }
     else{
         has_updated = false;
@@ -368,6 +279,7 @@ void myCallback()
         }
     } 
     if (ImGui::Button("Run ")){
+        start = std::chrono::duration_cast<std::chrono::seconds>(std::chrono::system_clock::now().time_since_epoch()).count();
         for (int i = 0; i < 1000; ++i)
         {
             bool updated = step();
@@ -376,6 +288,8 @@ void myCallback()
                 std::cout<<"Finished at i: "<<i<<std::endl;
                 break;
             }
+            auto end = std::chrono::duration_cast<std::chrono::seconds>(std::chrono::system_clock::now().time_since_epoch()).count();
+            std::cout<<"cur:"<<i<<", time:" <<end-start<< " seconds"<<std::endl;
         }
     } 
 }
@@ -386,9 +300,11 @@ int main(int argc, const char * argv[]) {
     // igl::readOBJ("../../../models/armadillo_cut_low.obj", V, F);
     // igl::readOBJ("../../../models/bunny_cut.obj", V, F);
     // igl::readOBJ("../../../models/snail.obj", V, F);
-    // igl::readOBJ("../../../models/camel-head.obj", V, F);
+    // igl::readOBJ("../../../models/camel-head.obj", V, F); 
+    // igl::readOBJ("../../../models/camelhead-decimate-qslim.obj", V, F); 
+    igl::readOBJ("../../../models/animal-straightened-decimated.obj", V, F); 
     // igl::readOFF("../../../models/camelhead.off", V, F);
-    igl::readOBJ("/Users/pressure/Downloads/mesh_source/models/camel-head_54.obj", V, F);
+    // igl::readOBJ("/Users/pressure/Downloads/mesh_source/models/camel-head_54.obj", V, F);
     // std::ifstream input_file("../../../models/1004826.stl");
     // igl::readSTL(input_file, V, F, N);
     P = tutte_embedding(V, F); // #V-by-2 2D vertex positions
@@ -407,7 +323,8 @@ int main(int argc, const char * argv[]) {
     polyscope::init();  
     polyscope::registerSurfaceMesh("my mesh", V, F);
     polyscope::state::userCallback = myCallback;
-    polyscope::getSurfaceMesh("my mesh")->updateVertexPositions2D(x);
+    polyscope::getSurfaceMesh("my mesh")->updateVertexPositions2D(x);   // original parameterization 
+    // polyscope::getSurfaceMesh("my mesh")->updateVertexPositions(x̄);  // original 3D shape
     polyscope::show();
 
     return 0;
