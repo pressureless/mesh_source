@@ -2,111 +2,89 @@ cmake_minimum_required(VERSION 3.19.0)
 
 project("Vertex normal")
 
-set(CMAKE_CXX_STANDARD 14)
+set(CMAKE_CXX_STANDARD 17)
 set(CMAKE_CXX_STANDARD_REQUIRED ON)
 set(CMAKE_CXX_EXTENSIONS OFF)
 
-# Maybe stop from CMAKEing in the wrong place
-if (CMAKE_BINARY_DIR STREQUAL CMAKE_SOURCE_DIR)
-    message(FATAL_ERROR "Source and build directories cannot be the same. Go use the /build directory.")
-endif()
+include(FetchContent)
+set(FETCHCONTENT_QUIET FALSE)
+# autodiff
+FetchContent_Declare(
+    autodiff
+    GIT_REPOSITORY https://github.com/autodiff/autodiff
+    GIT_TAG v1.0.1
+    GIT_SHALLOW TRUE
+    GIT_PROGRESS TRUE
+)
+set(AUTODIFF_BUILD_TESTS OFF CACHE INTERNAL "")
+set(AUTODIFF_BUILD_PYTHON OFF CACHE INTERNAL "")
+set(AUTODIFF_BUILD_EXAMPLES OFF CACHE INTERNAL "")
+set(AUTODIFF_BUILD_DOCS OFF CACHE INTERNAL "")
+FetchContent_MakeAvailable( autodiff )
 
-set(CMAKE_BUILD_TYPE "Debug")
-### Configure output locations
-set(CMAKE_ARCHIVE_OUTPUT_DIRECTORY ${CMAKE_BINARY_DIR}/lib)
-set(CMAKE_LIBRARY_OUTPUT_DIRECTORY ${CMAKE_BINARY_DIR}/lib)
-set(CMAKE_RUNTIME_OUTPUT_DIRECTORY ${CMAKE_BINARY_DIR}/bin)
+# eigen
+FetchContent_Declare(
+    Eigen3
+    GIT_REPOSITORY https://gitlab.com/libeigen/eigen
+    GIT_TAG 3.3
+    GIT_SHALLOW TRUE
+    GIT_PROGRESS TRUE
+)
+set(EIGEN_BUILD_DOC OFF CACHE INTERNAL "")
+set(EIGEN_SPLIT_LARGE_TESTS OFF CACHE INTERNAL "")
+set(EIGEN_BUILD_BTL OFF CACHE INTERNAL "")
+set(EIGEN_BUILD_PKGCONFIG OFF CACHE INTERNAL "")
+set(EIGEN_BUILD_TESTING OFF CACHE INTERNAL "")
+set(BUILD_TESTING OFF CACHE INTERNAL "")
+FetchContent_MakeAvailable( Eigen3 )
 
-### Compiler options
-set( CMAKE_EXPORT_COMPILE_COMMANDS 1 ) # Emit a compile flags file to support completion engines 
+# libigl
+FetchContent_Declare(
+    libigl
+    GIT_REPOSITORY https://github.com/libigl/libigl
+    GIT_TAG v2.4.0
+    GIT_SHALLOW TRUE
+    GIT_PROGRESS TRUE
+)
+FetchContent_MakeAvailable( libigl )
 
-if ("${CMAKE_CXX_COMPILER_ID}" MATCHES "Clang" OR "${CMAKE_CXX_COMPILER_ID}" STREQUAL "GNU")
-  # using Clang (linux or apple) or GCC
-  message("Using clang/gcc compiler flags")
-  SET(BASE_CXX_FLAGS "-std=c++11 -Wall -Wextra -g3")
-  SET(DISABLED_WARNINGS " -Wno-unused-parameter -Wno-unused-variable -Wno-unused-function -Wno-deprecated-declarations -Wno-missing-braces")
-  SET(TRACE_INCLUDES " -H -Wno-error=unused-command-line-argument")
-
-  if ("${CMAKE_CXX_COMPILER_ID}" MATCHES "Clang")
-    message("Setting clang-specific options")
-    SET(BASE_CXX_FLAGS "${BASE_CXX_FLAGS} -ferror-limit=5 -fcolor-diagnostics")
-    # SET(CMAKE_CXX_FLAGS_DEBUG          "-fsanitize=address -fno-limit-debug-info")
-  elseif ("${CMAKE_CXX_COMPILER_ID}" STREQUAL "GNU")
-    SET(BASE_CXX_FLAGS "${BASE_CXX_FLAGS} -fmax-errors=5")
-    message("Setting gcc-specific options")
-    SET(DISABLED_WARNINGS "${DISABLED_WARNINGS} -Wno-maybe-uninitialized -Wno-format-zero-length -Wno-unused-but-set-parameter -Wno-unused-but-set-variable")
-  endif()
+# polyscope
+FetchContent_Declare(
+    polyscope
+    GIT_REPOSITORY https://github.com/nmwsharp/polyscope
+    GIT_TAG v1.3.0
+    GIT_SHALLOW TRUE
+    GIT_PROGRESS TRUE
+)
+FetchContent_MakeAvailable( polyscope )
 
 
-  SET(CMAKE_CXX_FLAGS "${BASE_CXX_FLAGS} ${DISABLED_WARNINGS}")
-  #SET(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} ${TRACE_INCLUDES}") # uncomment if you need to track down where something is getting included from
-  SET(CMAKE_CXX_FLAGS_DEBUG          "${CMAKE_CXX_FLAGS_DEBUG} -g3")
-  SET(CMAKE_CXX_FLAGS_MINSIZEREL     "-Os -DNDEBUG")
-  SET(CMAKE_CXX_FLAGS_RELEASE        "-march=native -O3 -DNDEBUG")
-  set(CMAKE_CXX_FLAGS_RELEASE "-O3")
-  SET(CMAKE_CXX_FLAGS_RELWITHDEBINFO "-O3 -g")
-elseif ("${CMAKE_CXX_COMPILER_ID}" STREQUAL "MSVC")
-  # using Visual Studio C++
-  message("Using Visual Studio compiler flags")
-  set(BASE_CXX_FLAGS "${CMAKE_CXX_FLAGS} /W4")
-  set(BASE_CXX_FLAGS "${CMAKE_CXX_FLAGS} /MP") # parallel build
-  SET(DISABLED_WARNINGS "${DISABLED_WARNINGS} /wd\"4267\"")  # ignore conversion to smaller type (fires more aggressively than the gcc version, which is annoying)
-  SET(DISABLED_WARNINGS "${DISABLED_WARNINGS} /wd\"4244\"")  # ignore conversion to smaller type (fires more aggressively than the gcc version, which is annoying)
-  SET(DISABLED_WARNINGS "${DISABLED_WARNINGS} /wd\"4305\"")  # ignore truncation on initialization
-  SET(CMAKE_CXX_FLAGS "${BASE_CXX_FLAGS} ${DISABLED_WARNINGS}")
-  set(CMAKE_CXX_FLAGS_RELEASE "${CMAKE_CXX_FLAGS_RELEASE} /MD")
-  set(CMAKE_CXX_FLAGS_DEBUG "${CMAKE_CXX_FLAGS_DEBUG} /MDd")
-
-  add_definitions(/D "_CRT_SECURE_NO_WARNINGS")
-  add_definitions(-DNOMINMAX)
-  add_definitions(-D_USE_MATH_DEFINES)
-
-else()
-  # unrecognized
-  message( FATAL_ERROR "Unrecognized compiler [${CMAKE_CXX_COMPILER_ID}]" )
-endif()
-
-# Find Eigen
-find_package(Eigen3 3.3 REQUIRED NO_MODULE)
-find_package(autodiff REQUIRED NO_MODULE)
-find_package(OpenMP)
-
-# Add polyscope
-message("\n\n == CMAKE recursively building Polyscope\n")
-add_subdirectory("../../deps/polyscope" deps/polyscope)
-add_subdirectory("../../deps/openmesh" deps/openmesh)
-
-# Add libIGL
-# With these lines commented out, we use libIGL in "header only" mode.  Uncomment to recurse and get the full package.
-# (and see the libIGL build documentation)
-#message("\n\n == CMAKE recursively building libIGL\n")
-#set(LIBIGL_WITH_EMBREE            OFF CACHE BOOL "Use Embree")
-#set(LIBIGL_WITH_OPENGL            OFF CACHE BOOL "Use OpenGL")
-#set(LIBIGL_WITH_OPENGL            OFF CACHE BOOL "Use OpenGL")
-#set(LIBIGL_WITH_OPENGL_GLFW       OFF CACHE BOOL "Use GLFW"  )
-#set(LIBIGL_WITH_OPENGL_GLFW_IMGUI OFF CACHE BOOL "Use ImGui" )
-#add_subdirectory("../../deps/libIGL")
+# OpenMesh
+set(OPENMESH_DOCS false CACHE BOOL "Enable or disable building of documentation")
+FetchContent_Declare(openmesh
+    GIT_REPOSITORY https://www.graphics.rwth-aachen.de:9000/OpenMesh/OpenMesh.git
+    GIT_TAG        OpenMesh-8.1
+)
+FetchContent_MakeAvailable(openmesh)
+add_definitions(-DNO_DECREMENT_DEPRECATED_WARNINGS)
 
 
 # Create an executable
 set(SRCS 
   main.cpp
   ../../src/Connectivity.cpp
-  ../../src/TriangleMesh.cpp
-  ../../src/PolygonMesh.cpp
-  ../../src/PointCloud.cpp
   ../../src/dec_util.cpp
   ../../src/MeshHelper.cpp
+  ../../src/PointCloud.cpp
+  ../../src/PolygonMesh.cpp
+  ../../src/Tetrahedron.cpp
+  ../../src/TriangleMesh.cpp
 )
 
 add_executable(main "${SRCS}")
 
 # Include settings
-target_include_directories(main PUBLIC "${CMAKE_CURRENT_SOURCE_DIR}/../../deps/libigl/include")
 target_include_directories(main PUBLIC "${CMAKE_CURRENT_SOURCE_DIR}/../../include/")
-target_include_directories(main PUBLIC "${CMAKE_CURRENT_SOURCE_DIR}/../../deps/polyscope/deps/args")
-target_include_directories(main PUBLIC ${OPENMESH_INCLUDE_DIRS})
-
 
 # Link settings
-target_link_libraries(main polyscope Eigen3::Eigen autodiff::autodiff OpenMeshCore OpenMP::OpenMP_CXX)
+target_link_libraries(main igl::core polyscope Eigen3::Eigen autodiff::autodiff OpenMeshCore)
