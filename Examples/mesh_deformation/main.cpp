@@ -263,7 +263,7 @@ void myCallback()
         start = std::chrono::duration_cast<std::chrono::seconds>(std::chrono::system_clock::now().time_since_epoch()).count();
         step();
         auto end = std::chrono::duration_cast<std::chrono::seconds>(std::chrono::system_clock::now().time_since_epoch()).count();
-        std::cout <<end-start<< " seconds init"<<std::endl;
+        std::cout <<end-start<< " seconds for current step"<<std::endl;
     }
     if (ImGui::Button("Run/Stop Simulation"))
     {
