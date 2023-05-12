@@ -12,6 +12,7 @@
 #include <Eigen/Sparse> 
 #include <igl/readOBJ.h>
 #include <igl/readMESH.h>
+#include <igl/writeMESH.h>
 #include <igl/harmonic.h>
 #include <igl/boundary_loop.h>
 #include <igl/per_vertex_normals.h>
@@ -283,7 +284,7 @@ void myCallback()
 
 
 void load_cube_tet(){
-    igl::readMESH("../../../models/cube_v729.mesh", V, T, F);
+    igl::readMESH(DATA_PATH /  "cube_v729.mesh", V, T, F);
     tet_mesh.initialize(T);
     for (int i = 0; i < V.rows(); ++i)
     {
