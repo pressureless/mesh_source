@@ -18,8 +18,8 @@
 #include "polyscope/surface_mesh.h"
 #include "polyscope/point_cloud.h"
 #include "PointCloud.h"
-#include <experimental/filesystem> 
-namespace fs = std::experimental::filesystem;
+#include <filesystem>
+namespace fs = std::filesystem;
 inline fs::path DATA_PATH = fs::path(DATA_PATH_STR);
 
 int main(int argc, const char * argv[]) {
