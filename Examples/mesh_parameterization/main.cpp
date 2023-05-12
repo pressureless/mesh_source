@@ -303,9 +303,9 @@ int main(int argc, const char * argv[]) {
     // igl::readOBJ("../../../models/armadillo_cut_low.obj", V, F);
     // igl::readOBJ("../../../models/bunny_cut.obj", V, F);
     // igl::readOBJ("../../../models/snail.obj", V, F);
-    // igl::readOBJ("../../../models/camel-head.obj", V, F); 
+    igl::readOBJ(DATA_PATH /  "camel-head.obj", V, F); 
     // igl::readOBJ("../../../models/camelhead-decimate-qslim.obj", V, F); 
-    igl::readOBJ(DATA_PATH / "animal-straightened-decimated.obj", V, F); 
+    // igl::readOBJ(DATA_PATH / "animal-straightened-decimated.obj", V, F); 
     // igl::readOFF("../../../models/camelhead.off", V, F);
     // igl::readOBJ("/Users/pressure/Downloads/mesh_source/models/camel-head_54.obj", V, F);
     // std::ifstream input_file("../../../models/1004826.stl");
