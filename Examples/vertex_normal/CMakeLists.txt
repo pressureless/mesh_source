@@ -1,6 +1,7 @@
 cmake_minimum_required(VERSION 3.19.0)
 
 project("Vertex normal")
+set(CMAKE_BUILD_TYPE "Release")
 
 set(CMAKE_CXX_STANDARD 17)
 set(CMAKE_CXX_STANDARD_REQUIRED ON)
@@ -71,6 +72,10 @@ set(SRCS
 )
 
 add_executable(main "${SRCS}")
+
+# Set models path
+target_compile_definitions(main PUBLIC DATA_PATH_STR="${CMAKE_CURRENT_SOURCE_DIR}/../../models")
+
 
 # Include settings
 target_include_directories(main PUBLIC "${CMAKE_CURRENT_SOURCE_DIR}/../../include/")
