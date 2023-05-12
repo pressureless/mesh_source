@@ -283,7 +283,7 @@ void myCallback()
 
 
 void load_cube_tet(){
-    igl::readMESH("../../../models/cube_36.1.mesh", V, T, F);
+    igl::readMESH("../../../models/cube_v729.mesh", V, T, F);
     tet_mesh.initialize(T);
     for (int i = 0; i < V.rows(); ++i)
     {
@@ -352,7 +352,7 @@ void load_cube_tet(){
     }
 }
 void load_test(){
-    igl::readMESH(DATA_PATH / "cube_v729.mesh", V, T, F);
+    igl::readMESH(DATA_PATH / "cube_386.1.mesh", V, T, F);
     tet_mesh.initialize(T);
     for (int i = 0; i < V.rows(); ++i)
     {
