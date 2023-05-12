@@ -21,6 +21,9 @@
 
 #include <OpenMesh/Core/IO/MeshIO.hh>
 #include <OpenMesh/Core/Mesh/PolyMesh_ArrayKernelT.hh>
+#include <experimental/filesystem> 
+namespace fs = std::experimental::filesystem;
+inline fs::path DATA_PATH = fs::path(DATA_PATH_STR);
 
 typedef OpenMesh::PolyMesh_ArrayKernelT<>  MyMesh;
 
@@ -28,11 +31,11 @@ int main(int argc, const char * argv[]) {
     Eigen::MatrixXd meshV;
     Eigen::MatrixXi meshF;
     // igl::readOBJ("/Users/pressure/Downloads/mesh_source/models/cube.obj", meshV, meshF);
-    igl::readOBJ("/Users/pressure/Downloads/mesh_source/models/polygon/suzanne.obj", meshV, meshF);
+    igl::readOBJ(DATA_PATH /  "polygon/suzanne.obj", meshV, meshF);
     // igl::readOBJ("/Users/pressure/Documents/git/meshtaichi/vertex_normal/models/bunny.obj", meshV, meshF);
 
     MyMesh mesh;
-    if (!OpenMesh::IO::read_mesh(mesh, "/Users/pressure/Downloads/mesh_source/models/polygon/suzanne.obj")){
+    if (!OpenMesh::IO::read_mesh(mesh, DATA_PATH / "polygon/suzanne.obj")){
         std::cout<<"file i/o error"<<std::endl;
     }
     std::vector<std::vector<int> > faces;

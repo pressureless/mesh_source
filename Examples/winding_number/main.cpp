@@ -23,6 +23,9 @@
 #include "dec_util.h"
 #include "polyscope/polyscope.h"
 #include "polyscope/surface_mesh.h"
+#include <experimental/filesystem> 
+namespace fs = std::experimental::filesystem;
+inline fs::path DATA_PATH = fs::path(DATA_PATH_STR);
 
 
 int main(int argc, const char * argv[]) {
@@ -33,7 +36,7 @@ int main(int argc, const char * argv[]) {
     Eigen::MatrixXi T, G;
     // igl::readOBJ("/Users/pressure/Downloads/mesh_source/models/cube.obj", meshV, meshF);
     // igl::readOBJ("../../../models/small_bunny.obj", meshV, meshF);
-    igl::readMESH("../../../models/big-sigcat.mesh", meshV, T, meshF);
+    igl::readMESH(DATA_PATH / "big-sigcat.mesh", meshV, T, meshF);
     // igl::readOBJ("/Users/pressure/Documents/git/meshtaichi/vertex_normal/models/bunny.obj", meshV, meshF);
     igl::barycenter(meshV, T, BC);
 

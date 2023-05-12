@@ -32,6 +32,9 @@
 #include <autodiff/reverse/var/eigen.hpp>
 #include <ctime>
 #include <chrono>
+#include <experimental/filesystem> 
+namespace fs = std::experimental::filesystem;
+inline fs::path DATA_PATH = fs::path(DATA_PATH_STR);
 using namespace autodiff;
 
 int start;
@@ -302,7 +305,7 @@ int main(int argc, const char * argv[]) {
     // igl::readOBJ("../../../models/snail.obj", V, F);
     // igl::readOBJ("../../../models/camel-head.obj", V, F); 
     // igl::readOBJ("../../../models/camelhead-decimate-qslim.obj", V, F); 
-    igl::readOBJ("../../../models/animal-straightened-decimated.obj", V, F); 
+    igl::readOBJ(DATA_PATH / "animal-straightened-decimated.obj", V, F); 
     // igl::readOFF("../../../models/camelhead.off", V, F);
     // igl::readOBJ("/Users/pressure/Downloads/mesh_source/models/camel-head_54.obj", V, F);
     // std::ifstream input_file("../../../models/1004826.stl");

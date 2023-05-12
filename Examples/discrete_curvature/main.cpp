@@ -16,6 +16,9 @@
 #include "dec_util.h"
 #include "polyscope/polyscope.h"
 #include "polyscope/surface_mesh.h"
+#include <experimental/filesystem> 
+namespace fs = std::experimental::filesystem;
+inline fs::path DATA_PATH = fs::path(DATA_PATH_STR);
 
 
 int main(int argc, const char * argv[]) {
@@ -24,7 +27,7 @@ int main(int argc, const char * argv[]) {
     // igl::readOBJ("/Users/pressure/Downloads/mesh_source/models/cube.obj", meshV, meshF);
     // igl::readOBJ("../../../models/small_bunny.obj", meshV, meshF);
     // igl::readOBJ("../../../models/cactus.obj", meshV, meshF);
-    igl::readOBJ("../../../models/yog.obj", meshV, meshF);
+    igl::readOBJ(DATA_PATH / "yog.obj", meshV, meshF);
     // igl::readOBJ("../../../models/cartoon-elephant.obj", meshV, meshF);
     // igl::readOBJ("../../../models/keenan-ogre.obj", meshV, meshF);
     // igl::readOBJ("../../../models/elephant.obj", meshV, meshF);

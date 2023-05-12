@@ -18,12 +18,15 @@
 #include "polyscope/surface_mesh.h"
 #include "polyscope/point_cloud.h"
 #include "PointCloud.h"
+#include <experimental/filesystem> 
+namespace fs = std::experimental::filesystem;
+inline fs::path DATA_PATH = fs::path(DATA_PATH_STR);
 
 int main(int argc, const char * argv[]) {
     Eigen::MatrixXd meshV;
     Eigen::MatrixXi meshF;
     // igl::readOBJ("/Users/pressure/Downloads/mesh_source/models/cube.obj", meshV, meshF);
-    igl::readOBJ("../../../models/small_bunny.obj", meshV, meshF);
+    igl::readOBJ(DATA_PATH / "small_bunny.obj", meshV, meshF);
     // igl::readOBJ("../../../models/sphere.obj", meshV, meshF);
     // igl::readOBJ("/Users/pressure/Documents/git/meshtaichi/vertex_normal/models/bunny.obj", meshV, meshF);
     // Initialize triangle mesh

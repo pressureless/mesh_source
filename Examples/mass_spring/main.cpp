@@ -20,6 +20,9 @@
 #include "dec_util.h"
 #include "polyscope/polyscope.h"
 #include "polyscope/surface_mesh.h"
+#include <experimental/filesystem> 
+namespace fs = std::experimental::filesystem;
+inline fs::path DATA_PATH = fs::path(DATA_PATH_STR);
 
 double bottom_z = 0;
 
@@ -114,7 +117,7 @@ int main(int argc, const char * argv[]) {
     // igl::readOBJ("/Users/pressure/Downloads/mesh_source/models/cube.obj", meshV, meshF);
     // igl::readOBJ("/Users/pressure/Downloads/mesh_source/models/small_bunny.obj", meshV, meshF);
     // igl::readOBJ("/Users/pressure/Downloads/mesh_source/models/sphere3.obj", meshV, meshF);
-    igl::readOBJ("../../../../models/small_disk.obj", meshV, meshF);
+    igl::readOBJ(DATA_PATH / "small_disk.obj", meshV, meshF);
     // igl::readOBJ("/Users/pressure/Downloads/mesh_source/models/sphere.obj", meshV, meshF);
     // igl::readOBJ("/Users/pressure/Downloads/libigl-polyscope-project/input/sphere.obj", meshV, meshF);
     // igl::readOBJ("/Users/pressure/Documents/git/ddg-exercises/input/sphere.obj", meshV, meshF);

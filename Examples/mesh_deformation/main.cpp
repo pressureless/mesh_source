@@ -25,6 +25,9 @@
 #include <autodiff/reverse/var/eigen.hpp>
 #include <ctime>
 #include <chrono>
+#include <experimental/filesystem> 
+namespace fs = std::experimental::filesystem;
+inline fs::path DATA_PATH = fs::path(DATA_PATH_STR);
 using namespace autodiff;
 
 int start;
@@ -349,7 +352,7 @@ void load_cube_tet(){
     }
 }
 void load_test(){
-    igl::readMESH("../../../models/cube_386.1.mesh", V, T, F);
+    igl::readMESH(DATA_PATH / "cube_386.1.mesh", V, T, F);
     tet_mesh.initialize(T);
     for (int i = 0; i < V.rows(); ++i)
     {
