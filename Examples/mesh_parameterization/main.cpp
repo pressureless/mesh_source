@@ -22,7 +22,8 @@
 #include <igl/per_vertex_normals.h>
 #include <igl/map_vertices_to_circle.h>
 #include <igl/per_vertex_normals.h>
-
+#include <igl/seam_edges.h>
+// #include <igl/png/readPNG.h>
 // #include <igl/opengl/glfw/Viewer.h>
 #include "MeshHelper.h"
 #include "iheartmesh.h"
@@ -43,9 +44,12 @@ double default_hessian_projection_eps = 1e-9;
 std::vector<Eigen::Matrix<double, 2, 1>> x;
 std::vector<Eigen::Matrix<double, 3, 1>> x̄;
 Eigen::MatrixXd V; // #V-by-3 3D vertex positions
-Eigen::MatrixXd N; // #V-by-3 3D vertex positions
+Eigen::MatrixXd N; // #V-by-3 3D vertex normals
 Eigen::MatrixXi F; // #F-by-3 indices into V
 Eigen::MatrixXd P; // #V-by-2 3D vertex positions
+Eigen::MatrixXd TC;
+Eigen::MatrixXi FTC;
+Eigen::MatrixXi FN;
 TriangleMesh triangle_mesh;
 double eps = 1e-2;
 
@@ -57,6 +61,21 @@ inline Eigen::MatrixXd tutte_embedding(
   Eigen::MatrixXd bc; // #constr-by-2 2D boundary constraint positions
   Eigen::MatrixXd P; // #V-by-2 2D vertex positions
   igl::boundary_loop(_F, b); // Identify boundary vertices
+  std::cout<<"b is :"<<b<<std::endl;
+  igl::map_vertices_to_circle(_V, b, bc); // Set boundary vertex positions
+  igl::harmonic(_F, b, bc, 1, P); // Compute interior vertex positions
+
+  return P;
+}
+
+inline Eigen::MatrixXd tutte_embedding(
+    const Eigen::MatrixXd& _V,
+    const Eigen::MatrixXi& _F,
+    const Eigen::VectorXi& b
+    )
+{
+  Eigen::MatrixXd bc; // #constr-by-2 2D boundary constraint positions
+  Eigen::MatrixXd P; // #V-by-2 2D vertex positions
   igl::map_vertices_to_circle(_V, b, bc); // Set boundary vertex positions
   igl::harmonic(_F, b, bc, 1, P); // Compute interior vertex positions
 
@@ -278,22 +297,71 @@ void myCallback()
     } 
 }
 
-
-int main(int argc, const char * argv[]) {
+void load_boundary_mesh(){
     // igl::readOBJ("../../../models/armadillo_cut_low.obj", V, F);
     // igl::readOBJ("../../../models/armadillo_cut_low.obj", V, F);
     // igl::readOBJ("../../../models/bunny_cut.obj", V, F);
     // igl::readOBJ("../../../models/snail.obj", V, F);
     // igl::readOBJ(DATA_PATH / "camel-head.obj", V, F); 
-    igl::readOBJ(DATA_PATH / "camelhead-decimate-qslim.obj", V, F); 
-    // igl::readOBJ(DATA_PATH / "animal-straightened-decimated.obj", V, F); 
     // igl::readOFF("../../../models/camelhead.off", V, F);
     // igl::readOBJ("/Users/pressure/Downloads/mesh_source/models/camel-head_54.obj", V, F);
     // std::ifstream input_file("../../../models/1004826.stl");
+    igl::readOBJ(DATA_PATH / "camelhead-decimate-qslim.obj", V, TC, N, F, FTC, FN); 
     // igl::readSTL(input_file, V, F, N);
-    Eigen::MatrixXd N;
-    igl::per_vertex_normals(V,F,N); 
     P = tutte_embedding(V, F); // #V-by-2 2D vertex positions
+}
+
+void load_uv_mesh(){
+    igl::readOBJ(DATA_PATH / "animal-straightened-decimated.obj", V, TC, N, F, FTC, FN); 
+    Eigen::MatrixXi seams;
+    Eigen::MatrixXi boundary;
+    Eigen::MatrixXi foldovers;
+    igl::seam_edges(V, TC, F, FTC, seams, boundary, foldovers);
+    // std::cout<<"seams:"<<seams<<std::endl;
+    // std::cout<<"boundary:"<<boundary<<std::endl;
+    // std::cout<<"foldovers:"<<foldovers<<std::endl;
+    for (int i = 0; i < foldovers.rows(); ++i)
+    {
+        std::cout<<"foldovers: "<<F(foldovers( i, 0 ), foldovers( i, 1 ) )<<", :"<<F(foldovers( i, 0 ), (foldovers( i, 1 ) + 1) % 3 )<<std::endl;
+    }
+    Eigen::MatrixXi bound(seams.rows(), 2);
+    std::map<int, int> cnt_map;
+    for (int i = 0; i < seams.rows(); ++i)
+    {
+        bound(i, 0) = F( seams( i, 0 ), seams( i, 1 ) );
+        bound(i, 1) = F( seams( i, 0 ), (seams( i, 1 ) + 1) % 3 );
+        if (cnt_map.find( bound(i, 0) ) == cnt_map.end())
+        {
+            cnt_map[bound(i, 0)] = 1;
+        }
+        else{
+            cnt_map[bound(i, 0)]++;
+        }
+        //
+        if (cnt_map.find( bound(i, 1) ) == cnt_map.end())
+        {
+            cnt_map[bound(i, 1)] = 1;
+        }
+        else{
+            cnt_map[bound(i, 1)]++;
+        }
+    }
+    std::cout<<"bound:"<<bound.rows()<<std::endl;
+    for (std::map<int,int>::iterator it=cnt_map.begin(); it!=cnt_map.end(); ++it)
+    {
+        if (it->second != 2)
+        {
+            std::cout<<"not loop, cnt:"<<it->second<<", v:"<<it->first<<std::endl;
+        }
+    }
+    P = tutte_embedding(V, F, bound); // #V-by-2 2D vertex positions
+}
+
+int main(int argc, const char * argv[]) {
+    load_boundary_mesh();   // mesh with boundary
+    // load_uv_mesh();         // boundary in uv
+
+    igl::per_vertex_normals(V,F,N); 
 
     triangle_mesh.initialize(F);
     // std::cout<<"P is:"<<P<<std::endl;
