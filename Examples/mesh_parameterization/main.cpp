@@ -313,53 +313,77 @@ void load_boundary_mesh(){
 
 void load_uv_mesh(){
     igl::readOBJ(DATA_PATH / "animal-straightened-decimated.obj", V, TC, N, F, FTC, FN); 
-    Eigen::MatrixXi seams;
-    Eigen::MatrixXi boundary;
-    Eigen::MatrixXi foldovers;
-    igl::seam_edges(V, TC, F, FTC, seams, boundary, foldovers);
-    // std::cout<<"seams:"<<seams<<std::endl;
-    // std::cout<<"boundary:"<<boundary<<std::endl;
-    // std::cout<<"foldovers:"<<foldovers<<std::endl;
-    for (int i = 0; i < foldovers.rows(); ++i)
+    // std::cout<<"V rows:"<<V.rows()<<std::endl;
+    // std::cout<<"F rows:"<<F.rows()<<std::endl;
+    // std::cout<<"TC rows:"<<TC.rows()<<std::endl;
+    // std::cout<<"FTC rows:"<<FTC.rows()<<std::endl;
+    Eigen::VectorXi bb; // #constr boundary constraint indices
+    
+    igl::boundary_loop(FTC, bb);
+
+    Eigen::MatrixXd newV(TC.rows(), 3);
+    for (int i = 0; i < FTC.rows(); ++i)
     {
-        std::cout<<"foldovers: "<<F(foldovers( i, 0 ), foldovers( i, 1 ) )<<", :"<<F(foldovers( i, 0 ), (foldovers( i, 1 ) + 1) % 3 )<<std::endl;
+        newV.row(FTC(i, 0)) = V.row(F(i, 0)); 
+        newV.row(FTC(i, 1)) = V.row(F(i, 1)); 
+        newV.row(FTC(i, 2)) = V.row(F(i, 2)); 
     }
-    Eigen::MatrixXi bound(seams.rows(), 2);
-    std::map<int, int> cnt_map;
-    for (int i = 0; i < seams.rows(); ++i)
-    {
-        bound(i, 0) = F( seams( i, 0 ), seams( i, 1 ) );
-        bound(i, 1) = F( seams( i, 0 ), (seams( i, 1 ) + 1) % 3 );
-        if (cnt_map.find( bound(i, 0) ) == cnt_map.end())
-        {
-            cnt_map[bound(i, 0)] = 1;
-        }
-        else{
-            cnt_map[bound(i, 0)]++;
-        }
-        //
-        if (cnt_map.find( bound(i, 1) ) == cnt_map.end())
-        {
-            cnt_map[bound(i, 1)] = 1;
-        }
-        else{
-            cnt_map[bound(i, 1)]++;
-        }
-    }
-    std::cout<<"bound:"<<bound.rows()<<std::endl;
-    for (std::map<int,int>::iterator it=cnt_map.begin(); it!=cnt_map.end(); ++it)
-    {
-        if (it->second != 2)
-        {
-            std::cout<<"not loop, cnt:"<<it->second<<", v:"<<it->first<<std::endl;
-        }
-    }
-    P = tutte_embedding(V, F, bound); // #V-by-2 2D vertex positions
+    F = FTC;
+    V = newV;
+    P = tutte_embedding(V, F, bb); // #V-by-2 2D vertex positions
+
+    
+    Eigen::Matrix<unsigned char,Eigen::Dynamic,Eigen::Dynamic> R,G,B,A;
+
+    igl::png::readPNG(DATA_PATH / "animal_640-minimized-global.png",R,G,B,A);
+
+    // Eigen::MatrixXi seams;
+    // Eigen::MatrixXi boundary;
+    // Eigen::MatrixXi foldovers;
+    // igl::seam_edges(V, TC, F, FTC, seams, boundary, foldovers);
+    // // std::cout<<"seams:"<<seams<<std::endl;
+    // // std::cout<<"boundary:"<<boundary<<std::endl;
+    // // std::cout<<"foldovers:"<<foldovers<<std::endl;
+    // for (int i = 0; i < foldovers.rows(); ++i)
+    // {
+    //     std::cout<<"foldovers: "<<F(foldovers( i, 0 ), foldovers( i, 1 ) )<<", :"<<F(foldovers( i, 0 ), (foldovers( i, 1 ) + 1) % 3 )<<std::endl;
+    // }
+    // Eigen::MatrixXi bound(seams.rows(), 2);
+    // std::map<int, int> cnt_map;
+    // for (int i = 0; i < seams.rows(); ++i)
+    // {
+    //     bound(i, 0) = F( seams( i, 0 ), seams( i, 1 ) );
+    //     bound(i, 1) = F( seams( i, 0 ), (seams( i, 1 ) + 1) % 3 );
+    //     if (cnt_map.find( bound(i, 0) ) == cnt_map.end())
+    //     {
+    //         cnt_map[bound(i, 0)] = 1;
+    //     }
+    //     else{
+    //         cnt_map[bound(i, 0)]++;
+    //     }
+    //     //
+    //     if (cnt_map.find( bound(i, 1) ) == cnt_map.end())
+    //     {
+    //         cnt_map[bound(i, 1)] = 1;
+    //     }
+    //     else{
+    //         cnt_map[bound(i, 1)]++;
+    //     }
+    // }
+    // std::cout<<"bound:"<<bound.rows()<<std::endl;
+    // for (std::map<int,int>::iterator it=cnt_map.begin(); it!=cnt_map.end(); ++it)
+    // {
+    //     if (it->second != 2)
+    //     {
+    //         std::cout<<"not loop, cnt:"<<it->second<<", v:"<<it->first<<std::endl;
+    //     }
+    // }
+    // P = tutte_embedding(V, F, bound); // #V-by-2 2D vertex positions
 }
 
 int main(int argc, const char * argv[]) {
-    load_boundary_mesh();   // mesh with boundary
-    // load_uv_mesh();         // boundary in uv
+    // load_boundary_mesh();   // mesh with boundary
+    load_uv_mesh();         // boundary in uv
 
     igl::per_vertex_normals(V,F,N); 
 
@@ -374,9 +398,9 @@ int main(int argc, const char * argv[]) {
     polyscope::init();  
     polyscope::registerSurfaceMesh("my mesh", V, F);
     polyscope::state::userCallback = myCallback;
-    polyscope::getSurfaceMesh("my mesh")->updateVertexPositions2D(x);   // original parameterization 
+    // polyscope::getSurfaceMesh("my mesh")->updateVertexPositions2D(x);   // original parameterization 
     polyscope::getSurfaceMesh("my mesh")->addVertexColorQuantity("vColor", N.array()*0.5+0.5);
-    // polyscope::getSurfaceMesh("my mesh")->updateVertexPositions(x̄);  // original 3D shape
+    polyscope::getSurfaceMesh("my mesh")->updateVertexPositions(x̄);  // original 3D shape
     polyscope::show();
 
     return 0;
