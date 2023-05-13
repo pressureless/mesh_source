@@ -21,6 +21,7 @@
 #include <igl/boundary_loop.h>
 #include <igl/per_vertex_normals.h>
 #include <igl/map_vertices_to_circle.h>
+#include <igl/per_vertex_normals.h>
 
 // #include <igl/opengl/glfw/Viewer.h>
 #include "MeshHelper.h"
@@ -39,6 +40,14 @@ using namespace autodiff;
 
 int start;
 double default_hessian_projection_eps = 1e-9;
+std::vector<Eigen::Matrix<double, 2, 1>> x;
+std::vector<Eigen::Matrix<double, 3, 1>> x̄;
+Eigen::MatrixXd V; // #V-by-3 3D vertex positions
+Eigen::MatrixXd N; // #V-by-3 3D vertex positions
+Eigen::MatrixXi F; // #F-by-3 indices into V
+Eigen::MatrixXd P; // #V-by-2 3D vertex positions
+TriangleMesh triangle_mesh;
+double eps = 1e-2;
 
 inline Eigen::MatrixXd tutte_embedding(
     const Eigen::MatrixXd& _V,
@@ -118,12 +127,8 @@ Eigen::SparseMatrix<double > psd(
         Eigen::MatrixXd res = project_positive_definite(new_x);
         return res.sparseView();
     }
-    // assert(col_index == 6 && row_index == 6);
-    // std::cout<<"local_mat is:\n"<<local_mat<<std::endl;
     //
     Eigen::MatrixXd projected_hessian = project_positive_definite(local_mat);
-    // std::cout<<"rss is:"<<(projected_hessian-local_mat).norm()<<std::endl;
-    // std::cout<<"cnt is:"<<cnt<<std::endl;
     // map to global hessian
     std::vector<Eigen::Triplet<double>> tripletList;
     tripletList.reserve(36);
@@ -138,16 +143,6 @@ Eigen::SparseMatrix<double > psd(
     proj_mat.setFromTriplets(tripletList.begin(), tripletList.end());
     return proj_mat;  
 }
-
-std::vector<Eigen::Matrix<double, 2, 1>> x;
-std::vector<Eigen::Matrix<double, 3, 1>> x̄;
-Eigen::MatrixXd V; // #V-by-3 3D vertex positions
-Eigen::MatrixXd N; // #V-by-3 3D vertex positions
-Eigen::MatrixXi F; // #F-by-3 indices into V
-Eigen::MatrixXd P; // #V-by-2 3D vertex positions
-TriangleMesh triangle_mesh;
-double eps = 1e-2;
-
 
 bool armijo_condition(
         const double _f_curr,
@@ -175,10 +170,8 @@ Eigen::VectorXd my_line_search(
     assert( _x0.size() == _g.size());
     if (_s_max <= 0.0)
         std::cout<<"Max step size not positive."<<std::endl;
-
     // Also try a step size of 1.0 (if valid)
     const bool try_one = _s_max > 1.0;
-
     Eigen::VectorXd x_new = _x0;
     double s = _s_max;
     for (int i = 0; i < _max_iters; ++i)
@@ -196,7 +189,6 @@ Eigen::VectorXd my_line_search(
         else
             s *= _shrink;
     }
-
     std::cout<<"Line search couldn't find improvement. Gradient max norm is " << _g.cwiseAbs().maxCoeff()<<std::endl;
     return _x0;
 }
@@ -208,24 +200,13 @@ bool step(){
     std::cout<<"Cur energy is "<<ihla.e<<std::endl;
     Eigen::VectorXd g = ihla.G;
     Eigen::SparseMatrix<double> H = ihla.H;
-    // Projected Newton with conjugate gradient solver
-    int max_iters = 1000;
+    // Projected Newton w
     double convergence_eps = 1e-2;
-    // Eigen::ConjugateGradient<Eigen::SparseMatrix<double> > cg_solver;
-    //
-    // Eigen::SparseMatrix<double> id(x.size()*2, x.size()*2);
-    // id.setIdentity();
-    // Eigen::SparseMatrix<double> param = H + 1e-4 * id;
-    // Eigen::VectorXd d = cg_solver.compute(param).solve(-g);
-
     Eigen::SimplicialLDLT<Eigen::SparseMatrix<double>> _solver;
     _solver.analyzePattern(H);
     _solver.factorize(H);
     Eigen::VectorXd d = _solver.solve(-g);
-
-
-    // std::cout<<"H is "<<H<<std::endl; 
-    // std::cout<<"d is "<<d<<std::endl; 
+    //
     Eigen::VectorXd vec_x(x.size()*2);
     for (int i = 0; i < x.size(); ++i)
     {
@@ -303,13 +284,15 @@ int main(int argc, const char * argv[]) {
     // igl::readOBJ("../../../models/armadillo_cut_low.obj", V, F);
     // igl::readOBJ("../../../models/bunny_cut.obj", V, F);
     // igl::readOBJ("../../../models/snail.obj", V, F);
-    igl::readOBJ(DATA_PATH /  "camel-head.obj", V, F); 
-    // igl::readOBJ("../../../models/camelhead-decimate-qslim.obj", V, F); 
+    // igl::readOBJ(DATA_PATH / "camel-head.obj", V, F); 
+    igl::readOBJ(DATA_PATH / "camelhead-decimate-qslim.obj", V, F); 
     // igl::readOBJ(DATA_PATH / "animal-straightened-decimated.obj", V, F); 
     // igl::readOFF("../../../models/camelhead.off", V, F);
     // igl::readOBJ("/Users/pressure/Downloads/mesh_source/models/camel-head_54.obj", V, F);
     // std::ifstream input_file("../../../models/1004826.stl");
     // igl::readSTL(input_file, V, F, N);
+    Eigen::MatrixXd N;
+    igl::per_vertex_normals(V,F,N); 
     P = tutte_embedding(V, F); // #V-by-2 2D vertex positions
 
     triangle_mesh.initialize(F);
@@ -319,14 +302,12 @@ int main(int argc, const char * argv[]) {
         x.push_back(P.row(i));
         x̄.push_back(V.row(i));
     }
-    std::cout<<"x.size is:"<<x.size()<<std::endl;
-    std::cout<<"x̄.size is:"<<x̄.size()<<std::endl;
-
     // View resulting parametrization
     polyscope::init();  
     polyscope::registerSurfaceMesh("my mesh", V, F);
     polyscope::state::userCallback = myCallback;
     polyscope::getSurfaceMesh("my mesh")->updateVertexPositions2D(x);   // original parameterization 
+    polyscope::getSurfaceMesh("my mesh")->addVertexColorQuantity("vColor", N.array()*0.5+0.5);
     // polyscope::getSurfaceMesh("my mesh")->updateVertexPositions(x̄);  // original 3D shape
     polyscope::show();
 
