@@ -36,7 +36,7 @@ int main(int argc, const char * argv[]) {
     Eigen::MatrixXi T, G;
     // igl::readOBJ("/Users/pressure/Downloads/mesh_source/models/cube.obj", meshV, meshF);
     // igl::readOBJ("../../../models/small_bunny.obj", meshV, meshF);
-    igl::readMESH(DATA_PATH / "big-sigcat.mesh", meshV, T, meshF);
+    igl::readMESH(argc>1?argv[1]:DATA_PATH / "big-sigcat.mesh", meshV, T, meshF);
     // igl::readOBJ("/Users/pressure/Documents/git/meshtaichi/vertex_normal/models/bunny.obj", meshV, meshF);
     igl::barycenter(meshV, T, BC);
 

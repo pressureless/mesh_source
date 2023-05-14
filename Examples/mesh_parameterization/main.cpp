@@ -333,9 +333,9 @@ void load_uv_mesh(){
     P = tutte_embedding(V, F, bb); // #V-by-2 2D vertex positions
 
     
-    Eigen::Matrix<unsigned char,Eigen::Dynamic,Eigen::Dynamic> R,G,B,A;
+    // Eigen::Matrix<unsigned char,Eigen::Dynamic,Eigen::Dynamic> R,G,B,A;
 
-    igl::png::readPNG(DATA_PATH / "animal_640-minimized-global.png",R,G,B,A);
+    // igl::png::readPNG(DATA_PATH / "animal_640-minimized-global.png",R,G,B,A);
 
     // Eigen::MatrixXi seams;
     // Eigen::MatrixXi boundary;

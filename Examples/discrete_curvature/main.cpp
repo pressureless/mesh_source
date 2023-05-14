@@ -27,7 +27,7 @@ int main(int argc, const char * argv[]) {
     // igl::readOBJ("/Users/pressure/Downloads/mesh_source/models/cube.obj", meshV, meshF);
     // igl::readOBJ("../../../models/small_bunny.obj", meshV, meshF);
     // igl::readOBJ("../../../models/cactus.obj", meshV, meshF);
-    igl::readOBJ(DATA_PATH / "yog.obj", meshV, meshF);
+    igl::readOBJ(argc>1?argv[1]: DATA_PATH / "yog.obj", meshV, meshF);
     // igl::readOBJ("../../../models/cartoon-elephant.obj", meshV, meshF);
     // igl::readOBJ("../../../models/keenan-ogre.obj", meshV, meshF);
     // igl::readOBJ("../../../models/elephant.obj", meshV, meshF);

@@ -31,7 +31,7 @@ int main(int argc, const char * argv[]) {
     Eigen::MatrixXd meshV;
     Eigen::MatrixXi meshF;
     // igl::readOBJ("/Users/pressure/Downloads/mesh_source/models/cube.obj", meshV, meshF);
-    igl::readOBJ(DATA_PATH /  "polygon/suzanne.obj", meshV, meshF);
+    igl::readOBJ(argc>1?argv[1]: DATA_PATH /  "polygon/suzanne.obj", meshV, meshF);
     // igl::readOBJ("/Users/pressure/Documents/git/meshtaichi/vertex_normal/models/bunny.obj", meshV, meshF);
 
     MyMesh mesh;
