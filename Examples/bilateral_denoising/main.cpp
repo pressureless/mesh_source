@@ -11,6 +11,7 @@
 #include <Eigen/Dense>
 #include <Eigen/Sparse> 
 #include <igl/readOBJ.h>
+#include <igl/writeOBJ.h>
 #include <igl/readOFF.h>
 #include "MeshHelper.h"
 #include "iheartmesh.h"
@@ -66,6 +67,14 @@ void myCallback()
         {
             update();
         }
+    } 
+    if (ImGui::Button("Save current positions to file")){
+        Eigen::MatrixXd VV(meshV.rows(), 3);
+        for (int i = 0; i < VV.rows(); ++i)
+        {
+            VV.row(i) = P[i];
+        }
+        igl::writeOBJ(DATA_PATH / "updated_torusnoise.obj", VV, meshF);
     } 
 }
 
