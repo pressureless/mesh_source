@@ -47,17 +47,11 @@ FetchContent_Declare(
     GIT_SHALLOW TRUE
     GIT_PROGRESS TRUE
 )
+set(LIBIGL_GLFW ON CACHE INTERNAL "")
+set(LIBIGL_PNG ON CACHE INTERNAL "")
+set(LIBIGL_IMGUI ON CACHE INTERNAL "")
 FetchContent_MakeAvailable( libigl )
 
-# polyscope
-FetchContent_Declare(
-    polyscope
-    GIT_REPOSITORY https://github.com/nmwsharp/polyscope
-    GIT_TAG v1.3.0
-    GIT_SHALLOW TRUE
-    GIT_PROGRESS TRUE
-)
-FetchContent_MakeAvailable( polyscope )
 
 # OpenMP
 find_package(OpenMP)
@@ -83,4 +77,4 @@ target_compile_definitions(main PUBLIC DATA_PATH_STR="${CMAKE_CURRENT_SOURCE_DIR
 target_include_directories(main PUBLIC "${CMAKE_CURRENT_SOURCE_DIR}/../../include/")
 
 # Link settings
-target_link_libraries(main igl::core polyscope Eigen3::Eigen autodiff::autodiff OpenMP::OpenMP_CXX)
+target_link_libraries(main igl::core igl::png igl::glfw igl::imgui Eigen3::Eigen autodiff::autodiff OpenMP::OpenMP_CXX)
