@@ -10,7 +10,6 @@ bp_j ∈ ℝ^3 : boundary positions
 w ∈ ℝ : penalty
 ε ∈ ℝ : eps
 psd : ℝ^(p×p) -> ℝ^(p×p) sparse
-infinity: ℝ
 
 V, E, F, C = ElementSets(M)
 
@@ -19,25 +18,25 @@ vol_i,j,k,l = ⅙ |[x̄_j-x̄_i x̄_k-x̄_i x̄_l-x̄_i]| where i,j,k,l ∈ V
 mr(s) = [x̄_b-x̄_a x̄_c-x̄_a x̄_d-x̄_a] where s ∈ C,
 a, b, c, d = OrientedVertices(s)
 
-S(s, x) = { infinity if |m| <= 0
+S(s, x) = { ∞ if |m| <= 0
   vol_abcd (‖J‖² + ‖J⁻¹‖²) otherwise where s ∈ C, x_i ∈ ℝ^3,
 a, b, c, d = OrientedVertices(s),
 m = [x_b-x_a x_c-x_a x_d-x_a],
 J = m mr(s)⁻¹
 
-EXPS(s, x) = { infinity if |m| <= 0
+EXPS(s, x) = { ∞ if |m| <= 0
   vol_abcd exp(‖J‖² + ‖J⁻¹‖²) otherwise where s ∈ C, x_i ∈ ℝ^3,
 a, b, c, d = OrientedVertices(s),
 m = [x_b-x_a x_c-x_a x_d-x_a],
 J = m mr(s)⁻¹
 
-AMIPS(s, x) = { infinity if |m| <= 0
+AMIPS(s, x) = { ∞ if |m| <= 0
   vol_abcd exp(½(‖J‖²/|J| + ½(|J|+|J⁻¹|))) otherwise where s ∈ C, x_i ∈ ℝ^3,
 a, b, c, d = OrientedVertices(s),
 m = [x_b-x_a x_c-x_a x_d-x_a],
 J = m mr(s)⁻¹
 
-CAMIPS(s, x) = { infinity if |m| <= 0
+CAMIPS(s, x) = { ∞ if |m| <= 0
   vol_abcd (‖J‖²/|J|^⅔) otherwise where s ∈ C, x_i ∈ ℝ^3,
 a, b, c, d = OrientedVertices(s),
 m = [x_b-x_a x_c-x_a x_d-x_a],
@@ -64,11 +63,10 @@ H = sum_(i ∈ C) psd(∂²S(i, x)/∂x²) + psd(∂²E2/∂x²)
 #include "Tetrahedron.h"
 
 using namespace iheartmesh;
-
-using DT = autodiff::var;
-using MatrixD = Eigen::Matrix<autodiff::var, Eigen::Dynamic, Eigen::Dynamic>;
-using VectorD = Eigen::Matrix<autodiff::var, Eigen::Dynamic, 1>;
 struct heartlib {
+    using DT = autodiff::var;
+    using MatrixD = Eigen::Matrix<autodiff::var, Eigen::Dynamic, Eigen::Dynamic>;
+    using VectorD = Eigen::Matrix<autodiff::var, Eigen::Dynamic, 1>;
     std::vector<int > V;
     std::vector<int > E;
     std::vector<int > F;
@@ -81,7 +79,6 @@ struct heartlib {
     std::vector<Eigen::Matrix<double, 3, 1>> x̄;
     std::vector<Eigen::Matrix<DT, 3, 1>> x;
     autodiff::ArrayXvar new_x;
-    double infinity;
     double vol(
         const int & i,
         const int & j,
@@ -136,7 +133,7 @@ struct heartlib {
         // J = m mr(s)⁻¹
         Eigen::Matrix<REAL, 3, 3> J = m * mr(s).inverse();
         if((m).determinant() <= 0){
-            S_ret = this->infinity;
+            S_ret = INFINITY;
         }
         else{
             S_ret = vol(a, b, c, d) * (pow((J).norm(), 2) + pow((J.inverse()).norm(), 2));
@@ -167,7 +164,7 @@ struct heartlib {
         // J = m mr(s)⁻¹
         Eigen::Matrix<REAL, 3, 3> J = m * mr(s).inverse();
         if((m).determinant() <= 0){
-            EXPS_ret = this->infinity;
+            EXPS_ret = INFINITY;
         }
         else{
             EXPS_ret = vol(a, b, c, d) * exp(pow((J).norm(), 2) + pow((J.inverse()).norm(), 2));
@@ -198,7 +195,7 @@ struct heartlib {
         // J = m mr(s)⁻¹
         Eigen::Matrix<REAL, 3, 3> J = m * mr(s).inverse();
         if((m).determinant() <= 0){
-            AMIPS_ret = this->infinity;
+            AMIPS_ret = INFINITY;
         }
         else{
             AMIPS_ret = vol(a, b, c, d) * exp((1/double(2)) * (pow((J).norm(), 2) / REAL((J).determinant()) + (1/double(2)) * ((J).determinant() + (J.inverse()).determinant())));
@@ -229,7 +226,7 @@ struct heartlib {
         // J = m mr(s)⁻¹
         Eigen::Matrix<REAL, 3, 3> J = m * mr(s).inverse();
         if((m).determinant() <= 0){
-            CAMIPS_ret = this->infinity;
+            CAMIPS_ret = INFINITY;
         }
         else{
             CAMIPS_ret = vol(a, b, c, d) * (pow((J).norm(), 2) / REAL(pow((J).determinant(), (2/double(3)))));
@@ -824,8 +821,7 @@ struct heartlib {
         const std::vector<Eigen::Matrix<double, 3, 1>> & bp,
         const double & w,
         const double & ε,
-        const std::function<Eigen::SparseMatrix<double>(Eigen::MatrixXd)> & psd,
-        const double & infinity)
+        const std::function<Eigen::SparseMatrix<double>(Eigen::MatrixXd)> & psd)
     :
     _TetrahderonNeighborhoods(M)
     {
@@ -855,7 +851,6 @@ struct heartlib {
         {
             this->x[i] = new_x.segment(3*i, 3);
         }
-        this->infinity = infinity;
         // E2 = w sum_j ‖bp_j - x_(bx_j)‖²
         DT sum_0 = 0;
         for(int j=1; j<=bp.size(); j++){
@@ -865,7 +860,7 @@ struct heartlib {
         // e = sum_(i ∈ C) S(i, x) + E2
         DT sum_1 = 0;
         for(int i : this->C){
-            sum_1 += CAMIPS(i, this->x);
+            sum_1 += S(i, this->x);
         }
         e = sum_1 + E2;
         // G = ∂e/∂x
@@ -873,7 +868,7 @@ struct heartlib {
         // H = sum_(i ∈ C) psd(∂²S(i, x)/∂x²) + psd(∂²E2/∂x²)
         Eigen::SparseMatrix<double> sum_2(3*dim_1, 3*dim_1);
         for(int i : this->C){
-            sum_2 += psd(hessian(CAMIPS(i, this->x), this->new_x));
+            sum_2 += psd(hessian(S(i, this->x), this->new_x));
         }
         H = sum_2 + psd(hessian(E2, this->new_x));
     }

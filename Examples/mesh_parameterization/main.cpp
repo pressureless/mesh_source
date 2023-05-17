@@ -217,7 +217,7 @@ Eigen::VectorXd my_line_search(
 
 bool step(){
     bool has_updated = true;
-    heartlib ihla(triangle_mesh, x̄, x, eps, psd, INFINITY);
+    heartlib ihla(triangle_mesh, x̄, x, eps, psd);
     std::cout<<"Cur energy is "<<ihla.e<<std::endl;
     Eigen::VectorXd g = ihla.G;
     Eigen::SparseMatrix<double> H = ihla.H;

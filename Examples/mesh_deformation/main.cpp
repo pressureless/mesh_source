@@ -202,7 +202,7 @@ std::vector<Eigen::Matrix<double, 3, 1>> bp;
 
 bool step(){
     bool has_updated = true;
-    heartlib ihla(tet_mesh, x̄, x, bc, bp, weight, eps, psd, INFINITY);
+    heartlib ihla(tet_mesh, x̄, x, bc, bp, weight, eps, psd);
 
     auto end = std::chrono::duration_cast<std::chrono::seconds>(std::chrono::system_clock::now().time_since_epoch()).count();
     std::cout <<end-start<< " seconds init"<<std::endl;
@@ -236,6 +236,7 @@ bool step(){
         } 
         double e = 0;
         for(int i : ihla.C){
+            e += ihla.S(i, v_x);
             e += ihla.CAMIPS(i, v_x);
         } 
         return e;

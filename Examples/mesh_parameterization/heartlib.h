@@ -7,7 +7,6 @@ x̄_i ∈ ℝ^3 : rest pos in 3D
 x_i ∈ ℝ^2 : current pos in 2D
 ε ∈ ℝ : eps
 psd : ℝ^(p×p) -> ℝ^(p×p) sparse
-infinity: ℝ
 
 V, E, F = ElementSets(M)
 
@@ -21,7 +20,7 @@ br = ((x̄_b-x̄_a)⋅b1, 0),
 cr = ((x̄_c-x̄_a)⋅b1, (x̄_c-x̄_a)⋅b2)
 
 
-S(f, x) = { infinity if |m| <= 0
+S(f, x) = { ∞ if |m| <= 0
     A (‖J‖² + ‖J⁻¹‖²) otherwise where f ∈ F, x_i ∈ ℝ^2,
 a, b, c = OrientedVertices(f),
 m = [x_b-x_a x_c-x_a],
@@ -47,11 +46,10 @@ G = ∂e/∂x
 #include "TriangleMesh.h"
 
 using namespace iheartmesh;
-
-using DT = autodiff::var;
-using MatrixD = Eigen::Matrix<autodiff::var, Eigen::Dynamic, Eigen::Dynamic>;
-using VectorD = Eigen::Matrix<autodiff::var, Eigen::Dynamic, 1>;
 struct heartlib {
+    using DT = autodiff::var;
+    using MatrixD = Eigen::Matrix<autodiff::var, Eigen::Dynamic, Eigen::Dynamic>;
+    using VectorD = Eigen::Matrix<autodiff::var, Eigen::Dynamic, 1>;
     std::vector<int > V;
     std::vector<int > E;
     std::vector<int > F;
@@ -62,7 +60,6 @@ struct heartlib {
     std::vector<Eigen::Matrix<double, 3, 1>> x̄;
     std::vector<Eigen::Matrix<DT, 2, 1>> x;
     autodiff::ArrayXvar new_x;
-    double infinity;
     Eigen::Matrix<double, 2, 2> mr(
         const int & f)
     {
@@ -122,12 +119,12 @@ struct heartlib {
         Eigen::Matrix<REAL, 2, 2> m = m_0;
 
         // A = ½ |mr(f)|
-        REAL A = (1/REAL(2)) * (mr(f)).determinant();
+        REAL A = (1/double(2)) * (mr(f)).determinant();
 
         // J = m mr(f)⁻¹
         Eigen::Matrix<REAL, 2, 2> J = m * mr(f).inverse();
         if((m).determinant() <= 0){
-            S_ret = this->infinity;
+            S_ret = INFINITY;
         }
         else{
             S_ret = A * (pow((J).norm(), 2) + pow((J.inverse()).norm(), 2));
@@ -728,8 +725,7 @@ struct heartlib {
         const std::vector<Eigen::Matrix<double, 3, 1>> & x̄,
         const std::vector<Eigen::Matrix<double, 2, 1>> & x,
         const double & ε,
-        const std::function<Eigen::SparseMatrix<double>(Eigen::MatrixXd)> & psd,
-        const double & infinity)
+        const std::function<Eigen::SparseMatrix<double>(Eigen::MatrixXd)> & psd)
     :
     _Neighborhoods(M)
     {
@@ -755,7 +751,6 @@ struct heartlib {
         {
             this->x[i] = new_x.segment(2*i, 2);
         }
-        this->infinity = infinity;
         // e = sum_(i ∈ F) S(i, x)
         DT sum_0 = 0;
         for(int i : this->F){
