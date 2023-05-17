@@ -46,6 +46,8 @@ G = ∂e/∂x
 #include "type_helper.h"
 #include "TriangleMesh.h"
 
+using namespace heartlang;
+
 using DT = autodiff::var;
 using MatrixD = Eigen::Matrix<autodiff::var, Eigen::Dynamic, Eigen::Dynamic>;
 using VectorD = Eigen::Matrix<autodiff::var, Eigen::Dynamic, 1>;

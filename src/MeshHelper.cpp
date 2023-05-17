@@ -1,6 +1,6 @@
 #include "MeshHelper.h"
 
-using namespace iheartmesh;
+namespace heartlang {
 
 // std::set<int> vector_to_vertices(const TriangleMesh& mesh, const Eigen::VectorXi& vi){
 // 	return mesh.vector_to_vertices(vi);
@@ -56,4 +56,6 @@ std::set<int> ValueSet(Eigen::SparseMatrix<int> target, int value, bool is_row){
       }
     } 
     return result;
+}
+
 }

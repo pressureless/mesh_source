@@ -5,7 +5,7 @@
 #include "dec_util.h"
 #include "Tetrahedron.h"
 
-using namespace iheartmesh;
+namespace heartlang {
 
 Tetrahedron::Tetrahedron(){
 
@@ -159,4 +159,6 @@ std::tuple< Eigen::SparseMatrix<int>, Eigen::SparseMatrix<int>, Eigen::SparseMat
 
 std::tuple< Eigen::SparseMatrix<int>, Eigen::SparseMatrix<int>, Eigen::SparseMatrix<int> > Tetrahedron::UnsignedBoundaryMatrices() const{
     return std::tuple< Eigen::SparseMatrix<int>, Eigen::SparseMatrix<int>, Eigen::SparseMatrix<int> >(this->pos_bm1, this->pos_bm2, this->pos_bm3);
+}
+
 }

@@ -31,6 +31,8 @@ namespace fs = std::filesystem;
 inline fs::path DATA_PATH = fs::path(DATA_PATH_STR);
 using namespace autodiff;
 
+using namespace heartlang;
+
 int start;
 double default_hessian_projection_eps = 1e-9;
 Eigen::MatrixXd project_positive_definite(

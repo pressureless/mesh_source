@@ -5,7 +5,7 @@
 #include "dec_util.h"
 #include "PointCloud.h"
 
-using namespace iheartmesh;
+namespace heartlang {
 
 std::vector<std::vector<size_t>> GetPointNeighbors(std::vector<Eigen::VectorXd>& P, int k){
     std::unique_ptr<PointCloudWrapper> impl;
@@ -188,4 +188,6 @@ Eigen::SparseMatrix<int> PointCloud::BoundaryMatrices() const{
 
 Eigen::SparseMatrix<int> PointCloud::UnsignedBoundaryMatrices() const{
     return this->pos_bm1;
+}
+
 }

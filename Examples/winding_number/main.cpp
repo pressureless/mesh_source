@@ -29,6 +29,8 @@ using namespace Eigen;
 using namespace std;
 inline fs::path DATA_PATH = fs::path(DATA_PATH_STR);
 
+using namespace heartlang;
+
 Eigen::MatrixXd V,BC,VV; 
 Eigen::VectorXd W;
 Eigen::MatrixXi T,F,G,FF,TT;

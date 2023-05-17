@@ -3,11 +3,10 @@
 #include <Eigen/Dense>
 #include <Eigen/Sparse>
 #include <map>
-#include "simplicial_set.h"
 #include "Connectivity.h"
 #include "TriangleMesh.h"
 
-namespace iheartmesh {
+namespace heartlang {
 
 class Tetrahedron: public TriangleMesh {
 public:

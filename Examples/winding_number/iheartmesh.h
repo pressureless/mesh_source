@@ -28,6 +28,8 @@ w(p) = 1/(4π) sum_(f ∈ F) Ω(p, f) where p ∈ ℝ³
 #include "type_helper.h"
 #include "TriangleMesh.h"
 
+using namespace heartlang;
+
 template<class DT = double, class MatrixD = Eigen::MatrixXd, class VectorD = Eigen::VectorXd>
 struct iheartmesh {
     std::vector<int > V;

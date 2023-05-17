@@ -54,6 +54,8 @@ target = {v for v ∈ VertexOneRing(n) if ||x_i-x_v||< 2σ} ∪ n
 #include "type_helper.h"
 #include "TriangleMesh.h"
 
+using namespace heartlang;
+
 using DT = double;
 using MatrixD = Eigen::MatrixXd;
 using VectorD = Eigen::VectorXd;

@@ -22,6 +22,7 @@
 namespace fs = std::filesystem;
 inline fs::path DATA_PATH = fs::path(DATA_PATH_STR);
 
+using namespace heartlang;
 
 Eigen::MatrixXd meshV;
 Eigen::MatrixXi meshF;

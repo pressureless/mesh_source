@@ -20,6 +20,7 @@
 namespace fs = std::filesystem;
 inline fs::path DATA_PATH = fs::path(DATA_PATH_STR);
 
+using namespace heartlang;
 
 int main(int argc, const char * argv[]) {
     Eigen::MatrixXd meshV;

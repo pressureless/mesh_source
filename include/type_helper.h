@@ -12,7 +12,7 @@
 #include <autodiff/reverse/var/eigen.hpp>
 #include <type_traits>
 
-namespace iheartmesh {
+namespace heartlang {
 
 using namespace autodiff;
 

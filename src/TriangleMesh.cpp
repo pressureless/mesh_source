@@ -12,7 +12,7 @@
 #include "dec_util.h"
 #include "TriangleMesh.h"
 
-using namespace iheartmesh;
+namespace heartlang {
 
 TriangleMesh::TriangleMesh(){
 
@@ -247,4 +247,6 @@ std::tuple<Eigen::SparseMatrix<int>, Eigen::SparseMatrix<int> > TriangleMesh::Bo
 
 std::tuple<Eigen::SparseMatrix<int>, Eigen::SparseMatrix<int> > TriangleMesh::UnsignedBoundaryMatrices() const{
     return std::tuple< Eigen::SparseMatrix<int>, Eigen::SparseMatrix<int> >(this->pos_bm1, this->pos_bm2);
+}
+
 }

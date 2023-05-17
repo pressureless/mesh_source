@@ -3,10 +3,9 @@
 #include <Eigen/Dense>
 #include <Eigen/Sparse>
 #include <map>
-#include "simplicial_set.h"
 #include "Connectivity.h"
 
-namespace iheartmesh {
+namespace heartlang {
 
 class PolygonMesh: public Connectivity {
 public:

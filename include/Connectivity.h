@@ -3,9 +3,8 @@
 #include <Eigen/Dense>
 #include <Eigen/Sparse>
 #include <map>
-#include "simplicial_set.h"
 
-namespace iheartmesh {
+namespace heartlang {
 
 using Eigen::MatrixXi;
 using Eigen::VectorXi;

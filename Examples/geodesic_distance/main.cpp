@@ -20,6 +20,7 @@
 namespace fs = std::filesystem;
 inline fs::path DATA_PATH = fs::path(DATA_PATH_STR);
 
+using namespace heartlang;
 
 void print_distance(std::vector<double>& distance){
     std::cout<<"current distance:"<<std::endl;

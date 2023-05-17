@@ -63,6 +63,8 @@ H = sum_(i ∈ C) psd(∂²S(i, x)/∂x²) + psd(∂²E2/∂x²)
 #include "type_helper.h"
 #include "Tetrahedron.h"
 
+using namespace heartlang;
+
 using DT = autodiff::var;
 using MatrixD = Eigen::Matrix<autodiff::var, Eigen::Dynamic, Eigen::Dynamic>;
 using VectorD = Eigen::Matrix<autodiff::var, Eigen::Dynamic, 1>;

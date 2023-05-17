@@ -38,6 +38,8 @@ H(i) = 1/4 sum_(j ∈ VertexOneRing(i)) l_ij ϕ_ij where i ∈ V
 #include "type_helper.h"
 #include "TriangleMesh.h"
 
+using namespace heartlang;
+
 using DT = double;
 using MatrixD = Eigen::MatrixXd;
 using VectorD = Eigen::VectorXd;

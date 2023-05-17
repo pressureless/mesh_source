@@ -39,6 +39,8 @@ n = GetNextLevel(U)
 #include "type_helper.h"
 #include "TriangleMesh.h"
 
+using namespace heartlang;
+
 using DT = double;
 using MatrixD = Eigen::MatrixXd;
 using VectorD = Eigen::VectorXd;

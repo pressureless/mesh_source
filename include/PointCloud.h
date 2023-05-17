@@ -3,11 +3,10 @@
 #include <Eigen/Dense>
 #include <Eigen/Sparse>
 #include <map>
-#include "simplicial_set.h"
 #include "Connectivity.h"
 #include "nanoflann.hpp"
 
-namespace iheartmesh {
+namespace heartlang {
 
 struct MPoint {
   std::vector<Eigen::VectorXd> points;

@@ -31,6 +31,8 @@ p̄ = (∑_(n ∈ N) x_n)/|N|
 #include "type_helper.h"
 #include "PointCloud.h"
 
+using namespace heartlang;
+
 using DT = double;
 using MatrixD = Eigen::MatrixXd;
 using VectorD = Eigen::VectorXd;

@@ -22,6 +22,8 @@ where j, k = NeighborVerticesInFace(f, i) ) where i ∈ V
 #include "type_helper.h"
 #include "PolygonMesh.h"
 
+using namespace heartlang;
+
 using DT = double;
 using MatrixD = Eigen::MatrixXd;
 using VectorD = Eigen::VectorXd;
