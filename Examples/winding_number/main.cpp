@@ -29,9 +29,9 @@ using namespace Eigen;
 using namespace std;
 inline fs::path DATA_PATH = fs::path(DATA_PATH_STR);
 
-Eigen::MatrixXd V,BC; 
+Eigen::MatrixXd V,BC,VV; 
 Eigen::VectorXd W;
-Eigen::MatrixXi T,F,G;
+Eigen::MatrixXi T,F,G,FF,TT;
 RowVector3d f_c(0.486,0.549,0.815);   // face color
 double slice_z = 0.5;
 enum OverLayType
@@ -42,54 +42,105 @@ enum OverLayType
   NUM_OVERLAY = 3,
 } overlay = OVERLAY_NONE;
 
+void get_vis(MatrixXd &V_vis, 
+            MatrixXi &F_vis, 
+            MatrixXd &C_vis,
+            double cur_slice){
+  Eigen::Vector4d plane(
+    0,0,1,-((1-cur_slice)*V.col(2).minCoeff()+cur_slice*V.col(2).maxCoeff()));
+  VectorXi J;
+  {
+    SparseMatrix<double> bary;
+    // Value of plane's implicit function at all vertices
+    const VectorXd IV = 
+      (V.col(0)*plane(0) + 
+        V.col(1)*plane(1) + 
+        V.col(2)*plane(2)).array()
+      + plane(3);
+    igl::marching_tets(V,T,IV,V_vis,F_vis,J,bary);
+  }
+  VectorXd W_vis;
+  igl::slice(W,J,W_vis);
+  // color without normalizing
+  igl::parula(W_vis,false,C_vis);
+}
+
+void get_multiple_vis(MatrixXd &V_vis, 
+            MatrixXi &F_vis, 
+            MatrixXd &C_vis){
+  get_vis(V_vis, F_vis, C_vis, 0.1);
+  MatrixXd V_vis_tmp;
+  MatrixXi F_vis_tmp;
+  MatrixXd C_vis_tmp;
+  get_vis(V_vis_tmp, F_vis_tmp, C_vis_tmp, 0.3);
+  F_vis.conservativeResize(F_vis.rows()+F_vis_tmp.rows(),3);
+  F_vis.bottomRows(F_vis_tmp.rows()) = F_vis_tmp.array()+V_vis.rows();
+  V_vis.conservativeResize(V_vis.rows()+V_vis_tmp.rows(),3);
+  V_vis.bottomRows(V_vis_tmp.rows()) = V_vis_tmp;
+  C_vis.conservativeResize(C_vis.rows()+C_vis_tmp.rows(),3);
+  C_vis.bottomRows(C_vis_tmp.rows()) = C_vis_tmp;
+
+  get_vis(V_vis_tmp, F_vis_tmp, C_vis_tmp, 0.6);
+  F_vis.conservativeResize(F_vis.rows()+F_vis_tmp.rows(),3);
+  F_vis.bottomRows(F_vis_tmp.rows()) = F_vis_tmp.array()+V_vis.rows();
+  V_vis.conservativeResize(V_vis.rows()+V_vis_tmp.rows(),3);
+  V_vis.bottomRows(V_vis_tmp.rows()) = V_vis_tmp;
+  C_vis.conservativeResize(C_vis.rows()+C_vis_tmp.rows(),3);
+  C_vis.bottomRows(C_vis_tmp.rows()) = C_vis_tmp;
+
+  get_vis(V_vis_tmp, F_vis_tmp, C_vis_tmp, 0.9);
+  F_vis.conservativeResize(F_vis.rows()+F_vis_tmp.rows(),3);
+  F_vis.bottomRows(F_vis_tmp.rows()) = F_vis_tmp.array()+V_vis.rows();
+  V_vis.conservativeResize(V_vis.rows()+V_vis_tmp.rows(),3);
+  V_vis.bottomRows(V_vis_tmp.rows()) = V_vis_tmp;
+  C_vis.conservativeResize(C_vis.rows()+C_vis_tmp.rows(),3);
+  C_vis.bottomRows(C_vis_tmp.rows()) = C_vis_tmp;
+}
+
 void update_visualization(igl::opengl::glfw::Viewer & viewer)
 {
-    Eigen::Vector4d plane(
-    0,0,1,-((1-slice_z)*V.col(2).minCoeff()+slice_z*V.col(2).maxCoeff()));
-    MatrixXd V_vis;
-    MatrixXi F_vis;
-    VectorXi J;
-    {
-        SparseMatrix<double> bary;
-        // Value of plane's implicit function at all vertices
-        const VectorXd IV = 
-          (V.col(0)*plane(0) + 
-            V.col(1)*plane(1) + 
-            V.col(2)*plane(2)).array()
-          + plane(3);
-        igl::marching_tets(V,T,IV,V_vis,F_vis,J,bary);
-    }
-    VectorXd W_vis;
-    igl::slice(W,J,W_vis);
-    MatrixXd C_vis = f_c.replicate(W_vis.rows(),1);
-    const auto & append_mesh = [&C_vis,&F_vis,&V_vis](
+  // std::cout<<"cur slicing:"<<slice_z<<std::endl;
+  MatrixXd V_vis;
+  MatrixXi F_vis;
+  MatrixXd C_vis;
+  get_vis(V_vis, F_vis, C_vis, slice_z);
+  // get_multiple_vis(V_vis, F_vis, C_vis);
+  //
+  const auto & append_mesh = [&C_vis,&F_vis,&V_vis](
     const Eigen::MatrixXd & V,
     const Eigen::MatrixXi & F,
     const RowVector3d & color)
-    {
-        F_vis.conservativeResize(F_vis.rows()+F.rows(),3);
-        F_vis.bottomRows(F.rows()) = F.array()+V_vis.rows();
-        V_vis.conservativeResize(V_vis.rows()+V.rows(),3);
-        V_vis.bottomRows(V.rows()) = V;
-        C_vis.conservativeResize(C_vis.rows()+F.rows(),3);
-        C_vis.bottomRows(F.rows()).rowwise() = color;
-    };
-    switch(overlay)
-    {
-        case OVERLAY_INPUT:
-          append_mesh(V,F, f_c);
-          break;
-        case OVERLAY_OUTPUT:
-          append_mesh(V,G,RowVector3d(0.8,0.8,0.8));
-          break;
-        default:
-          break;
-    }
-    viewer.data().clear();
-    viewer.data().set_mesh(V_vis,F_vis);
-    viewer.data().set_colors(C_vis);
-    viewer.data().set_face_based(true);
-    viewer.core().background_color.setConstant(1);
+  {
+    F_vis.conservativeResize(F_vis.rows()+F.rows(),3);
+    F_vis.bottomRows(F.rows()) = F.array()+V_vis.rows();
+    V_vis.conservativeResize(V_vis.rows()+V.rows(),3);
+    V_vis.bottomRows(V.rows()) = V;
+    C_vis.conservativeResize(C_vis.rows()+F.rows(),3);
+    C_vis.bottomRows(F.rows()).rowwise() = color;
+  };
+  switch(overlay)
+  {
+    case OVERLAY_INPUT:
+      append_mesh(V,F,RowVector3d(1.,0.894,0.227));
+      break;
+    case OVERLAY_OUTPUT:
+        if (FF.rows() > 0)
+        {
+            append_mesh(V,FF,RowVector3d(1.,0.894,0.227));
+        }
+        else{
+            append_mesh(V,G,RowVector3d(0.8,0.8,0.8));
+        }
+      break;
+    default:
+      break;
+  }
+  viewer.data().clear();
+  viewer.data().set_mesh(V_vis,F_vis);
+  // viewer.data().set_mesh(V,F);
+  viewer.data().set_colors(C_vis);
+  viewer.data().set_face_based(true);
+  viewer.core().background_color.setConstant(1);
 }
 
 bool key_down(igl::opengl::glfw::Viewer& viewer, unsigned char key, int mod)
@@ -146,15 +197,15 @@ void set_slicing_colors(){
     // Extract interior tets
     MatrixXi CT((W.array()>0.5).count(),4);
     {
-    size_t k = 0;
-    for(size_t t = 0;t<T.rows();t++)
-    {
-      if(W(t)>0.5)
-      {
-        CT.row(k) = T.row(t);
-        k++;
-      }
-    }
+        size_t k = 0;
+        for(size_t t = 0;t<T.rows();t++)
+        {
+          if(W(t)>0.5)
+          {
+            CT.row(k) = T.row(t);
+            k++;
+          }
+        }
     }
     // find bounary facets of interior tets
     igl::boundary_facets(CT,G);
@@ -175,7 +226,8 @@ int main(int argc, char *argv[])
   // Load mesh: (V,T) tet-mesh of convex hull, F contains facets of input
   // surface mesh _after_ self-intersection resolution
   // igl::readMESH(TUTORIAL_SHARED_PATH "/big-sigcat.mesh",V,T,F);
-  igl::readMESH(argc>1?argv[1]:DATA_PATH / "holy-cow.mesh", V, T, F);  //6851 sec
+  igl::readMESH(argc>1?argv[1]:DATA_PATH / "cat_surface.mesh", V, T, F);  //6851 sec
+  // igl::readMESH(argc>1?argv[1]:DATA_PATH / "cat_volume.mesh", VV, TT, FF);  //6851 sec
   set_slicing_colors();
   // Plot the generated mesh
   igl::opengl::glfw::Viewer viewer;
@@ -183,4 +235,5 @@ int main(int argc, char *argv[])
   viewer.callback_key_down = &key_down; 
   viewer.launch();
   viewer.core().background_color.setConstant(1);
+      viewer.core().lighting_factor = 0;
 }
