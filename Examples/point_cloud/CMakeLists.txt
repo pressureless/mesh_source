@@ -49,6 +49,16 @@ FetchContent_Declare(
 )
 FetchContent_MakeAvailable( libigl )
 
+# LBFGSpp
+FetchContent_Declare(
+    LBFGSpp
+    GIT_REPOSITORY https://github.com/yixuan/LBFGSpp.git
+    GIT_TAG v0.2.0
+    GIT_SHALLOW TRUE
+    GIT_PROGRESS TRUE
+)
+FetchContent_MakeAvailable( LBFGSpp )
+
 # polyscope
 FetchContent_Declare(
     polyscope
@@ -83,4 +93,4 @@ target_compile_definitions(main PUBLIC DATA_PATH_STR="${CMAKE_CURRENT_SOURCE_DIR
 target_include_directories(main PUBLIC "${CMAKE_CURRENT_SOURCE_DIR}/../../include/")
 
 # Link settings
-target_link_libraries(main igl::core polyscope Eigen3::Eigen autodiff::autodiff OpenMP::OpenMP_CXX)
+target_link_libraries(main igl::core polyscope lbfgspp Eigen3::Eigen autodiff::autodiff OpenMP::OpenMP_CXX)

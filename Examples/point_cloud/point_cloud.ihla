@@ -12,9 +12,3 @@ p̄ = (∑_(n ∈ N) x_n)/|N|,
 d = {x_v-p̄ for v ∈ N},
 m_i,* = d_i,
 u, `∑`, vv = svd(m)
-
- 
-cov(v) = ∑_(n ∈ N) (x_v-p̄)(x_v-p̄)ᵀ where v ∈ V,
-N = VertexOneRing(v),
-p̄ = (∑_(n ∈ N) x_n)/|N|
-

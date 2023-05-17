@@ -1,18 +1,18 @@
 /*
-svd from linearalgebra
 ElementSets from MeshConnectivity
-VertexOneRing from PointCloudNeighborhoods(M)
+VertexOneRing, Vertices from PointCloudNeighborhoods(M)
 M : PointCloud 
-x_i ∈ ℝ^3 
+s ∈ ℝ^r
+n_i ∈ ℝ^o
 
 V, E = ElementSets( M )
 
-Normal(v) = vv_*,3 where v ∈ V,
-N = VertexOneRing(v),
-p̄ = (∑_(n ∈ N) x_n)/|N|,
-d = {x_v-p̄ for v ∈ N},
-m_i,* = d_i,
-u, `∑`, vv = svd(m)
+energy_i(s) = ∑_(j ∈ VertexOneRing(i)) ‖ s_i n_i - s_j n_j ‖² where i ∈ V, s ∈ ℝ^r
+
+
+total = ∑_( v ∈ V ) energy_v(s) + 100 ∑_i (s_i² -1)² 
+ 
+g = ∂total/∂s
 */
 #include <Eigen/Core>
 #include <Eigen/QR>
@@ -21,71 +21,36 @@ u, `∑`, vv = svd(m)
 #include <iostream>
 #include <set>
 #include <algorithm>
+#include <autodiff/reverse/var.hpp>
+#include <autodiff/reverse/var/eigen.hpp>
 #include "type_helper.h"
-using namespace iheartmesh;
 #include "PointCloud.h"
 
-struct heartlib {
-    using DT = double;
-    using MatrixD = Eigen::MatrixXd;
-    using VectorD = Eigen::VectorXd;
+using namespace iheartmesh;
+struct orientation {
+    using DT = autodiff::var;
+    using MatrixD = Eigen::Matrix<autodiff::var, Eigen::Dynamic, Eigen::Dynamic>;
+    using VectorD = Eigen::Matrix<autodiff::var, Eigen::Dynamic, 1>;
     std::vector<int > V;
     std::vector<int > E;
+    DT total;
+    Eigen::VectorXd g;
     PointCloud M;
-    std::vector<Eigen::Matrix<double, 3, 1>> x;
-    Eigen::Matrix<double, 3, 1> Normal(
-        const int & v)
+    VectorD s;
+    std::vector<Eigen::VectorXd> n;
+    template<typename REAL>
+    REAL energy(
+        const int & i,
+        const Eigen::Matrix<REAL, Eigen::Dynamic, 1> & s)
     {
-        assert( std::binary_search(V.begin(), V.end(), v) );
+        const long r = s.size();
+        assert( std::binary_search(V.begin(), V.end(), i) );
 
-        // N = VertexOneRing(v)
-        std::vector<int > N = this->VertexOneRing(v);
-
-        // p̄ = (∑_(n ∈ N) x_n)/|N|
-        MatrixD sum_0 = MatrixD::Zero(3, 1);
-        for(int n : N){
-            sum_0 += this->x.at(n);
+        REAL sum_0 = 0;
+        for(int j : this->VertexOneRing(i)){
+            sum_0 += pow((s[i] * this->n.at(i) - s[j] * this->n.at(j)).template lpNorm<2>(), 2);
         }
-        Eigen::Matrix<double, 3, 1> p̄ = (sum_0) / double(double((N).size()));
-
-        // d = {x_v-p̄ for v ∈ N}
-        std::vector<Eigen::Matrix<double, 3, 1> > Normalset_0;
-        const std::vector<int >& range = N;
-        Normalset_0.reserve(range.size());
-        for(int v : range){
-            Normalset_0.push_back(this->x.at(v) - p̄);
-        }
-        if(Normalset_0.size() > 1){
-            sort(Normalset_0.begin(), Normalset_0.end(), [](const Eigen::Matrix<double, 3, 1> &lhs_, const Eigen::Matrix<double, 3, 1> &rhs_)
-            {
-                for (int si=0; si<lhs_.rows(); si++) {
-                    if (lhs_(si) == rhs_(si)) {
-                        continue;
-                    }
-                    else if (lhs_(si) > rhs_(si)) {
-                        return false;
-                    }
-                    return true;
-                }
-                return false;
-            });
-            Normalset_0.erase(unique(Normalset_0.begin(), Normalset_0.end() ), Normalset_0.end());
-        }
-        std::vector<Eigen::Matrix<double, 3, 1> > d = Normalset_0;
-
-        // m_i,* = d_i
-        Eigen::MatrixXd m = MatrixD::Zero(d.size(), 3);
-        for( int i=1; i<=d.size(); i++){
-            m.row(i-1) = d[i-1];
-        }
-
-        Eigen::BDCSVD<Eigen::MatrixXd> svd(to_double(m), Eigen::ComputeFullU | Eigen::ComputeFullV);
-        // u, `∑`, vv = svd(m)
-        std::tuple< Eigen::MatrixXd, Eigen::VectorXd, Eigen::Matrix<double, 3, 3> > rhs_1 = std::tuple< Eigen::MatrixXd, Eigen::VectorXd, Eigen::Matrix<double, 3, 3> >(svd.matrixU(), svd.singularValues(), svd.matrixV());
-        Eigen::MatrixXd u = std::get<0>(rhs_1);
-        Eigen::VectorXd n_ary_summation = std::get<1>(rhs_1);
-        Eigen::Matrix<double, 3, 3> vv = std::get<2>(rhs_1);
-        return vv.col(3-1);    
+        return sum_0;    
     }
     using DT_ = double;
     using MatrixD_ = Eigen::MatrixXd;
@@ -253,9 +218,19 @@ struct heartlib {
     std::vector<int > VertexOneRing(std::vector<int > p0){
         return _PointCloudNeighborhoods.VertexOneRing(p0);
     };
-    heartlib(
+    std::vector<int > Vertices(std::tuple< std::vector<int >, std::vector<int >, std::vector<int >, std::vector<int > > p0){
+        return _PointCloudNeighborhoods.Vertices(p0);
+    };
+    std::vector<int > Vertices(int p0){
+        return _PointCloudNeighborhoods.Vertices(p0);
+    };
+    std::vector<int > Vertices(std::vector<int > p0){
+        return _PointCloudNeighborhoods.Vertices(p0);
+    };
+    orientation(
         const PointCloud & M,
-        const std::vector<Eigen::Matrix<double, 3, 1>> & x)
+        const Eigen::VectorXd & s,
+        const std::vector<Eigen::VectorXd> & n)
     :
     _PointCloudNeighborhoods(M)
     {
@@ -265,10 +240,28 @@ struct heartlib {
         E = std::get<1>(rhs);
         int dimv_0 = M.n_vertices();
         int dime_0 = M.n_edges();
-        const long dim_0 = x.size();
+        const long r = s.size();
+        const long dim_0 = n.size();
+        const long o = n[0].rows();
+        assert( n.size() == dim_0 );
+        for( const auto& el : n ) {
+            assert( el.size() == o );
+        }
         this->M = M;
-        this->x = x;
-    
+        this->s = s;
+        this->n = n;
+        // total = ∑_( v ∈ V ) energy_v(s) + 100 ∑_i (s_i² -1)²
+        DT sum_1 = 0;
+        for(int v : this->V){
+            sum_1 += energy(v, this->s);
+        }
+        DT sum_2 = 0;
+        for(int i=1; i<=s.size(); i++){
+            sum_2 += pow((pow(this->s[i-1], 2) - 1), 2);
+        }
+        total = sum_1 + 100 * sum_2;
+        // g = ∂total/∂s
+        g = gradient(total, this->s);
     }
 };
 
