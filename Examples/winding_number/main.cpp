@@ -21,7 +21,7 @@
 #include <igl/winding_number.h>
 #include <igl/opengl/glfw/Viewer.h>
 #include "MeshHelper.h"
-#include "iheartmesh.h"
+#include "heartlib.h"
 #include "dec_util.h"
 #include <filesystem>
 namespace fs = std::filesystem;
@@ -29,7 +29,7 @@ using namespace Eigen;
 using namespace std;
 inline fs::path DATA_PATH = fs::path(DATA_PATH_STR);
 
-using namespace heartlang;
+using namespace iheartmesh;
 
 Eigen::MatrixXd V,BC,VV; 
 Eigen::VectorXd W;
@@ -175,7 +175,7 @@ void set_winding_number(){
     {
         P.push_back(V.row(i).transpose());
     }
-    iheartmesh ihla(triangle_mesh, P);
+    heartlib ihla(triangle_mesh, P);
     int start = std::chrono::duration_cast<std::chrono::seconds>(std::chrono::system_clock::now().time_since_epoch()).count();
         ;
     W.resize(BC.rows());

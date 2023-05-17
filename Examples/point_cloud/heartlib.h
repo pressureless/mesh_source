@@ -31,12 +31,12 @@ p̄ = (∑_(n ∈ N) x_n)/|N|
 #include "type_helper.h"
 #include "PointCloud.h"
 
-using namespace heartlang;
+using namespace iheartmesh;
 
 using DT = double;
 using MatrixD = Eigen::MatrixXd;
 using VectorD = Eigen::VectorXd;
-struct iheartmesh {
+struct heartlib {
     std::vector<int > V;
     std::vector<int > E;
     PointCloud M;
@@ -281,7 +281,7 @@ struct iheartmesh {
     std::vector<int > VertexOneRing(std::vector<int > p0){
         return _PointCloudNeighborhoods.VertexOneRing(p0);
     };
-    iheartmesh(
+    heartlib(
         const PointCloud & M,
         const std::vector<Eigen::Matrix<double, 3, 1>> & x)
     :

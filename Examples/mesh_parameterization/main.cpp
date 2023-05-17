@@ -26,7 +26,7 @@
 // #include <igl/png/readPNG.h>
 // #include <igl/opengl/glfw/Viewer.h>
 #include "MeshHelper.h"
-#include "iheartmesh.h"
+#include "heartlib.h"
 #include "dec_util.h"
 #include "polyscope/polyscope.h"
 #include "polyscope/surface_mesh.h"
@@ -39,7 +39,7 @@ namespace fs = std::filesystem;
 inline fs::path DATA_PATH = fs::path(DATA_PATH_STR);
 using namespace autodiff;
 
-using namespace heartlang;
+using namespace iheartmesh;
 
 int start;
 double default_hessian_projection_eps = 1e-9;
@@ -217,7 +217,7 @@ Eigen::VectorXd my_line_search(
 
 bool step(){
     bool has_updated = true;
-    iheartmesh ihla(triangle_mesh, x̄, x, eps, psd, INFINITY);
+    heartlib ihla(triangle_mesh, x̄, x, eps, psd, INFINITY);
     std::cout<<"Cur energy is "<<ihla.e<<std::endl;
     Eigen::VectorXd g = ihla.G;
     Eigen::SparseMatrix<double> H = ihla.H;

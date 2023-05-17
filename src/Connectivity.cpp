@@ -5,7 +5,7 @@
 #include "dec_util.h"
 #include "Connectivity.h"
 
-namespace heartlang {
+namespace iheartmesh {
 
 Connectivity::Connectivity(){
 

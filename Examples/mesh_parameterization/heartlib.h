@@ -1,33 +1,38 @@
 /*
+vec, inversevec, diag, svd from linearalgebra
 ElementSets from MeshConnectivity
-VertexOneRing, Faces from Neighborhoods(M)
+NeighborVerticesInFace, Faces, VertexOneRing, OrientedVertices from Neighborhoods(M)
 M : TriangleMesh
-x_i ∈ ℝ^3  
-V, E, F = ElementSets( M )
+x̄_i ∈ ℝ^3 : rest pos in 3D
+x_i ∈ ℝ^2 : current pos in 2D
+ε ∈ ℝ : eps
+psd : ℝ^(p×p) -> ℝ^(p×p) sparse
+infinity: ℝ
 
-UpdateStep(v0, v1, v2, d) = { p if s_1,1 < 0 and s_2,1 < 0 
-            min(d_(v1)+||x1||, d_(v2)+||x2||) otherwise where v0,v1,v2 ∈ V, d_i ∈ ℝ,
-x1 = x_(v1) - x_(v0),
-x2 = x_(v2) - x_(v0),
-X = [x1 x2],
-t = [d_(v1) d_(v2)]ᵀ,
-Q = (XᵀX)⁻¹,
-`1` = [1 ; 1],
-p = (`1`ᵀQt + sqrt((`1`ᵀQt)² - `1`ᵀQ`1` ⋅ (tᵀQt - 1)))/ (`1`ᵀQ`1`),
-n = XQ(t- p ⋅`1`),
-s = QXᵀn
+V, E, F = ElementSets(M)
 
-GetNextLevel(U) = v - s where U_i ⊂ V,
-s = ∪_i U_i,
-v = VertexOneRing(s)
-
-GetRangeLevel(U, a, b) = ∪_(i=a)^b U_i where U_j ⊂ V, a,b ∈ ℤ index
+mr(f) = [br-ar cr-ar] where f ∈ F,
+a, b, c = OrientedVertices(f),
+n = (x̄_b-x̄_a)×(x̄_c-x̄_a),
+b1 = (x̄_b-x̄_a)/||x̄_b-x̄_a||,
+b2 = (n × b1)/||n × b1||,
+ar = (0, 0),
+br = ((x̄_b-x̄_a)⋅b1, 0),
+cr = ((x̄_c-x̄_a)⋅b1, (x̄_c-x̄_a)⋅b2)
 
 
-GetLevelSequence(U) = { sequence(U, n) if |n| ≠ 0
-                        U otherwise where U_i ⊂ V,
-n = GetNextLevel(U)
+S(f, x) = { infinity if |m| <= 0
+    A (‖J‖² + ‖J⁻¹‖²) otherwise where f ∈ F, x_i ∈ ℝ^2,
+a, b, c = OrientedVertices(f),
+m = [x_b-x_a x_c-x_a],
+A = ½ |mr(f)|,
+J = m mr(f)⁻¹
 
+e = sum_(i ∈ F) S(i, x)
+
+H = sum_(i ∈ F) psd(∂²S(i, x)/∂x²)
+
+G = ∂e/∂x  
 */
 #include <Eigen/Core>
 #include <Eigen/QR>
@@ -36,129 +41,98 @@ n = GetNextLevel(U)
 #include <iostream>
 #include <set>
 #include <algorithm>
+#include <autodiff/reverse/var.hpp>
+#include <autodiff/reverse/var/eigen.hpp>
 #include "type_helper.h"
 #include "TriangleMesh.h"
 
-using namespace heartlang;
+using namespace iheartmesh;
 
-using DT = double;
-using MatrixD = Eigen::MatrixXd;
-using VectorD = Eigen::VectorXd;
-struct iheartmesh {
+using DT = autodiff::var;
+using MatrixD = Eigen::Matrix<autodiff::var, Eigen::Dynamic, Eigen::Dynamic>;
+using VectorD = Eigen::Matrix<autodiff::var, Eigen::Dynamic, 1>;
+struct heartlib {
     std::vector<int > V;
     std::vector<int > E;
     std::vector<int > F;
+    DT e;
+    Eigen::SparseMatrix<double> H;
+    Eigen::VectorXd G;
     TriangleMesh M;
-    std::vector<Eigen::Matrix<double, 3, 1>> x;
+    std::vector<Eigen::Matrix<double, 3, 1>> x̄;
+    std::vector<Eigen::Matrix<DT, 2, 1>> x;
+    autodiff::ArrayXvar new_x;
+    double infinity;
+    Eigen::Matrix<double, 2, 2> mr(
+        const int & f)
+    {
+        assert( std::binary_search(F.begin(), F.end(), f) );
+
+        // a, b, c = OrientedVertices(f)
+        std::tuple< int, int, int > rhs_1 = this->OrientedVertices(f);
+        int a = std::get<0>(rhs_1);
+        int b = std::get<1>(rhs_1);
+        int c = std::get<2>(rhs_1);
+
+        // n = (x̄_b-x̄_a)×(x̄_c-x̄_a)
+        Eigen::Matrix<double, 3, 1> n = ((this->x̄.at(b) - this->x̄.at(a))).cross((this->x̄.at(c) - this->x̄.at(a)));
+
+        // b1 = (x̄_b-x̄_a)/||x̄_b-x̄_a||
+        Eigen::Matrix<double, 3, 1> b1 = (this->x̄.at(b) - this->x̄.at(a)) / double((this->x̄.at(b) - this->x̄.at(a)).template lpNorm<2>());
+
+        // b2 = (n × b1)/||n × b1||
+        Eigen::Matrix<double, 3, 1> b2 = ((n).cross(b1)) / double(((n).cross(b1)).template lpNorm<2>());
+
+        // ar = (0, 0)
+        Eigen::Matrix<int, 2, 1> ar_0;
+        ar_0 << 0, 0;
+        Eigen::Matrix<int, 2, 1> ar = ar_0;
+
+        // br = ((x̄_b-x̄_a)⋅b1, 0)
+        Eigen::Matrix<double, 2, 1> br_0;
+        br_0 << ((this->x̄.at(b) - this->x̄.at(a))).dot(b1), 0;
+        Eigen::Matrix<double, 2, 1> br = br_0;
+
+        // cr = ((x̄_c-x̄_a)⋅b1, (x̄_c-x̄_a)⋅b2)
+        Eigen::Matrix<double, 2, 1> cr_0;
+        cr_0 << ((this->x̄.at(c) - this->x̄.at(a))).dot(b1), ((this->x̄.at(c) - this->x̄.at(a))).dot(b2);
+        Eigen::Matrix<double, 2, 1> cr = cr_0;
+        Eigen::Matrix<double, 2, 2> mr_0;
+        mr_0 << br - (ar).template cast<double>(), cr - (ar).template cast<double>();
+        return mr_0;    
+    }
     template<typename REAL>
-    REAL UpdateStep(
-        const int & v0,
-        const int & v1,
-        const int & v2,
-        const std::vector<REAL> & d)
+    REAL S(
+        const int & f,
+        const std::vector<Eigen::Matrix<REAL, 2, 1>> & x)
     {
-        const long dim_1 = d.size();
-        assert( std::binary_search(V.begin(), V.end(), v0) );
-        assert( std::binary_search(V.begin(), V.end(), v1) );
-        assert( std::binary_search(V.begin(), V.end(), v2) );
+        const long dim_1 = x.size();
+        assert( std::binary_search(F.begin(), F.end(), f) );
 
-        REAL UpdateStep_ret;
-        // x1 = x_(v1) - x_(v0)
-        Eigen::Matrix<REAL, 3, 1> x1 = this->x.at(v1) - this->x.at(v0);
+        REAL S_ret;
+        // a, b, c = OrientedVertices(f)
+        std::tuple< int, int, int > rhs_2 = this->OrientedVertices(f);
+        int a = std::get<0>(rhs_2);
+        int b = std::get<1>(rhs_2);
+        int c = std::get<2>(rhs_2);
 
-        // x2 = x_(v2) - x_(v0)
-        Eigen::Matrix<REAL, 3, 1> x2 = this->x.at(v2) - this->x.at(v0);
+        // m = [x_b-x_a x_c-x_a]
+        Eigen::Matrix<REAL, 2, 2> m_0;
+        m_0 << x.at(b) - x.at(a), x.at(c) - x.at(a);
+        Eigen::Matrix<REAL, 2, 2> m = m_0;
 
-        // X = [x1 x2]
-        Eigen::Matrix<REAL, 3, 2> X_0;
-        X_0 << x1, x2;
-        Eigen::Matrix<REAL, 3, 2> X = X_0;
+        // A = ½ |mr(f)|
+        REAL A = (1/REAL(2)) * (mr(f)).determinant();
 
-        // t = [d_(v1) d_(v2)]ᵀ
-        Eigen::Matrix<REAL, 1, 2> t_0;
-        t_0 << d.at(v1), d.at(v2);
-        Eigen::Matrix<REAL, 2, 1> t = t_0.transpose();
-
-        // Q = (XᵀX)⁻¹
-        Eigen::Matrix<REAL, 2, 2> Q = (X.transpose() * X).inverse();
-
-        // `1` = [1 ; 1]
-        Eigen::Matrix<int, 2, 1> num1_0;
-        num1_0 << 1,
-        1;
-        Eigen::Matrix<int, 2, 1> num1 = num1_0;
-
-        // p = (`1`ᵀQt + sqrt((`1`ᵀQt)² - `1`ᵀQ`1` ⋅ (tᵀQt - 1)))/ (`1`ᵀQ`1`)
-        REAL p = ((REAL)((num1.transpose()).cast<REAL>() * Q * t) + sqrt(pow(((REAL)((num1.transpose()).cast<REAL>() * Q * t)), 2) - (REAL)((num1.transpose()).cast<REAL>() * Q * (num1).cast<REAL>()) * ((REAL)(t.transpose() * Q * t) - 1))) / REAL(((REAL)((num1.transpose()).cast<REAL>() * Q * (num1).cast<REAL>())));
-
-        // n = XQ(t- p ⋅`1`)
-        Eigen::Matrix<REAL, 3, 1> n = X * Q * (t - (p * (num1).template cast<REAL>()).template cast<REAL>());
-
-        // s = QXᵀn
-        Eigen::Matrix<REAL, 2, 1> s = Q * X.transpose() * n;
-        if((s(1-1, 1-1) < 0) && (s(2-1, 1-1) < 0)){
-            UpdateStep_ret = p;
+        // J = m mr(f)⁻¹
+        Eigen::Matrix<REAL, 2, 2> J = m * mr(f).inverse();
+        if((m).determinant() <= 0){
+            S_ret = this->infinity;
         }
         else{
-            UpdateStep_ret = std::min({d.at(v1) + (x1).template lpNorm<2>(), d.at(v2) + (x2).template lpNorm<2>()});
+            S_ret = A * (pow((J).norm(), 2) + pow((J.inverse()).norm(), 2));
         }
-        return UpdateStep_ret;    
-    }
-    std::vector<int > GetNextLevel(
-        const std::vector<std::vector<int >> & U)
-    {
-        const long dim_2 = U.size();
-        // s = ∪_i U_i
-        std::vector<int > union_0;
-        std::vector<int > tmp;
-        for(int i=1; i<=U.size(); i++){
-            std::set_union(union_0.begin(), union_0.end(), U.at(i-1).begin(), U.at(i-1).end(), std::back_inserter(tmp));
-            union_0.assign(tmp.begin(), tmp.end());
-            tmp.clear();
-        }
-        std::vector<int > s = union_0;
-
-        // v = VertexOneRing(s)
-        std::vector<int > v = this->VertexOneRing(s);
-        std::vector<int > difference;
-        const std::vector<int >& lhs_diff = v;
-        const std::vector<int >& rhs_diff = s;
-        difference.reserve(lhs_diff.size());
-        std::set_difference(lhs_diff.begin(), lhs_diff.end(), rhs_diff.begin(), rhs_diff.end(), std::back_inserter(difference));
-        return difference;    
-    }
-    std::vector<int > GetRangeLevel(
-        const std::vector<std::vector<int >> & U,
-        const int & a,
-        const int & b)
-    {
-        const long dim_3 = U.size();
-        std::vector<int > union_1;
-        std::vector<int > tmp_1;
-        for(int i=a; i<=b; i++){
-            std::set_union(union_1.begin(), union_1.end(), U.at(i).begin(), U.at(i).end(), std::back_inserter(tmp_1));
-            union_1.assign(tmp_1.begin(), tmp_1.end());
-            tmp_1.clear();
-        }
-        return union_1;    
-    }
-    std::vector<std::vector<int >> GetLevelSequence(
-        const std::vector<std::vector<int >> & U)
-    {
-        const long dim_4 = U.size();
-        std::vector<std::vector<int >> GetLevelSequence_ret;
-        // n = GetNextLevel(U)
-        std::vector<int > n = GetNextLevel(U);
-        if((n).size() != 0){
-            std::vector<std::vector<int >> seq = U;
-            seq.reserve(seq.size()+1);
-            seq.push_back(n);
-            GetLevelSequence_ret = seq;
-        }
-        else{
-            GetLevelSequence_ret = U;
-        }
-        return GetLevelSequence_ret;    
+        return S_ret;    
     }
     using DT_ = double;
     using MatrixD_ = Eigen::MatrixXd;
@@ -725,11 +699,8 @@ struct iheartmesh {
         }
     };
     Neighborhoods _Neighborhoods;
-    std::vector<int > VertexOneRing(int p0){
-        return _Neighborhoods.VertexOneRing(p0);
-    };
-    std::vector<int > VertexOneRing(std::vector<int > p0){
-        return _Neighborhoods.VertexOneRing(p0);
+    std::tuple< int, int > NeighborVerticesInFace(int p0,int p1){
+        return _Neighborhoods.NeighborVerticesInFace(p0,p1);
     };
     std::vector<int > Faces(std::tuple< std::vector<int >, std::vector<int >, std::vector<int >, std::vector<int > > p0){
         return _Neighborhoods.Faces(p0);
@@ -740,13 +711,29 @@ struct iheartmesh {
     std::vector<int > Faces_1(int p0){
         return _Neighborhoods.Faces_1(p0);
     };
-    iheartmesh(
+    std::vector<int > VertexOneRing(int p0){
+        return _Neighborhoods.VertexOneRing(p0);
+    };
+    std::vector<int > VertexOneRing(std::vector<int > p0){
+        return _Neighborhoods.VertexOneRing(p0);
+    };
+    std::tuple< int, int, int > OrientedVertices(int p0){
+        return _Neighborhoods.OrientedVertices(p0);
+    };
+    std::tuple< int, int > OrientedVertices(int p0,int p1,int p2){
+        return _Neighborhoods.OrientedVertices(p0,p1,p2);
+    };
+    heartlib(
         const TriangleMesh & M,
-        const std::vector<Eigen::Matrix<double, 3, 1>> & x)
+        const std::vector<Eigen::Matrix<double, 3, 1>> & x̄,
+        const std::vector<Eigen::Matrix<double, 2, 1>> & x,
+        const double & ε,
+        const std::function<Eigen::SparseMatrix<double>(Eigen::MatrixXd)> & psd,
+        const double & infinity)
     :
     _Neighborhoods(M)
     {
-        // V, E, F = ElementSets( M )
+        // V, E, F = ElementSets(M)
         std::tuple< std::vector<int >, std::vector<int >, std::vector<int > > rhs = M.ElementSets();
         V = std::get<0>(rhs);
         E = std::get<1>(rhs);
@@ -754,10 +741,35 @@ struct iheartmesh {
         int dimv_0 = M.n_vertices();
         int dime_0 = M.n_edges();
         int dimf_0 = M.n_faces();
-        const long dim_0 = x.size();
+        const long dim_0 = x̄.size();
+        assert( x.size() == dim_0 );
         this->M = M;
-        this->x = x;
-    
+        this->x̄ = x̄;
+        new_x.resize(dim_0*2);
+        for (int i = 0; i < x.size(); ++i)
+        {
+            new_x.segment(2*i, 2) = x[i];
+        }
+        this->x.resize(x.size());
+        for (int i = 0; i < x.size(); ++i)
+        {
+            this->x[i] = new_x.segment(2*i, 2);
+        }
+        this->infinity = infinity;
+        // e = sum_(i ∈ F) S(i, x)
+        DT sum_0 = 0;
+        for(int i : this->F){
+            sum_0 += S(i, this->x);
+        }
+        e = sum_0;
+        // H = sum_(i ∈ F) psd(∂²S(i, x)/∂x²)
+        Eigen::SparseMatrix<double> sum_1(2*dim_0, 2*dim_0);
+        for(int i : this->F){
+            sum_1 += psd(hessian(S(i, this->x), this->new_x));
+        }
+        H = sum_1;
+        // G = ∂e/∂x
+        G = gradient(e, this->new_x);
     }
 };
 

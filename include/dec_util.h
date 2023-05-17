@@ -14,7 +14,7 @@
 // using Eigen::Matrix;
 // using Eigen::Vector;
 
-namespace heartlang {
+namespace iheartmesh {
 
 typedef Eigen::Matrix< int, Eigen::Dynamic, 1> Vector;
 typedef Eigen::Matrix< int, 1, Eigen::Dynamic> RowVector;

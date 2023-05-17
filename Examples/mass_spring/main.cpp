@@ -16,7 +16,7 @@
 #include <igl/readSTL.h>
 // #include <thread> 
 #include "MeshHelper.h"
-#include "iheartmesh.h"
+#include "heartlib.h"
 #include "dec_util.h"
 #include "polyscope/polyscope.h"
 #include "polyscope/surface_mesh.h"
@@ -24,7 +24,7 @@
 namespace fs = std::filesystem;
 inline fs::path DATA_PATH = fs::path(DATA_PATH_STR);
 
-using namespace heartlang;
+using namespace iheartmesh;
 
 double bottom_z = 0;
 
@@ -46,7 +46,7 @@ std::vector<Eigen::Matrix<double, 3, 1>> Velocity;
 std::vector<Eigen::Matrix<double, 3, 1>> Force;
  
 void update(){
-    iheartmesh ihla(triangle_mesh, OriginalPosition, mass, damping, stiffness, dt, bottom_z);
+    heartlib ihla(triangle_mesh, OriginalPosition, mass, damping, stiffness, dt, bottom_z);
     for (int i = 0; i < meshV.rows(); ++i)
     {
         //

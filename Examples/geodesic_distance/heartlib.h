@@ -1,34 +1,32 @@
 /*
 ElementSets from MeshConnectivity
-VertexOneRing from Neighborhoods(M)
+VertexOneRing, Faces from Neighborhoods(M)
 M : TriangleMesh
-x_i ∈ ℝ^3: original positions
-m ∈ ℝ: mass
-damping ∈ ℝ: damping
-K ∈ ℝ: stiffness
-dt ∈ ℝ: step size
-bottom ∈ ℝ: ground height
+x_i ∈ ℝ^3  
 V, E, F = ElementSets( M )
 
+UpdateStep(v0, v1, v2, d) = { p if s_1,1 < 0 and s_2,1 < 0 
+            min(d_(v1)+||x1||, d_(v2)+||x2||) otherwise where v0,v1,v2 ∈ V, d_i ∈ ℝ,
+x1 = x_(v1) - x_(v0),
+x2 = x_(v2) - x_(v0),
+X = [x1 x2],
+t = [d_(v1) d_(v2)]ᵀ,
+Q = (XᵀX)⁻¹,
+`1` = [1 ; 1],
+p = (`1`ᵀQt + sqrt((`1`ᵀQt)² - `1`ᵀQ`1` ⋅ (tᵀQt - 1)))/ (`1`ᵀQ`1`),
+n = XQ(t- p ⋅`1`),
+s = QXᵀn
 
-e(i, j) = ||x_i - x_j|| where i,j ∈ V
+GetNextLevel(U) = v - s where U_i ⊂ V,
+s = ∪_i U_i,
+v = VertexOneRing(s)
 
-computeInternalForces(i, v, xn) = tuple(vn, f+(0.0, -98.0, 0.0))  where i ∈ V, v_i ∈ ℝ^3, xn_i ∈ ℝ^3,
-f = (sum_(j ∈ VertexOneRing(i)) (-K) (||disp|| - e(i, j)) dir
-where disp = xn_i - xn_j,
-dir = disp/||disp||),
-vn = v_i exp(-dt damping) + dt f
+GetRangeLevel(U, a, b) = ∪_(i=a)^b U_i where U_j ⊂ V, a,b ∈ ℤ index
 
 
-applyForces(i, v, f, xn) = tuple(vn, xnn) where i ∈ V, v_i ∈ ℝ^3, f_i ∈ ℝ^3,xn_i ∈ ℝ^3,
-a = f_i / m,
-vn = v_i + a dt,
-vnn = { (0, -vn_2, 0) if xn_i,2 < bottom
-     vn otherwise,
-xnnn = { (xn_i,1, bottom, xn_i,3) if xn_i,2 < bottom
-     xn_i otherwise,
-xnn = xnnn + vnn dt
-
+GetLevelSequence(U) = { sequence(U, n) if |n| ≠ 0
+                        U otherwise where U_i ⊂ V,
+n = GetNextLevel(U)
 
 */
 #include <Eigen/Core>
@@ -41,105 +39,126 @@ xnn = xnnn + vnn dt
 #include "type_helper.h"
 #include "TriangleMesh.h"
 
-using namespace heartlang;
+using namespace iheartmesh;
 
 using DT = double;
 using MatrixD = Eigen::MatrixXd;
 using VectorD = Eigen::VectorXd;
-struct iheartmesh {
+struct heartlib {
     std::vector<int > V;
     std::vector<int > E;
     std::vector<int > F;
     TriangleMesh M;
     std::vector<Eigen::Matrix<double, 3, 1>> x;
-    double K;
-    double dt;
-    double damping;
-    double m;
-    double bottom;
-    double e(
-        const int & i,
-        const int & j)
-    {
-        assert( std::binary_search(V.begin(), V.end(), i) );
-        assert( std::binary_search(V.begin(), V.end(), j) );
-
-        return (this->x.at(i) - this->x.at(j)).template lpNorm<2>();    
-    }
     template<typename REAL>
-    std::tuple< Eigen::Matrix<REAL, 3, 1>, Eigen::Matrix<REAL, 3, 1> > computeInternalForces(
-        const int & i,
-        const std::vector<Eigen::Matrix<REAL, 3, 1>> & v,
-        const std::vector<Eigen::Matrix<REAL, 3, 1>> & xn)
+    REAL UpdateStep(
+        const int & v0,
+        const int & v1,
+        const int & v2,
+        const std::vector<REAL> & d)
     {
-        const long dim_1 = v.size();
-        assert( xn.size() == dim_1 );
-        assert( std::binary_search(V.begin(), V.end(), i) );
+        const long dim_1 = d.size();
+        assert( std::binary_search(V.begin(), V.end(), v0) );
+        assert( std::binary_search(V.begin(), V.end(), v1) );
+        assert( std::binary_search(V.begin(), V.end(), v2) );
 
-        // f = (sum_(j ∈ VertexOneRing(i)) (-K) (||disp|| - e(i, j)) dir
-        // where disp = xn_i - xn_j,
-        // dir = disp/||disp||)
-        MatrixD sum_0 = MatrixD::Zero(3, 1);
-        for(int j : this->VertexOneRing(i)){
-                // disp = xn_i - xn_j
-            Eigen::Matrix<REAL, 3, 1> disp = xn.at(i) - xn.at(j);
-                // dir = disp/||disp||
-            Eigen::Matrix<REAL, 3, 1> dir = disp / REAL((disp).template lpNorm<2>());
-            sum_0 += (-this->K) * ((disp).template lpNorm<2>() - e(i, j)) * dir;
-        }
-        Eigen::Matrix<REAL, 3, 1> f = (sum_0);
+        REAL UpdateStep_ret;
+        // x1 = x_(v1) - x_(v0)
+        Eigen::Matrix<REAL, 3, 1> x1 = this->x.at(v1) - this->x.at(v0);
 
-        // vn = v_i exp(-dt damping) + dt f
-        Eigen::Matrix<REAL, 3, 1> vn = v.at(i) * exp(-this->dt * this->damping) + this->dt * f;
-        Eigen::Matrix<REAL, 3, 1> computeInternalForces_0;
-        computeInternalForces_0 << 0.0, -98.0, 0.0;
-        return std::tuple<Eigen::Matrix<REAL, 3, 1>,Eigen::Matrix<REAL, 3, 1> >{ vn,f + computeInternalForces_0 };    
-    }
-    template<typename REAL>
-    std::tuple< Eigen::Matrix<REAL, 3, 1>, Eigen::Matrix<REAL, 3, 1> > applyForces(
-        const int & i,
-        const std::vector<Eigen::Matrix<REAL, 3, 1>> & v,
-        const std::vector<Eigen::Matrix<REAL, 3, 1>> & f,
-        const std::vector<Eigen::Matrix<REAL, 3, 1>> & xn)
-    {
-        const long dim_2 = v.size();
-        assert( f.size() == dim_2 );
-        assert( xn.size() == dim_2 );
-        assert( std::binary_search(V.begin(), V.end(), i) );
+        // x2 = x_(v2) - x_(v0)
+        Eigen::Matrix<REAL, 3, 1> x2 = this->x.at(v2) - this->x.at(v0);
 
-        // a = f_i / m
-        Eigen::Matrix<REAL, 3, 1> a = f.at(i) / REAL(this->m);
+        // X = [x1 x2]
+        Eigen::Matrix<REAL, 3, 2> X_0;
+        X_0 << x1, x2;
+        Eigen::Matrix<REAL, 3, 2> X = X_0;
 
-        // vn = v_i + a dt
-        Eigen::Matrix<REAL, 3, 1> vn = v.at(i) + a * this->dt;
+        // t = [d_(v1) d_(v2)]ᵀ
+        Eigen::Matrix<REAL, 1, 2> t_0;
+        t_0 << d.at(v1), d.at(v2);
+        Eigen::Matrix<REAL, 2, 1> t = t_0.transpose();
 
-        // vnn = { (0, -vn_2, 0) if xn_i,2 < bottom
-        //      vn otherwise
-        Eigen::Matrix<REAL, 3, 1> vnn;
-        if(xn.at(i)[2-1] < this->bottom){
-            Eigen::Matrix<REAL, 3, 1> vnn_0;
-        vnn_0 << 0, -vn[2-1], 0;
-            vnn = vnn_0;
+        // Q = (XᵀX)⁻¹
+        Eigen::Matrix<REAL, 2, 2> Q = (X.transpose() * X).inverse();
+
+        // `1` = [1 ; 1]
+        Eigen::Matrix<int, 2, 1> num1_0;
+        num1_0 << 1,
+        1;
+        Eigen::Matrix<int, 2, 1> num1 = num1_0;
+
+        // p = (`1`ᵀQt + sqrt((`1`ᵀQt)² - `1`ᵀQ`1` ⋅ (tᵀQt - 1)))/ (`1`ᵀQ`1`)
+        REAL p = ((REAL)((num1.transpose()).cast<REAL>() * Q * t) + sqrt(pow(((REAL)((num1.transpose()).cast<REAL>() * Q * t)), 2) - (REAL)((num1.transpose()).cast<REAL>() * Q * (num1).cast<REAL>()) * ((REAL)(t.transpose() * Q * t) - 1))) / REAL(((REAL)((num1.transpose()).cast<REAL>() * Q * (num1).cast<REAL>())));
+
+        // n = XQ(t- p ⋅`1`)
+        Eigen::Matrix<REAL, 3, 1> n = X * Q * (t - (p * (num1).template cast<REAL>()).template cast<REAL>());
+
+        // s = QXᵀn
+        Eigen::Matrix<REAL, 2, 1> s = Q * X.transpose() * n;
+        if((s(1-1, 1-1) < 0) && (s(2-1, 1-1) < 0)){
+            UpdateStep_ret = p;
         }
         else{
-            vnn = vn;
+            UpdateStep_ret = std::min({d.at(v1) + (x1).template lpNorm<2>(), d.at(v2) + (x2).template lpNorm<2>()});
         }
+        return UpdateStep_ret;    
+    }
+    std::vector<int > GetNextLevel(
+        const std::vector<std::vector<int >> & U)
+    {
+        const long dim_2 = U.size();
+        // s = ∪_i U_i
+        std::vector<int > union_0;
+        std::vector<int > tmp;
+        for(int i=1; i<=U.size(); i++){
+            std::set_union(union_0.begin(), union_0.end(), U.at(i-1).begin(), U.at(i-1).end(), std::back_inserter(tmp));
+            union_0.assign(tmp.begin(), tmp.end());
+            tmp.clear();
+        }
+        std::vector<int > s = union_0;
 
-        // xnnn = { (xn_i,1, bottom, xn_i,3) if xn_i,2 < bottom
-        //      xn_i otherwise
-        Eigen::Matrix<REAL, 3, 1> xnnn;
-        if(xn.at(i)[2-1] < this->bottom){
-            Eigen::Matrix<REAL, 3, 1> xnnn_0;
-        xnnn_0 << xn.at(i)[1-1], this->bottom, xn.at(i)[3-1];
-            xnnn = xnnn_0;
+        // v = VertexOneRing(s)
+        std::vector<int > v = this->VertexOneRing(s);
+        std::vector<int > difference;
+        const std::vector<int >& lhs_diff = v;
+        const std::vector<int >& rhs_diff = s;
+        difference.reserve(lhs_diff.size());
+        std::set_difference(lhs_diff.begin(), lhs_diff.end(), rhs_diff.begin(), rhs_diff.end(), std::back_inserter(difference));
+        return difference;    
+    }
+    std::vector<int > GetRangeLevel(
+        const std::vector<std::vector<int >> & U,
+        const int & a,
+        const int & b)
+    {
+        const long dim_3 = U.size();
+        std::vector<int > union_1;
+        std::vector<int > tmp_1;
+        for(int i=a; i<=b; i++){
+            std::set_union(union_1.begin(), union_1.end(), U.at(i).begin(), U.at(i).end(), std::back_inserter(tmp_1));
+            union_1.assign(tmp_1.begin(), tmp_1.end());
+            tmp_1.clear();
+        }
+        return union_1;    
+    }
+    std::vector<std::vector<int >> GetLevelSequence(
+        const std::vector<std::vector<int >> & U)
+    {
+        const long dim_4 = U.size();
+        std::vector<std::vector<int >> GetLevelSequence_ret;
+        // n = GetNextLevel(U)
+        std::vector<int > n = GetNextLevel(U);
+        if((n).size() != 0){
+            std::vector<std::vector<int >> seq = U;
+            seq.reserve(seq.size()+1);
+            seq.push_back(n);
+            GetLevelSequence_ret = seq;
         }
         else{
-            xnnn = xn.at(i);
+            GetLevelSequence_ret = U;
         }
-
-        // xnn = xnnn + vnn dt
-        Eigen::Matrix<REAL, 3, 1> xnn = xnnn + vnn * this->dt;
-        return std::tuple<Eigen::Matrix<REAL, 3, 1>,Eigen::Matrix<REAL, 3, 1> >{ vn,xnn };    
+        return GetLevelSequence_ret;    
     }
     using DT_ = double;
     using MatrixD_ = Eigen::MatrixXd;
@@ -712,14 +731,18 @@ struct iheartmesh {
     std::vector<int > VertexOneRing(std::vector<int > p0){
         return _Neighborhoods.VertexOneRing(p0);
     };
-    iheartmesh(
+    std::vector<int > Faces(std::tuple< std::vector<int >, std::vector<int >, std::vector<int >, std::vector<int > > p0){
+        return _Neighborhoods.Faces(p0);
+    };
+    std::vector<int > Faces_0(int p0){
+        return _Neighborhoods.Faces_0(p0);
+    };
+    std::vector<int > Faces_1(int p0){
+        return _Neighborhoods.Faces_1(p0);
+    };
+    heartlib(
         const TriangleMesh & M,
-        const std::vector<Eigen::Matrix<double, 3, 1>> & x,
-        const double & m,
-        const double & damping,
-        const double & K,
-        const double & dt,
-        const double & bottom)
+        const std::vector<Eigen::Matrix<double, 3, 1>> & x)
     :
     _Neighborhoods(M)
     {
@@ -734,11 +757,6 @@ struct iheartmesh {
         const long dim_0 = x.size();
         this->M = M;
         this->x = x;
-        this->K = K;
-        this->dt = dt;
-        this->damping = damping;
-        this->m = m;
-        this->bottom = bottom;
     
     }
 };

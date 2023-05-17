@@ -12,7 +12,7 @@
 #include <map>
 #include "Connectivity.h"
 
-namespace heartlang {
+namespace iheartmesh {
 
 class TriangleMesh: public Connectivity {
 public:

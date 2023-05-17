@@ -14,7 +14,7 @@
 #include <igl/writeOBJ.h>
 #include <igl/readOFF.h>
 #include "MeshHelper.h"
-#include "iheartmesh.h"
+#include "heartlib.h"
 #include "dec_util.h"
 #include "polyscope/polyscope.h"
 #include "polyscope/surface_mesh.h"
@@ -22,7 +22,7 @@
 namespace fs = std::filesystem;
 inline fs::path DATA_PATH = fs::path(DATA_PATH_STR);
 
-using namespace heartlang;
+using namespace iheartmesh;
 
 Eigen::MatrixXd meshV;
 Eigen::MatrixXi meshF;
@@ -31,7 +31,7 @@ TriangleMesh triangle_mesh;
 std::vector<Eigen::Matrix<double, 3, 1>> P;
 
 void update(){
-    iheartmesh ihla(triangle_mesh, P); 
+    heartlib ihla(triangle_mesh, P); 
     // std::cout<<"before"<<std::endl;
     // for (int i = 0; i < 10; ++i)
     // {
@@ -102,7 +102,7 @@ int main(int argc, const char * argv[]) {
         P.push_back(meshV.row(i).transpose());
     }
     // update();
-    // iheartmesh ihla(triangle_mesh, P); 
+    // heartlib ihla(triangle_mesh, P); 
     // // std::cout<<"before"<<std::endl;
 
     // std::cout<<"nn:\n"<<std::endl;

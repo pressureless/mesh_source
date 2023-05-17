@@ -12,7 +12,7 @@
 #include <Eigen/Sparse> 
 #include <igl/readOBJ.h>
 #include "MeshHelper.h"
-#include "iheartmesh.h"
+#include "heartlib.h"
 #include "dec_util.h"
 #include "polyscope/polyscope.h"
 #include "polyscope/surface_mesh.h"
@@ -25,7 +25,7 @@
 namespace fs = std::filesystem;
 inline fs::path DATA_PATH = fs::path(DATA_PATH_STR);
 
-using namespace heartlang;
+using namespace iheartmesh;
 
 typedef OpenMesh::PolyMesh_ArrayKernelT<>  MyMesh;
 
@@ -65,7 +65,7 @@ int main(int argc, const char * argv[]) {
     {
         P.push_back(meshV.row(i).transpose());
     }
-    iheartmesh ihla(polygon_mesh, P);
+    heartlib ihla(polygon_mesh, P);
     std::vector<Eigen::Matrix<double, 3, 1>> N;
     for (int i = 0; i < meshV.rows(); ++i)
     {

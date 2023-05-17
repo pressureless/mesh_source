@@ -6,7 +6,7 @@
 #include "Connectivity.h"
 #include "nanoflann.hpp"
 
-namespace heartlang {
+namespace iheartmesh {
 
 struct MPoint {
   std::vector<Eigen::VectorXd> points;

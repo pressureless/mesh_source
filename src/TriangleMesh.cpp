@@ -12,7 +12,7 @@
 #include "dec_util.h"
 #include "TriangleMesh.h"
 
-namespace heartlang {
+namespace iheartmesh {
 
 TriangleMesh::TriangleMesh(){
 

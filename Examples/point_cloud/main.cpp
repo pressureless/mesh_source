@@ -12,7 +12,7 @@
 #include <Eigen/Sparse> 
 #include <igl/readOBJ.h>
 #include "MeshHelper.h"
-#include "iheartmesh.h"
+#include "heartlib.h"
 #include "dec_util.h"
 #include "polyscope/polyscope.h"
 #include "polyscope/surface_mesh.h"
@@ -22,7 +22,7 @@
 namespace fs = std::filesystem;
 inline fs::path DATA_PATH = fs::path(DATA_PATH_STR);
 
-using namespace heartlang;
+using namespace iheartmesh;
 
 int main(int argc, const char * argv[]) {
     Eigen::MatrixXd meshV;
@@ -46,7 +46,7 @@ int main(int argc, const char * argv[]) {
     std::vector<std::vector<size_t>> neighbors = GetPointNeighbors(PN, 6);
 
     PointCloud pc(PN, neighbors);
-    iheartmesh ihla(pc, P);
+    heartlib ihla(pc, P);
     std::vector<Eigen::Matrix<double, 3, 3>> cov;
 
     // std::cout<<"v:"<<meshV.rows()<<std::endl;

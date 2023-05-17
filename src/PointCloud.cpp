@@ -5,7 +5,7 @@
 #include "dec_util.h"
 #include "PointCloud.h"
 
-namespace heartlang {
+namespace iheartmesh {
 
 std::vector<std::vector<size_t>> GetPointNeighbors(std::vector<Eigen::VectorXd>& P, int k){
     std::unique_ptr<PointCloudWrapper> impl;

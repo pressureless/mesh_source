@@ -1,46 +1,44 @@
 /*
+arccos, atan2 from trigonometry
 ElementSets from MeshConnectivity
-NeighborVerticesInFace, Faces, VertexOneRing from Neighborhoods(M)
+Faces, Vertices, Edges,OppositeFaces, VertexOneRing, OrientedOppositeFaces, OppositeVertices, NeighborVerticesInFace, OrientedVertices, EdgeIndex from Neighborhoods(M)
 M : TriangleMesh
-x_i ∈ ℝ^3 
-
+x_i ∈ ℝ^3  
 V, E, F = ElementSets( M )
-VertexNormal(i) = w/||w|| where i ∈ V,
-w = (sum_(f ∈ Faces(i)) (x_j- x_i)×(x_k-x_i)
-where j, k = NeighborVerticesInFace(f, i) )
 
-CalcNorm(i, v, n, `σ_c`, `σ_s`) = `w_c`⋅`w_s` where i,v ∈ ℤ vertices,`σ_c`, `σ_s` ∈ ℝ, n ∈ ℝ³,
-t = ||x_i - x_v||,
-h = <n, x_v - x_i>, 
-`w_c` = exp(-t²/(2`σ_c`²)),
-`w_s` = exp(-h²/(2`σ_s`²))
+VertexNormal(i) = (sum_(f ∈ Faces(i)) (x_j- x_i)×(x_k-x_i)/(||x_j-x_i||² ||x_k-x_i||²) 
+where j, k = NeighborVerticesInFace(f, i) ) where i ∈ V
 
-CalcS(i, v, n, `σ_c`, `σ_s`) = CalcNorm(i, v, n, `σ_c`,`σ_s`)⋅h where i,v ∈ ℤ vertices,`σ_c`, `σ_s` ∈ ℝ, n ∈ ℝ³,
-h = <n, x_v - x_i>
+θ(i, f) = arccos((x_j-x_i)⋅(x_k-x_i)/(‖x_j-x_i‖ ‖x_k-x_i‖)) where i ∈ V, f ∈ F,
+j, k = NeighborVerticesInFace(f, i)
 
+area(f) = ½ ‖(x_j-x_i)×(x_k-x_i)‖ where f ∈ F,
+i, j, k = OrientedVertices(f)
 
-DenoisePoint(i) = x_i + n⋅(s/norm)  where i ∈ V,
-n = VertexNormal(i),
-`σ_c` = CalcSigmaC(i),
-neighbors = AdaptiveVertexNeighbor(i, {i}, `σ_c`),
-`σ_s` = CalcSigmaS(i, neighbors),
-s = (sum_(v ∈ neighbors) CalcS(i, v, n, `σ_c`, `σ_s`)),
-norm = (sum_(v ∈ neighbors) CalcNorm(i, v, n, `σ_c`, `σ_s`))
+N(f) = ((x_j- x_i)×(x_k-x_i))/(2area(f)) where f ∈ F,
+i,j,k = OrientedVertices(f)
+
+l(i, j) = ‖x_j - x_i‖ where i,j ∈ V
+
+ϕ(i, j) = atan2(e⋅(`n_1`×`n_2`), `n_1`⋅`n_2`) where i, j ∈ V, 
+e = (x_j-x_i)/||x_j-x_i||,
+`f_1`, `f_2` = OrientedOppositeFaces(i, j),
+`n_1` = N(`f_1`),
+`n_2` = N(`f_2`)
+
+cot(k, j, i) = cos/sin where i,j,k ∈ V,
+oj, oi = OrientedVertices(k, j, i),
+cos = (x_oj - x_k)⋅(x_oi-x_k),
+sin = ||(x_oj - x_k)×(x_oi-x_k)||
+
  
-
-CalcSigmaC(i) = min({||x_i - x_v|| for v ∈ VertexOneRing(i)}) where i ∈ V
-
-CalcSigmaS(i, N) = {sqrt(offset) + 1.0E-12 if sqrt(offset) < 1.0E-12
-    sqrt(offset) otherwise where i ∈ V, N ⊂ V,
-n = VertexNormal(i),
-avg = (sum_(v ∈ N) t/|N| where t = sqrt(((x_v - x_i)⋅n)²)),
-sqs = (sum_(v ∈ N) (t-avg)² where t = sqrt(((x_v - x_i)⋅n)²)),
-offset = sqs / |N|
+KN(i) = 1/2 (sum_(j ∈ VertexOneRing(i)) ϕ_ij/l_ij (x_j - x_i)) where i ∈ V
 
 
-AdaptiveVertexNeighbor(i, n, σ) = { n  if |n|=|target| 
-                                           AdaptiveVertexNeighbor(i, target, σ) otherwise where i ∈ V, σ ∈ ℝ, n ⊂ V,
-target = {v for v ∈ VertexOneRing(n) if ||x_i-x_v||< 2σ} ∪ n
+HN(i) = 1/2 (sum_(j ∈ VertexOneRing(i))(`cot(α)` + `cot(β)`) (x_i - x_j) 
+where k, p = OppositeVertices(i, j),
+`cot(α)` = cot(k, j, i),
+`cot(β)` = cot(p, i, j) ) where i ∈ V
 
 
 */
@@ -54,12 +52,12 @@ target = {v for v ∈ VertexOneRing(n) if ||x_i-x_v||< 2σ} ∪ n
 #include "type_helper.h"
 #include "TriangleMesh.h"
 
-using namespace heartlang;
+using namespace iheartmesh;
 
 using DT = double;
 using MatrixD = Eigen::MatrixXd;
 using VectorD = Eigen::VectorXd;
-struct iheartmesh {
+struct heartlib {
     std::vector<int > V;
     std::vector<int > E;
     std::vector<int > F;
@@ -70,179 +68,134 @@ struct iheartmesh {
     {
         assert( std::binary_search(V.begin(), V.end(), i) );
 
-        // w = (sum_(f ∈ Faces(i)) (x_j- x_i)×(x_k-x_i)
-        // where j, k = NeighborVerticesInFace(f, i) )
         MatrixD sum_0 = MatrixD::Zero(3, 1);
         for(int f : Faces_0(i)){
                 // j, k = NeighborVerticesInFace(f, i)
             std::tuple< int, int > rhs_1 = this->NeighborVerticesInFace(f, i);
             int j = std::get<0>(rhs_1);
             int k = std::get<1>(rhs_1);
-            sum_0 += ((this->x.at(j) - this->x.at(i))).cross((this->x.at(k) - this->x.at(i)));
+            sum_0 += ((this->x.at(j) - this->x.at(i))).cross((this->x.at(k) - this->x.at(i))) / double((pow((this->x.at(j) - this->x.at(i)).template lpNorm<2>(), 2) * pow((this->x.at(k) - this->x.at(i)).template lpNorm<2>(), 2)));
         }
-        Eigen::Matrix<double, 3, 1> w = (sum_0);
-        return w / double((w).template lpNorm<2>());    
+        return (sum_0);    
     }
-    template<typename REAL>
-    REAL CalcNorm(
+    double θ(
         const int & i,
-        const int & v,
-        const Eigen::Matrix<REAL, 3, 1> & n,
-        const REAL & σ_c,
-        const REAL & σ_s)
+        const int & f)
     {
-        // t = ||x_i - x_v||
-        REAL t = (this->x.at(i) - this->x.at(v)).template lpNorm<2>();
+        assert( std::binary_search(V.begin(), V.end(), i) );
+        assert( std::binary_search(F.begin(), F.end(), f) );
 
-        // h = <n, x_v - x_i>
-        REAL h = (n).dot(this->x.at(v) - this->x.at(i));
-
-        // `w_c` = exp(-t²/(2`σ_c`²))
-        REAL w_c = exp(-pow(t, 2) / REAL((2 * pow(σ_c, 2))));
-
-        // `w_s` = exp(-h²/(2`σ_s`²))
-        REAL w_s = exp(-pow(h, 2) / REAL((2 * pow(σ_s, 2))));
-        return w_c * w_s;    
+        // j, k = NeighborVerticesInFace(f, i)
+        std::tuple< int, int > rhs_2 = this->NeighborVerticesInFace(f, i);
+        int j = std::get<0>(rhs_2);
+        int k = std::get<1>(rhs_2);
+        return acos(((this->x.at(j) - this->x.at(i))).dot((this->x.at(k) - this->x.at(i))) / double(((this->x.at(j) - this->x.at(i)).template lpNorm<2>() * (this->x.at(k) - this->x.at(i)).template lpNorm<2>())));    
     }
-    template<typename REAL>
-    REAL CalcS(
+    double area(
+        const int & f)
+    {
+        assert( std::binary_search(F.begin(), F.end(), f) );
+
+        // i, j, k = OrientedVertices(f)
+        std::tuple< int, int, int > rhs_3 = this->OrientedVertices(f);
+        int i = std::get<0>(rhs_3);
+        int j = std::get<1>(rhs_3);
+        int k = std::get<2>(rhs_3);
+        return (1/double(2)) * (((this->x.at(j) - this->x.at(i))).cross((this->x.at(k) - this->x.at(i)))).template lpNorm<2>();    
+    }
+    Eigen::Matrix<double, 3, 1> N(
+        const int & f)
+    {
+        assert( std::binary_search(F.begin(), F.end(), f) );
+
+        // i,j,k = OrientedVertices(f)
+        std::tuple< int, int, int > rhs_4 = this->OrientedVertices(f);
+        int i = std::get<0>(rhs_4);
+        int j = std::get<1>(rhs_4);
+        int k = std::get<2>(rhs_4);
+        return (((this->x.at(j) - this->x.at(i))).cross((this->x.at(k) - this->x.at(i)))) / double((2 * area(f)));    
+    }
+    double l(
         const int & i,
-        const int & v,
-        const Eigen::Matrix<REAL, 3, 1> & n,
-        const REAL & σ_c,
-        const REAL & σ_s)
+        const int & j)
     {
-        // h = <n, x_v - x_i>
-        REAL h = (n).dot(this->x.at(v) - this->x.at(i));
-        return CalcNorm(i, v, n, σ_c, σ_s) * h;    
+        assert( std::binary_search(V.begin(), V.end(), i) );
+        assert( std::binary_search(V.begin(), V.end(), j) );
+
+        return (this->x.at(j) - this->x.at(i)).template lpNorm<2>();    
     }
-    double CalcSigmaC(
+    double ϕ(
+        const int & i,
+        const int & j)
+    {
+        assert( std::binary_search(V.begin(), V.end(), i) );
+        assert( std::binary_search(V.begin(), V.end(), j) );
+
+        // e = (x_j-x_i)/||x_j-x_i||
+        Eigen::Matrix<double, 3, 1> e = (this->x.at(j) - this->x.at(i)) / double((this->x.at(j) - this->x.at(i)).template lpNorm<2>());
+
+        // `f_1`, `f_2` = OrientedOppositeFaces(i, j)
+        std::tuple< int, int > rhs_5 = this->OrientedOppositeFaces(i, j);
+        int f_1 = std::get<0>(rhs_5);
+        int f_2 = std::get<1>(rhs_5);
+
+        // `n_1` = N(`f_1`)
+        Eigen::Matrix<double, 3, 1> n_1 = N(f_1);
+
+        // `n_2` = N(`f_2`)
+        Eigen::Matrix<double, 3, 1> n_2 = N(f_2);
+        return atan2((e).dot(((n_1).cross(n_2))), (n_1).dot(n_2));    
+    }
+    double cot(
+        const int & k,
+        const int & j,
+        const int & i)
+    {
+        assert( std::binary_search(V.begin(), V.end(), i) );
+        assert( std::binary_search(V.begin(), V.end(), j) );
+        assert( std::binary_search(V.begin(), V.end(), k) );
+
+        // oj, oi = OrientedVertices(k, j, i)
+        std::tuple< int, int > rhs_6 = this->OrientedVertices(k, j, i);
+        int oj = std::get<0>(rhs_6);
+        int oi = std::get<1>(rhs_6);
+
+        // cos = (x_oj - x_k)⋅(x_oi-x_k)
+        double cos = ((this->x.at(oj) - this->x.at(k))).dot((this->x.at(oi) - this->x.at(k)));
+
+        // sin = ||(x_oj - x_k)×(x_oi-x_k)||
+        double sin = (((this->x.at(oj) - this->x.at(k))).cross((this->x.at(oi) - this->x.at(k)))).template lpNorm<2>();
+        return cos / double(sin);    
+    }
+    Eigen::Matrix<double, 3, 1> KN(
         const int & i)
     {
         assert( std::binary_search(V.begin(), V.end(), i) );
 
-        std::vector<double > CalcSigmaCset_0;
-        const std::vector<int >& range = this->VertexOneRing(i);
-        CalcSigmaCset_0.reserve(range.size());
-        for(int v : range){
-            CalcSigmaCset_0.push_back((this->x.at(i) - this->x.at(v)).template lpNorm<2>());
+        MatrixD sum_1 = MatrixD::Zero(3, 1);
+        for(int j : this->VertexOneRing(i)){
+            sum_1 += ϕ(i, j) / double(l(i, j)) * (this->x.at(j) - this->x.at(i));
         }
-        if(CalcSigmaCset_0.size() > 1){
-            sort(CalcSigmaCset_0.begin(), CalcSigmaCset_0.end());
-            CalcSigmaCset_0.erase(unique(CalcSigmaCset_0.begin(), CalcSigmaCset_0.end() ), CalcSigmaCset_0.end());
-        }
-        return *(CalcSigmaCset_0).begin();    
+        return double(1 / double(2)) * (sum_1);    
     }
-    double CalcSigmaS(
-        const int & i,
-        const std::vector<int > & N)
-    {
-        assert( std::binary_search(V.begin(), V.end(), i) );
-
-        double CalcSigmaS_ret;
-        // n = VertexNormal(i)
-        Eigen::Matrix<double, 3, 1> n = VertexNormal(i);
-
-        // t = sqrt(((x_v - x_i)⋅n)²)
-        double sum_3 = 0;
-        for(int v : N){
-                // t = sqrt(((x_v - x_i)⋅n)²)
-            double t = sqrt(pow((((this->x.at(v) - this->x.at(i))).dot(n)), 2));
-            sum_3 += t / double((N).size());
-        }
-        double avg = (sum_3);
-
-        // t = sqrt(((x_v - x_i)⋅n)²)
-        double sum_4 = 0;
-        for(int v : N){
-                // t = sqrt(((x_v - x_i)⋅n)²)
-            double t = sqrt(pow((((this->x.at(v) - this->x.at(i))).dot(n)), 2));
-            sum_4 += pow((t - avg), 2);
-        }
-        double sqs = (sum_4);
-
-        // offset = sqs / |N|
-        double offset = sqs / double((N).size());
-        if(sqrt(offset) < 1.0E-12){
-            CalcSigmaS_ret = sqrt(offset) + 1.0E-12;
-        }
-        else{
-            CalcSigmaS_ret = sqrt(offset);
-        }
-        return CalcSigmaS_ret;    
-    }
-    template<typename REAL>
-    std::vector<int > AdaptiveVertexNeighbor(
-        const int & i,
-        const std::vector<int > & n,
-        const REAL & σ)
-    {
-        assert( std::binary_search(V.begin(), V.end(), i) );
-
-        std::vector<int > AdaptiveVertexNeighbor_ret;
-        // target = {v for v ∈ VertexOneRing(n) if ||x_i-x_v||< 2σ} ∪ n
-        std::vector<int > AdaptiveVertexNeighborset_0;
-        const std::vector<int >& range_1 = this->VertexOneRing(n);
-        AdaptiveVertexNeighborset_0.reserve(range_1.size());
-        for(int v : range_1){
-            if((this->x.at(i) - this->x.at(v)).template lpNorm<2>() < 2 * σ){
-                AdaptiveVertexNeighborset_0.push_back(v);
-            }
-        }
-        if(AdaptiveVertexNeighborset_0.size() > 1){
-            sort(AdaptiveVertexNeighborset_0.begin(), AdaptiveVertexNeighborset_0.end());
-            AdaptiveVertexNeighborset_0.erase(unique(AdaptiveVertexNeighborset_0.begin(), AdaptiveVertexNeighborset_0.end() ), AdaptiveVertexNeighborset_0.end());
-        }
-        std::vector<int > uni;
-        const std::vector<int >& lhs = AdaptiveVertexNeighborset_0;
-        const std::vector<int >& rhs_2 = n;
-        uni.reserve(lhs.size()+rhs_2.size());
-        std::set_union(lhs.begin(), lhs.end(), rhs_2.begin(), rhs_2.end(), std::back_inserter(uni));
-        std::vector<int > target = uni;
-        if((n).size() == (target).size()){
-            AdaptiveVertexNeighbor_ret = n;
-        }
-        else{
-            AdaptiveVertexNeighbor_ret = AdaptiveVertexNeighbor(i, target, σ);
-        }
-        return AdaptiveVertexNeighbor_ret;    
-    }
-    Eigen::Matrix<double, 3, 1> DenoisePoint(
+    Eigen::Matrix<double, 3, 1> HN(
         const int & i)
     {
         assert( std::binary_search(V.begin(), V.end(), i) );
 
-        // n = VertexNormal(i)
-        Eigen::Matrix<double, 3, 1> n = VertexNormal(i);
-
-        // `σ_c` = CalcSigmaC(i)
-        double σ_c = CalcSigmaC(i);
-
-        // neighbors = AdaptiveVertexNeighbor(i, {i}, `σ_c`)
-        std::vector<int > DenoisePointset_0({i});
-        if(DenoisePointset_0.size() > 1){
-            sort(DenoisePointset_0.begin(), DenoisePointset_0.end());
-            DenoisePointset_0.erase(unique(DenoisePointset_0.begin(), DenoisePointset_0.end() ), DenoisePointset_0.end());
+        MatrixD sum_2 = MatrixD::Zero(3, 1);
+        for(int j : this->VertexOneRing(i)){
+                // k, p = OppositeVertices(i, j)
+            std::tuple< int, int > rhs_7 = this->OppositeVertices(i, j);
+            int k = std::get<0>(rhs_7);
+            int p = std::get<1>(rhs_7);
+                // `cot(α)` = cot(k, j, i)
+            double cotα = cot(k, j, i);
+                // `cot(β)` = cot(p, i, j)
+            double cotβ = cot(p, i, j);
+            sum_2 += (cotα + cotβ) * (this->x.at(i) - this->x.at(j));
         }
-        std::vector<int > neighbors = AdaptiveVertexNeighbor(i, DenoisePointset_0, σ_c);
-
-        // `σ_s` = CalcSigmaS(i, neighbors)
-        double σ_s = CalcSigmaS(i, neighbors);
-
-        // s = (sum_(v ∈ neighbors) CalcS(i, v, n, `σ_c`, `σ_s`))
-        double sum_6 = 0;
-        for(int v : neighbors){
-            sum_6 += CalcS(i, v, n, σ_c, σ_s);
-        }
-        double s = (sum_6);
-
-        // norm = (sum_(v ∈ neighbors) CalcNorm(i, v, n, `σ_c`, `σ_s`))
-        double sum_7 = 0;
-        for(int v : neighbors){
-            sum_7 += CalcNorm(i, v, n, σ_c, σ_s);
-        }
-        double norm = (sum_7);
-        return this->x.at(i) + n * (s / double(norm));    
+        return double(1 / double(2)) * (sum_2);    
     }
     using DT_ = double;
     using MatrixD_ = Eigen::MatrixXd;
@@ -809,9 +762,6 @@ struct iheartmesh {
         }
     };
     Neighborhoods _Neighborhoods;
-    std::tuple< int, int > NeighborVerticesInFace(int p0,int p1){
-        return _Neighborhoods.NeighborVerticesInFace(p0,p1);
-    };
     std::vector<int > Faces(std::tuple< std::vector<int >, std::vector<int >, std::vector<int >, std::vector<int > > p0){
         return _Neighborhoods.Faces(p0);
     };
@@ -821,13 +771,61 @@ struct iheartmesh {
     std::vector<int > Faces_1(int p0){
         return _Neighborhoods.Faces_1(p0);
     };
+    std::vector<int > Vertices(std::tuple< std::vector<int >, std::vector<int >, std::vector<int >, std::vector<int > > p0){
+        return _Neighborhoods.Vertices(p0);
+    };
+    std::vector<int > Vertices_0(int p0){
+        return _Neighborhoods.Vertices_0(p0);
+    };
+    std::vector<int > Vertices_1(std::vector<int > p0){
+        return _Neighborhoods.Vertices_1(p0);
+    };
+    std::vector<int > Vertices_2(int p0){
+        return _Neighborhoods.Vertices_2(p0);
+    };
+    std::vector<int > Vertices_3(std::vector<int > p0){
+        return _Neighborhoods.Vertices_3(p0);
+    };
+    std::vector<int > Edges(std::tuple< std::vector<int >, std::vector<int >, std::vector<int >, std::vector<int > > p0){
+        return _Neighborhoods.Edges(p0);
+    };
+    std::vector<int > Edges_0(int p0){
+        return _Neighborhoods.Edges_0(p0);
+    };
+    std::vector<int > Edges_1(int p0){
+        return _Neighborhoods.Edges_1(p0);
+    };
+    std::tuple< int, int > OppositeFaces(int p0){
+        return _Neighborhoods.OppositeFaces(p0);
+    };
     std::vector<int > VertexOneRing(int p0){
         return _Neighborhoods.VertexOneRing(p0);
     };
     std::vector<int > VertexOneRing(std::vector<int > p0){
         return _Neighborhoods.VertexOneRing(p0);
     };
-    iheartmesh(
+    std::tuple< int, int > OrientedOppositeFaces(int p0,int p1){
+        return _Neighborhoods.OrientedOppositeFaces(p0,p1);
+    };
+    std::tuple< int, int > OppositeVertices(int p0){
+        return _Neighborhoods.OppositeVertices(p0);
+    };
+    std::tuple< int, int > OppositeVertices(int p0,int p1){
+        return _Neighborhoods.OppositeVertices(p0,p1);
+    };
+    std::tuple< int, int > NeighborVerticesInFace(int p0,int p1){
+        return _Neighborhoods.NeighborVerticesInFace(p0,p1);
+    };
+    std::tuple< int, int, int > OrientedVertices(int p0){
+        return _Neighborhoods.OrientedVertices(p0);
+    };
+    std::tuple< int, int > OrientedVertices(int p0,int p1,int p2){
+        return _Neighborhoods.OrientedVertices(p0,p1,p2);
+    };
+    int EdgeIndex(int p0,int p1){
+        return _Neighborhoods.EdgeIndex(p0,p1);
+    };
+    heartlib(
         const TriangleMesh & M,
         const std::vector<Eigen::Matrix<double, 3, 1>> & x)
     :
@@ -846,4 +844,9 @@ struct iheartmesh {
         this->x = x;
     
     }
-}; 
+};
+
+
+
+
+

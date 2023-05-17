@@ -15,7 +15,7 @@
 // using Eigen::Vector;
 #include "TriangleMesh.h"
 
-namespace heartlang {
+namespace iheartmesh {
 
 // std::tuple<std::set<int>, std::set<int>, std::set<int>> MeshSets(const TriangleMesh& mesh);
 // std::tuple<Eigen::SparseMatrix<int>, Eigen::SparseMatrix<int> > BoundaryMatrices(const TriangleMesh& mesh);

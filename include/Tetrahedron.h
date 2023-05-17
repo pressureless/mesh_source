@@ -6,7 +6,7 @@
 #include "Connectivity.h"
 #include "TriangleMesh.h"
 
-namespace heartlang {
+namespace iheartmesh {
 
 class Tetrahedron: public TriangleMesh {
 public:

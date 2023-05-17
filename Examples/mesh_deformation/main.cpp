@@ -18,7 +18,7 @@
 #include <igl/per_vertex_normals.h>
 #include <igl/map_vertices_to_circle.h>
 #include "MeshHelper.h"
-#include "iheartmesh.h"
+#include "heartlib.h"
 #include "dec_util.h"
 #include "polyscope/polyscope.h"
 #include "polyscope/surface_mesh.h"
@@ -31,7 +31,7 @@ namespace fs = std::filesystem;
 inline fs::path DATA_PATH = fs::path(DATA_PATH_STR);
 using namespace autodiff;
 
-using namespace heartlang;
+using namespace iheartmesh;
 
 int start;
 double default_hessian_projection_eps = 1e-9;
@@ -202,7 +202,7 @@ std::vector<Eigen::Matrix<double, 3, 1>> bp;
 
 bool step(){
     bool has_updated = true;
-    iheartmesh ihla(tet_mesh, x̄, x, bc, bp, weight, eps, psd, INFINITY);
+    heartlib ihla(tet_mesh, x̄, x, bc, bp, weight, eps, psd, INFINITY);
 
     auto end = std::chrono::duration_cast<std::chrono::seconds>(std::chrono::system_clock::now().time_since_epoch()).count();
     std::cout <<end-start<< " seconds init"<<std::endl;
