@@ -1,11 +1,13 @@
-#ifndef Tetrahedron_h
-#define Tetrahedron_h
+#pragma once
+
 #include <Eigen/Dense>
 #include <Eigen/Sparse>
 #include <map>
 #include "simplicial_set.h"
 #include "Connectivity.h"
 #include "TriangleMesh.h"
+
+namespace iheartmesh {
 
 class Tetrahedron: public TriangleMesh {
 public:
@@ -24,4 +26,4 @@ public:
     std::tuple<Eigen::SparseMatrix<int>, Eigen::SparseMatrix<int>, Eigen::SparseMatrix<int> > UnsignedBoundaryMatrices() const;
 };
 
-#endif
+}

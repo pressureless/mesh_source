@@ -12,6 +12,8 @@
 #include "dec_util.h"
 #include "TriangleMesh.h"
 
+using namespace iheartmesh;
+
 TriangleMesh::TriangleMesh(){
 
 }

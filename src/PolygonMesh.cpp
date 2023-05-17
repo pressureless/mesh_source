@@ -6,6 +6,8 @@
 #include "dec_util.h"
 #include "PolygonMesh.h"
 
+using namespace iheartmesh;
+
 PolygonMesh::PolygonMesh(){
 
 }

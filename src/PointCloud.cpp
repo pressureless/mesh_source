@@ -4,6 +4,9 @@
 #include <algorithm> 
 #include "dec_util.h"
 #include "PointCloud.h"
+
+using namespace iheartmesh;
+
 std::vector<std::vector<size_t>> GetPointNeighbors(std::vector<Eigen::VectorXd>& P, int k){
     std::unique_ptr<PointCloudWrapper> impl;
     impl.reset(new PointCloudWrapper(P, k));

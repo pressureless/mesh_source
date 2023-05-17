@@ -4,13 +4,13 @@
 //
 //  Created by pressure on 10/31/22.
 //
-#pragma once
-
 #include <Eigen/Dense>
 #include <Eigen/Sparse>
 #include "dec_util.h"
 // using Eigen::Matrix;
 // using Eigen::Vector;
+
+using namespace iheartmesh;
 
 typedef Eigen::Matrix< int, Eigen::Dynamic, 1> Vector;
 typedef Eigen::Matrix< int, 1, Eigen::Dynamic> RowVector;

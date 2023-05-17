@@ -1,5 +1,6 @@
 #include "MeshHelper.h"
- 
+
+using namespace iheartmesh;
 
 // std::set<int> vector_to_vertices(const TriangleMesh& mesh, const Eigen::VectorXi& vi){
 // 	return mesh.vector_to_vertices(vi);
