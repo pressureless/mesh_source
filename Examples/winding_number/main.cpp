@@ -49,7 +49,7 @@ void get_vis(MatrixXd &V_vis,
             MatrixXd &C_vis,
             double cur_slice){
   Eigen::Vector4d plane(
-    0,0,1,-((1-cur_slice)*V.col(2).minCoeff()+cur_slice*V.col(2).maxCoeff()));
+    1,0,0,-((1-cur_slice)*V.col(0).minCoeff()+cur_slice*V.col(0).maxCoeff()));
   VectorXi J;
   {
     SparseMatrix<double> bary;
@@ -71,32 +71,27 @@ void get_multiple_vis(MatrixXd &V_vis,
             MatrixXi &F_vis, 
             MatrixXd &C_vis){
   get_vis(V_vis, F_vis, C_vis, 0.1);
+  const auto & append_mesh = [&C_vis,&F_vis,&V_vis](
+    const Eigen::MatrixXd & V_vis_tmp,
+    const Eigen::MatrixXi & F_vis_tmp,
+    const Eigen::MatrixXd & C_vis_tmp)
+  {
+      F_vis.conservativeResize(F_vis.rows()+F_vis_tmp.rows(),3);
+      F_vis.bottomRows(F_vis_tmp.rows()) = F_vis_tmp.array()+V_vis.rows();
+      V_vis.conservativeResize(V_vis.rows()+V_vis_tmp.rows(),3);
+      V_vis.bottomRows(V_vis_tmp.rows()) = V_vis_tmp;
+      C_vis.conservativeResize(C_vis.rows()+C_vis_tmp.rows(),3);
+      C_vis.bottomRows(C_vis_tmp.rows()) = C_vis_tmp;
+  };
   MatrixXd V_vis_tmp;
   MatrixXi F_vis_tmp;
   MatrixXd C_vis_tmp;
   get_vis(V_vis_tmp, F_vis_tmp, C_vis_tmp, 0.3);
-  F_vis.conservativeResize(F_vis.rows()+F_vis_tmp.rows(),3);
-  F_vis.bottomRows(F_vis_tmp.rows()) = F_vis_tmp.array()+V_vis.rows();
-  V_vis.conservativeResize(V_vis.rows()+V_vis_tmp.rows(),3);
-  V_vis.bottomRows(V_vis_tmp.rows()) = V_vis_tmp;
-  C_vis.conservativeResize(C_vis.rows()+C_vis_tmp.rows(),3);
-  C_vis.bottomRows(C_vis_tmp.rows()) = C_vis_tmp;
-
+  append_mesh(V_vis_tmp, F_vis_tmp, C_vis_tmp);
   get_vis(V_vis_tmp, F_vis_tmp, C_vis_tmp, 0.6);
-  F_vis.conservativeResize(F_vis.rows()+F_vis_tmp.rows(),3);
-  F_vis.bottomRows(F_vis_tmp.rows()) = F_vis_tmp.array()+V_vis.rows();
-  V_vis.conservativeResize(V_vis.rows()+V_vis_tmp.rows(),3);
-  V_vis.bottomRows(V_vis_tmp.rows()) = V_vis_tmp;
-  C_vis.conservativeResize(C_vis.rows()+C_vis_tmp.rows(),3);
-  C_vis.bottomRows(C_vis_tmp.rows()) = C_vis_tmp;
-
+  append_mesh(V_vis_tmp, F_vis_tmp, C_vis_tmp);
   get_vis(V_vis_tmp, F_vis_tmp, C_vis_tmp, 0.9);
-  F_vis.conservativeResize(F_vis.rows()+F_vis_tmp.rows(),3);
-  F_vis.bottomRows(F_vis_tmp.rows()) = F_vis_tmp.array()+V_vis.rows();
-  V_vis.conservativeResize(V_vis.rows()+V_vis_tmp.rows(),3);
-  V_vis.bottomRows(V_vis_tmp.rows()) = V_vis_tmp;
-  C_vis.conservativeResize(C_vis.rows()+C_vis_tmp.rows(),3);
-  C_vis.bottomRows(C_vis_tmp.rows()) = C_vis_tmp;
+  append_mesh(V_vis_tmp, F_vis_tmp, C_vis_tmp);
 }
 
 void update_visualization(igl::opengl::glfw::Viewer & viewer)
@@ -167,7 +162,7 @@ bool key_down(igl::opengl::glfw::Viewer& viewer, unsigned char key, int mod)
 
 void set_winding_number(){
     // igl::winding_number(V,F,BC,W);   // libigl version
-    // Initialize triangle mesh
+    //Initialize triangle mesh
     TriangleMesh triangle_mesh;
     triangle_mesh.initialize(F);
     std::vector<Eigen::Matrix<double, 3, 1>> P;
@@ -184,9 +179,9 @@ void set_winding_number(){
     {
         W[i] = ihla.w(BC.row(i));
     } 
-    auto end = std::chrono::duration_cast<std::chrono::seconds>(std::chrono::system_clock::now().time_since_epoch()).count();
-    std::cout <<end-start<< " seconds int total"<<std::endl;
-    cout<<"W, rows:"<<W.rows()<<", cols:"<<W.cols()<<endl;
+    // auto end = std::chrono::duration_cast<std::chrono::seconds>(std::chrono::system_clock::now().time_since_epoch()).count();
+    // std::cout <<end-start<< " seconds in total"<<std::endl;
+    // cout<<"W, rows:"<<W.rows()<<", cols:"<<W.cols()<<endl;
 }
 
 
@@ -237,5 +232,5 @@ int main(int argc, char *argv[])
   viewer.callback_key_down = &key_down; 
   viewer.launch();
   viewer.core().background_color.setConstant(1);
-      viewer.core().lighting_factor = 0;
+  viewer.core().lighting_factor = 0;
 }
