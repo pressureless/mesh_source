@@ -9,6 +9,6 @@ V, E = ElementSets( M )
 energy_i(s) = ∑_(j ∈ VertexOneRing(i)) ‖ s_i n_i - s_j n_j ‖² where i ∈ V, s ∈ ℝ^r
 
 
-total = ∑_( v ∈ V ) energy_v(s) + 100 ∑_i (s_i² -1)² 
+total = ∑_( v ∈ V ) energy_v(s) + 100 (s_1 + 1)² 
  
 g = ∂total/∂s

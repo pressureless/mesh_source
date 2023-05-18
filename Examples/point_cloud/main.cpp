@@ -50,7 +50,10 @@ int main(int argc, const char * argv[]) {
     heartlib ihla(pc, P);
     std::vector<Eigen::Matrix<double, 3, 3>> cov;
     // std::cout<<"v:"<<meshV.rows()<<std::endl;
+    std::vector<Eigen::VectorXd> original_normals(meshV.rows());
     std::vector<Eigen::VectorXd> point_normals(meshV.rows());
+    std::vector<Eigen::VectorXd> inverse_original_normals(meshV.rows());
+    std::vector<Eigen::VectorXd> inverse_point_normals(meshV.rows());
 
     #pragma omp parallel for schedule(static) num_threads(omp_get_thread_num())
     for (int i = 0; i < meshV.rows(); ++i)
@@ -61,14 +64,16 @@ int main(int argc, const char * argv[]) {
         // {
         //     n = -n;
         // }
-        point_normals[i] = n/n.norm();
+        point_normals[i] = n;
+        original_normals[i] = point_normals[i];
+        inverse_original_normals[i] = -point_normals[i];
     } 
     //
     std::cout<<"normal end:"<<std::endl;
     // Set up parameters
     LBFGSParam<double> param;
     param.epsilon = 1e-10;
-    param.max_iterations = 100;
+    param.max_iterations = 1000;
     // Create solver and function object
     LBFGSpp::LBFGSSolver<double> solver(param);
     // Initial guess
@@ -90,6 +95,7 @@ int main(int argc, const char * argv[]) {
     for (int i = 0; i < meshV.rows(); ++i)
     {
         point_normals[i] = point_normals[i] * (s(i)>0?1:-1);
+        inverse_point_normals[i] = -point_normals[i];
     } 
     // Initialize polyscope
     polyscope::init();   
@@ -97,7 +103,10 @@ int main(int argc, const char * argv[]) {
     // set some options
     psCloud->setPointRadius(0.01);
     psCloud->setPointRenderMode(polyscope::PointRenderMode::Sphere);
-    psCloud->addVectorQuantity("Normals", point_normals);
+    psCloud->addVectorQuantity("Normals", original_normals);
+    psCloud->addVectorQuantity("Oriented Normals", point_normals);
+    psCloud->addVectorQuantity("Inverse Normals", inverse_original_normals);
+    psCloud->addVectorQuantity("Inverse Oriented Normals", inverse_point_normals);
     // show
     polyscope::show();
     return 0;

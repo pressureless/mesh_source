@@ -10,9 +10,10 @@ V, E = ElementSets( M )
 energy_i(s) = ∑_(j ∈ VertexOneRing(i)) ‖ s_i n_i - s_j n_j ‖² where i ∈ V, s ∈ ℝ^r
 
 
-total = ∑_( v ∈ V ) energy_v(s) + 100 ∑_i (s_i² -1)² 
+total = ∑_( v ∈ V ) energy_v(s) + 100 (s_1 + 1)² 
  
 g = ∂total/∂s
+
 */
 #include <Eigen/Core>
 #include <Eigen/QR>
@@ -52,10 +53,10 @@ struct orientation {
         }
         return sum_0;    
     }
-    using DT_ = double;
-    using MatrixD_ = Eigen::MatrixXd;
-    using VectorD_ = Eigen::VectorXd;
     struct PointCloudNeighborhoods {
+        using DT_ = double;
+        using MatrixD_ = Eigen::MatrixXd;
+        using VectorD_ = Eigen::VectorXd;
         std::vector<int > V;
         std::vector<int > E;
         Eigen::SparseMatrix<int> dee0;
@@ -117,10 +118,10 @@ struct orientation {
             std::vector<int > eset = intsect;
             return eset[1-1];    
         }
-        using DT = double;
-        using MatrixD = Eigen::MatrixXd;
-        using VectorD = Eigen::VectorXd;
         struct FundamentalPointCloudAccessors {
+            using DT = double;
+            using MatrixD = Eigen::MatrixXd;
+            using VectorD = Eigen::VectorXd;
             std::vector<int > V;
             std::vector<int > E;
             Eigen::SparseMatrix<int> dee0;
@@ -250,16 +251,12 @@ struct orientation {
         this->M = M;
         this->s = s;
         this->n = n;
-        // total = ∑_( v ∈ V ) energy_v(s) + 100 ∑_i (s_i² -1)²
+        // total = ∑_( v ∈ V ) energy_v(s) + 100 (s_1 + 1)²
         DT sum_1 = 0;
         for(int v : this->V){
             sum_1 += energy(v, this->s);
         }
-        DT sum_2 = 0;
-        for(int i=1; i<=s.size(); i++){
-            sum_2 += pow((pow(this->s[i-1], 2) - 1), 2);
-        }
-        total = sum_1 + 100 * sum_2;
+        total = sum_1 + 100 * pow((this->s[1-1] + 1), 2);
         // g = ∂total/∂s
         g = gradient(total, this->s);
     }
