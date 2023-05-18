@@ -13,14 +13,14 @@ V, E, F = ElementSets( M )
 
 e(i, j) = ||x_i - x_j|| where i,j ∈ V
 
-computeInternalForces(i, v, xn) = tuple(vn, f+(0.0, -98.0, 0.0))  where i ∈ V, v_i ∈ ℝ^3, xn_i ∈ ℝ^3,
+ComputeInternalForces(i, v, xn) = tuple(vn, f+(0.0, -98.0, 0.0))  where i ∈ V, v_i ∈ ℝ^3, xn_i ∈ ℝ^3,
 f = (sum_(j ∈ VertexOneRing(i)) (-K) (||disp|| - e(i, j)) dir
 where disp = xn_i - xn_j,
 dir = disp/||disp||),
 vn = v_i exp(-dt damping) + dt f
 
 
-applyForces(i, v, f, xn) = tuple(vn, xnn) where i ∈ V, v_i ∈ ℝ^3, f_i ∈ ℝ^3,xn_i ∈ ℝ^3,
+ApplyForces(i, v, f, xn) = tuple(vn, xnn) where i ∈ V, v_i ∈ ℝ^3, f_i ∈ ℝ^3,xn_i ∈ ℝ^3,
 a = f_i / m,
 vn = v_i + a dt,
 vnn = { (0, -vn_2, 0) if xn_i,2 < bottom
@@ -66,7 +66,7 @@ struct heartlib {
         return (this->x.at(i) - this->x.at(j)).template lpNorm<2>();    
     }
     template<typename REAL>
-    std::tuple< Eigen::Matrix<REAL, 3, 1>, Eigen::Matrix<REAL, 3, 1> > computeInternalForces(
+    std::tuple< Eigen::Matrix<REAL, 3, 1>, Eigen::Matrix<REAL, 3, 1> > ComputeInternalForces(
         const int & i,
         const std::vector<Eigen::Matrix<REAL, 3, 1>> & v,
         const std::vector<Eigen::Matrix<REAL, 3, 1>> & xn)
@@ -90,12 +90,12 @@ struct heartlib {
 
         // vn = v_i exp(-dt damping) + dt f
         Eigen::Matrix<REAL, 3, 1> vn = v.at(i) * exp(-this->dt * this->damping) + this->dt * f;
-        Eigen::Matrix<REAL, 3, 1> computeInternalForces_0;
-        computeInternalForces_0 << 0.0, -98.0, 0.0;
-        return std::tuple<Eigen::Matrix<REAL, 3, 1>,Eigen::Matrix<REAL, 3, 1> >{ vn,f + computeInternalForces_0 };    
+        Eigen::Matrix<REAL, 3, 1> ComputeInternalForces_0;
+        ComputeInternalForces_0 << 0.0, -98.0, 0.0;
+        return std::tuple<Eigen::Matrix<REAL, 3, 1>,Eigen::Matrix<REAL, 3, 1> >{ vn,f + ComputeInternalForces_0 };    
     }
     template<typename REAL>
-    std::tuple< Eigen::Matrix<REAL, 3, 1>, Eigen::Matrix<REAL, 3, 1> > applyForces(
+    std::tuple< Eigen::Matrix<REAL, 3, 1>, Eigen::Matrix<REAL, 3, 1> > ApplyForces(
         const int & i,
         const std::vector<Eigen::Matrix<REAL, 3, 1>> & v,
         const std::vector<Eigen::Matrix<REAL, 3, 1>> & f,

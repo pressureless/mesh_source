@@ -57,9 +57,10 @@ void update(){
         int TIMES = 25;
         for (int i = 0; i < TIMES; ++i)
         {
+            #pragma omp parallel for schedule(static) num_threads(omp_get_thread_num())
             for (int i = 0; i < meshV.rows(); ++i)
             {
-                std::tuple< Eigen::Matrix<double, 3, 1>, Eigen::Matrix<double, 3, 1> > tuple = ihla.applyForces(i, Velocity, Force, Position);
+                std::tuple< Eigen::Matrix<double, 3, 1>, Eigen::Matrix<double, 3, 1> > tuple = ihla.ApplyForces(i, Velocity, Force, Position);
                 Eigen::Matrix<double, 3, 1> vn = std::get<0>(tuple);
                 Eigen::Matrix<double, 3, 1> xn = std::get<1>(tuple);
                 //
@@ -68,9 +69,10 @@ void update(){
                 // std::cout<<"i:"<<i<<", pos:( "<<xn[0]<<", "<<xn[1]<<", "<<xn[2]<<" )"<<std::endl;
             } 
             
+            #pragma omp parallel for schedule(static) num_threads(omp_get_thread_num())
             for (int i = 0; i < meshV.rows(); ++i)
             {
-                std::tuple< Eigen::Matrix<double, 3, 1>, Eigen::Matrix<double, 3, 1> > tuple = ihla.computeInternalForces(i, Velocity, Position);
+                std::tuple< Eigen::Matrix<double, 3, 1>, Eigen::Matrix<double, 3, 1> > tuple = ihla.ComputeInternalForces(i, Velocity, Position);
                 Eigen::Matrix<double, 3, 1> vn = std::get<0>(tuple);
                 Eigen::Matrix<double, 3, 1> f = std::get<1>(tuple);
                 //
@@ -81,6 +83,7 @@ void update(){
         
         double min_diff = 1000;
         double max_diff = 0;
+        #pragma omp parallel for schedule(static) num_threads(omp_get_thread_num())
         for (int i = 0; i < meshV.rows(); ++i)
         {
             double norm = (Position[i]-OriginalPosition[i]).norm();
@@ -119,7 +122,13 @@ int main(int argc, const char * argv[]) {
     // igl::readOBJ("/Users/pressure/Downloads/mesh_source/models/cube.obj", meshV, meshF);
     // igl::readOBJ("/Users/pressure/Downloads/mesh_source/models/small_bunny.obj", meshV, meshF);
     // igl::readOBJ("/Users/pressure/Downloads/mesh_source/models/sphere3.obj", meshV, meshF);
-    igl::readOBJ(argc>1?argv[1]:DATA_PATH / "small_disk.obj", meshV, meshF);
+    igl::readOBJ(argc>1?argv[1]:DATA_PATH / "camelhead-decimate-qslim.obj", meshV, meshF); 
+    // Eigen::MatrixXd N; // #V-by-3 3D vertex normals 
+    // Eigen::MatrixXd TC;
+    // Eigen::MatrixXi FTC;
+    // Eigen::MatrixXi FN;
+    // igl::readOBJ(argc>1?argv[1]:DATA_PATH / "animal-straightened-decimated.obj", meshV, TC, N, meshF, FTC, FN); 
+
     // igl::readOBJ("/Users/pressure/Downloads/mesh_source/models/sphere.obj", meshV, meshF);
     // igl::readOBJ("/Users/pressure/Downloads/libigl-polyscope-project/input/sphere.obj", meshV, meshF);
     // igl::readOBJ("/Users/pressure/Documents/git/ddg-exercises/input/sphere.obj", meshV, meshF);
