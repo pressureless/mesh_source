@@ -78,7 +78,7 @@ int main(int argc, const char * argv[]) {
     LBFGSpp::LBFGSSolver<double> solver(param);
     // Initial guess
     Eigen::VectorXd s = Eigen::VectorXd::Random(point_normals.size());
-    std::cout << "s = " << s.transpose() << std::endl;
+    // std::cout << "s = " << s.transpose() << std::endl;
     // x will be overwritten to be the best point found
     auto func = [&]( const Eigen::VectorXd& S, Eigen::VectorXd& gradient_out ) -> double {
             orientation ori(pc, S, point_normals);
@@ -89,7 +89,7 @@ int main(int argc, const char * argv[]) {
     double fx;
     int niter = solver.minimize(func, s, fx);
     std::cout << niter << " iterations" << std::endl;
-    std::cout << "s = \n" << s.transpose() << std::endl;
+    // std::cout << "s = \n" << s.transpose() << std::endl;
     std::cout << "f(x) = " << fx << std::endl;
 
     for (int i = 0; i < meshV.rows(); ++i)
