@@ -4,12 +4,10 @@ M : TriangleMesh
 x_i ∈ ℝ^3  
 V, E, F = ElementSets( M )
 
-UpdateStep(v0, v1, v2, d) = { p if s_1,1 < 0 and s_2,1 < 0 
-			min(d_(v1)+||x1||, d_(v2)+||x2||) otherwise where v0,v1,v2 ∈ V, d_i ∈ ℝ,
-x1 = x_(v1) - x_(v0),
-x2 = x_(v2) - x_(v0),
-X = [x1 x2],
-t = [d_(v1) d_(v2)]ᵀ,
+UpdateStep(i, j, k, d) = { p if s_1,1 < 0 and s_2,1 < 0 
+			min(d_j+||x_j - x_i||, d_k+||x_k - x_i||) otherwise where i,j,k ∈ V, d_i ∈ ℝ,
+X = [x_j-x_i x_k-x_i],
+t = [d_j d_k]ᵀ,
 Q = (XᵀX)⁻¹,
 `1` = [1 ; 1],
 p = (`1`ᵀQt + sqrt((`1`ᵀQt)² - `1`ᵀQ`1` ⋅ (tᵀQt - 1)))/ (`1`ᵀQ`1`),

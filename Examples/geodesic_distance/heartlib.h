@@ -5,12 +5,10 @@ M : TriangleMesh
 x_i ∈ ℝ^3  
 V, E, F = ElementSets( M )
 
-UpdateStep(v0, v1, v2, d) = { p if s_1,1 < 0 and s_2,1 < 0 
-            min(d_(v1)+||x1||, d_(v2)+||x2||) otherwise where v0,v1,v2 ∈ V, d_i ∈ ℝ,
-x1 = x_(v1) - x_(v0),
-x2 = x_(v2) - x_(v0),
-X = [x1 x2],
-t = [d_(v1) d_(v2)]ᵀ,
+UpdateStep(i, j, k, d) = { p if s_1,1 < 0 and s_2,1 < 0 
+            min(d_j+||x_j - x_i||, d_k+||x_k - x_i||) otherwise where i,j,k ∈ V, d_i ∈ ℝ,
+X = [x_j-x_i x_k-x_i],
+t = [d_j d_k]ᵀ,
 Q = (XᵀX)⁻¹,
 `1` = [1 ; 1],
 p = (`1`ᵀQt + sqrt((`1`ᵀQt)² - `1`ᵀQ`1` ⋅ (tᵀQt - 1)))/ (`1`ᵀQ`1`),
@@ -28,6 +26,7 @@ GetLevelSequence(U) = { sequence(U, n) if |n| ≠ 0
                         U otherwise where U_i ⊂ V,
 n = GetNextLevel(U)
 
+
 */
 #include <Eigen/Core>
 #include <Eigen/QR>
@@ -40,11 +39,10 @@ n = GetNextLevel(U)
 #include "TriangleMesh.h"
 
 using namespace iheartmesh;
-
-using DT = double;
-using MatrixD = Eigen::MatrixXd;
-using VectorD = Eigen::VectorXd;
 struct heartlib {
+    using DT = double;
+    using MatrixD = Eigen::MatrixXd;
+    using VectorD = Eigen::VectorXd;
     std::vector<int > V;
     std::vector<int > E;
     std::vector<int > F;
@@ -52,31 +50,25 @@ struct heartlib {
     std::vector<Eigen::Matrix<double, 3, 1>> x;
     template<typename REAL>
     REAL UpdateStep(
-        const int & v0,
-        const int & v1,
-        const int & v2,
+        const int & i,
+        const int & j,
+        const int & k,
         const std::vector<REAL> & d)
     {
         const long dim_1 = d.size();
-        assert( std::binary_search(V.begin(), V.end(), v0) );
-        assert( std::binary_search(V.begin(), V.end(), v1) );
-        assert( std::binary_search(V.begin(), V.end(), v2) );
+        assert( std::binary_search(V.begin(), V.end(), i) );
+        assert( std::binary_search(V.begin(), V.end(), j) );
+        assert( std::binary_search(V.begin(), V.end(), k) );
 
         REAL UpdateStep_ret;
-        // x1 = x_(v1) - x_(v0)
-        Eigen::Matrix<REAL, 3, 1> x1 = this->x.at(v1) - this->x.at(v0);
-
-        // x2 = x_(v2) - x_(v0)
-        Eigen::Matrix<REAL, 3, 1> x2 = this->x.at(v2) - this->x.at(v0);
-
-        // X = [x1 x2]
+        // X = [x_j-x_i x_k-x_i]
         Eigen::Matrix<REAL, 3, 2> X_0;
-        X_0 << x1, x2;
+        X_0 << this->x.at(j) - this->x.at(i), this->x.at(k) - this->x.at(i);
         Eigen::Matrix<REAL, 3, 2> X = X_0;
 
-        // t = [d_(v1) d_(v2)]ᵀ
+        // t = [d_j d_k]ᵀ
         Eigen::Matrix<REAL, 1, 2> t_0;
-        t_0 << d.at(v1), d.at(v2);
+        t_0 << d.at(j), d.at(k);
         Eigen::Matrix<REAL, 2, 1> t = t_0.transpose();
 
         // Q = (XᵀX)⁻¹
@@ -89,7 +81,7 @@ struct heartlib {
         Eigen::Matrix<int, 2, 1> num1 = num1_0;
 
         // p = (`1`ᵀQt + sqrt((`1`ᵀQt)² - `1`ᵀQ`1` ⋅ (tᵀQt - 1)))/ (`1`ᵀQ`1`)
-        REAL p = ((REAL)((num1.transpose()).cast<REAL>() * Q * t) + sqrt(pow(((REAL)((num1.transpose()).cast<REAL>() * Q * t)), 2) - (REAL)((num1.transpose()).cast<REAL>() * Q * (num1).cast<REAL>()) * ((REAL)(t.transpose() * Q * t) - 1))) / REAL(((REAL)((num1.transpose()).cast<REAL>() * Q * (num1).cast<REAL>())));
+        REAL p = ((REAL)((num1.transpose()).template cast<REAL>() * Q * t) + sqrt(pow(((REAL)((num1.transpose()).template cast<REAL>() * Q * t)), 2) - (REAL)((num1.transpose()).template cast<REAL>() * Q * (num1).template cast<REAL>()) * ((REAL)(t.transpose() * Q * t) - 1))) / REAL(((REAL)((num1.transpose()).template cast<REAL>() * Q * (num1).template cast<REAL>())));
 
         // n = XQ(t- p ⋅`1`)
         Eigen::Matrix<REAL, 3, 1> n = X * Q * (t - (p * (num1).template cast<REAL>()).template cast<REAL>());
@@ -100,7 +92,7 @@ struct heartlib {
             UpdateStep_ret = p;
         }
         else{
-            UpdateStep_ret = std::min({d.at(v1) + (x1).template lpNorm<2>(), d.at(v2) + (x2).template lpNorm<2>()});
+            UpdateStep_ret = std::min({d.at(j) + (this->x.at(j) - this->x.at(i)).template lpNorm<2>(), d.at(k) + (this->x.at(k) - this->x.at(i)).template lpNorm<2>()});
         }
         return UpdateStep_ret;    
     }
