@@ -69,11 +69,11 @@ int main(int argc, const char * argv[]) {
         inverse_original_normals[i] = -point_normals[i];
     } 
     //
-    std::cout<<"normal end:"<<std::endl;
+    std::cout<<"normal calculated"<<std::endl;
     // Set up parameters
     LBFGSParam<double> param;
     param.epsilon = 1e-10;
-    param.max_iterations = 1000;
+    param.max_iterations = 100;
     // Create solver and function object
     LBFGSpp::LBFGSSolver<double> solver(param);
     // Initial guess
@@ -91,7 +91,9 @@ int main(int argc, const char * argv[]) {
     std::cout << niter << " iterations" << std::endl;
     // std::cout << "s = \n" << s.transpose() << std::endl;
     std::cout << "f(x) = " << fx << std::endl;
+    std::cout<<"normal oriented"<<std::endl;
 
+    #pragma omp parallel for schedule(static) num_threads(omp_get_thread_num())
     for (int i = 0; i < meshV.rows(); ++i)
     {
         point_normals[i] = point_normals[i] * (s(i)>0?1:-1);
