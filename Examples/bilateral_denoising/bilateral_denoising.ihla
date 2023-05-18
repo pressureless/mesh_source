@@ -29,7 +29,7 @@ norm = (sum_(v ∈ neighbors) CalcNorm(i, v, n, `σ_c`, `σ_s`))
 
 CalcSigmaC(i) = min({||x_i - x_v|| for v ∈ VertexOneRing(i)}) where i ∈ V
 
-CalcSigmaS(i, N) = {sqrt(offset) + 1.0E-12 if sqrt(offset) < 1.0E-12
+CalcSigmaS(i, N) = {sqrt(offset) + 10^(-12) if sqrt(offset) < 10^(-12)
 	sqrt(offset) otherwise where i ∈ V, N ⊂ V,
 n = VertexNormal(i),
 avg = (sum_(v ∈ N) t/|N| where t = sqrt(((x_v - x_i)⋅n)²)),
