@@ -53,11 +53,10 @@ where k, p = OppositeVertices(i, j),
 #include "TriangleMesh.h"
 
 using namespace iheartmesh;
-
-using DT = double;
-using MatrixD = Eigen::MatrixXd;
-using VectorD = Eigen::VectorXd;
 struct heartlib {
+    using DT = double;
+    using MatrixD = Eigen::MatrixXd;
+    using VectorD = Eigen::VectorXd;
     std::vector<int > V;
     std::vector<int > E;
     std::vector<int > F;
