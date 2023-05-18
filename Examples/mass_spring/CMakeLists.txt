@@ -27,7 +27,7 @@ FetchContent_MakeAvailable( autodiff )
 FetchContent_Declare(
     Eigen3
     GIT_REPOSITORY https://gitlab.com/libeigen/eigen
-    GIT_TAG 3.3
+    GIT_TAG 3.4
     GIT_SHALLOW TRUE
     GIT_PROGRESS TRUE
 )
