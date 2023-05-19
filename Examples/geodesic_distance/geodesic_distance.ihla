@@ -21,7 +21,7 @@ v = VertexOneRing(s)
 GetRangeLevel(U, a, b) = ∪_(i=a)^b U_i where U_j ⊂ V, a,b ∈ ℤ index
 
 
-GetLevelSequence(U) = { sequence(U, n) if |n| ≠ 0
+GetLevelSequence(U) = { sequence(U, next) if |next| ≠ 0
                         U otherwise where U_i ⊂ V,
-n = GetNextLevel(U)
+next = GetNextLevel(U)
 

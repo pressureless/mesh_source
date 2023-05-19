@@ -22,9 +22,9 @@ v = VertexOneRing(s)
 GetRangeLevel(U, a, b) = ∪_(i=a)^b U_i where U_j ⊂ V, a,b ∈ ℤ index
 
 
-GetLevelSequence(U) = { sequence(U, n) if |n| ≠ 0
+GetLevelSequence(U) = { sequence(U, next) if |next| ≠ 0
                         U otherwise where U_i ⊂ V,
-n = GetNextLevel(U)
+next = GetNextLevel(U)
 
 
 */
@@ -139,12 +139,12 @@ struct heartlib {
     {
         const long dim_4 = U.size();
         std::vector<std::vector<int >> GetLevelSequence_ret;
-        // n = GetNextLevel(U)
-        std::vector<int > n = GetNextLevel(U);
-        if((n).size() != 0){
+        // next = GetNextLevel(U)
+        std::vector<int > next = GetNextLevel(U);
+        if((next).size() != 0){
             std::vector<std::vector<int >> seq = U;
             seq.reserve(seq.size()+1);
-            seq.push_back(n);
+            seq.push_back(next);
             GetLevelSequence_ret = seq;
         }
         else{

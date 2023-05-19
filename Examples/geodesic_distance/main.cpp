@@ -16,12 +16,14 @@
 #include "dec_util.h"
 #include "polyscope/polyscope.h"
 #include "polyscope/surface_mesh.h"
+#include <ctime>
+#include <chrono>
 #include <filesystem>
 namespace fs = std::filesystem;
 inline fs::path DATA_PATH = fs::path(DATA_PATH_STR);
 
 using namespace iheartmesh;
-
+int start;
 void print_distance(std::vector<double>& distance){
     std::cout<<"current distance:"<<std::endl;
     for (int m = 0; m < distance.size(); ++m)
@@ -34,7 +36,21 @@ int main(int argc, const char * argv[]) {
     Eigen::MatrixXd meshV;
     Eigen::MatrixXi meshF;
     // igl::readOBJ("/Users/pressure/Downloads/mesh_source/models/cube.obj", meshV, meshF);
-    igl::readOBJ(DATA_PATH / "small_bunny.obj", meshV, meshF);
+    igl::readOBJ(argc>1?argv[1]: DATA_PATH / "small_bunny.obj", meshV, meshF);
+    // igl::readOBJ(argc>1?argv[1]: DATA_PATH / "dragon.obj", meshV, meshF);
+    // orient the dragon
+    // double angle = 1.57;
+    // Eigen::Matrix<double, 3, 3> rotation, rotation1;
+    // rotation << std::cos(angle), -std::sin(angle), 0,
+    //             std::sin(angle), std::cos(angle), 0,
+    //             0, 0, 1;
+    // rotation1 << 1,0,0,
+    //            0, std::cos(-angle), -std::sin(-angle), 
+    //             0 ,std::sin(-angle), std::cos(-angle);
+    // for (int i = 0; i < meshV.rows(); ++i)
+    // {
+    //     meshV.row(i) = rotation1*rotation*meshV.row(i).transpose();
+    // }
     // igl::readOBJ("/Users/pressure/Downloads/mesh_source/models/sphere3.obj", meshV, meshF);
     // igl::readOBJ("/Users/pressure/Downloads/mesh_source/models/yog.obj", meshV, meshF);
     // igl::readOBJ("/Users/pressure/Documents/git/meshtaichi/vertex_normal/models/bunny.obj", meshV, meshF);
@@ -57,8 +73,8 @@ int main(int argc, const char * argv[]) {
         distance.push_back(10000); 
     } 
  
-    int cur = 316;
-    // cur = 0;
+    int cur = 316;   // small_bunny.obj
+    // cur = 4421;   // dragon.obj
     std::vector<std::vector<int> > U;
     std::vector<int> origin;
     origin.push_back(cur);
@@ -85,6 +101,7 @@ int main(int argc, const char * argv[]) {
     // std::set<int> ran = ihla.GetRangeLevel(U, 1, 2);
     // std::cout<<"ranged: "<<std::endl;
     // print_set(ran);
+    start = std::chrono::duration_cast<std::chrono::seconds>(std::chrono::system_clock::now().time_since_epoch()).count();
     int i=1, j=1, k=1;
     int max_iter = 2 * U.size();
     while(i <= j){
@@ -97,6 +114,7 @@ int main(int argc, const char * argv[]) {
         std::vector<int> v_set = ihla.GetRangeLevel(U, i, j);
         // std::cout<<"current v_set: "<<std::endl;
         // print_set(v_set);
+        #pragma omp parallel for schedule(static) num_threads(omp_get_thread_num())
         for (int v: v_set)
         {
             std::vector<int> f_set = ihla.Faces_0(v);
@@ -132,7 +150,9 @@ int main(int argc, const char * argv[]) {
         }
         distance = new_distance;
     } 
-    std::cout<<"end: "<<std::endl;
+    auto end = std::chrono::duration_cast<std::chrono::seconds>(std::chrono::system_clock::now().time_since_epoch()).count();
+    // std::cout <<end-start<< " seconds"<<std::endl;
+    // std::cout<<"end: "<<std::endl;
     polyscope::getSurfaceMesh("Geodesic")->addVertexDistanceQuantity("Distance", distance); 
     polyscope::show();
     return 0;
