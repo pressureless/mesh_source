@@ -14,6 +14,7 @@
 #include <igl/writeOBJ.h>
 #include <igl/readOFF.h>
 #include <igl/readSTL.h>
+#include <igl/readMESH.h>
 // #include <thread> 
 #include "MeshHelper.h"
 #include "heartlib.h"
@@ -29,6 +30,7 @@ using namespace iheartmesh;
 double bottom_z = 0;
 
 Eigen::MatrixXd meshV;
+Eigen::MatrixXi T;
 Eigen::MatrixXi meshF;
 Eigen::MatrixXd meshN;
 TriangleMesh triangle_mesh;
@@ -49,7 +51,6 @@ void update(){
     heartlib ihla(triangle_mesh, OriginalPosition, mass, damping, stiffness, dt, bottom_z);
     for (int i = 0; i < meshV.rows(); ++i)
     {
-        //
         Velocity[i] = Eigen::Matrix<double, 3, 1>::Zero();
         Force[i] = Eigen::Matrix<double, 3, 1>::Zero();
     } 
@@ -61,29 +62,20 @@ void update(){
             for (int i = 0; i < meshV.rows(); ++i)
             {
                 std::tuple< Eigen::Matrix<double, 3, 1>, Eigen::Matrix<double, 3, 1> > tuple = ihla.ApplyForces(i, Velocity, Force, Position);
-                Eigen::Matrix<double, 3, 1> vn = std::get<0>(tuple);
-                Eigen::Matrix<double, 3, 1> xn = std::get<1>(tuple);
-                //
-                Velocity[i] = vn;
-                Position[i] = xn; 
-                // std::cout<<"i:"<<i<<", pos:( "<<xn[0]<<", "<<xn[1]<<", "<<xn[2]<<" )"<<std::endl;
+                Velocity[i] = std::get<0>(tuple);
+                Position[i] = std::get<1>(tuple);
             } 
             
             #pragma omp parallel for schedule(static) num_threads(omp_get_thread_num())
             for (int i = 0; i < meshV.rows(); ++i)
             {
                 std::tuple< Eigen::Matrix<double, 3, 1>, Eigen::Matrix<double, 3, 1> > tuple = ihla.ComputeInternalForces(i, Velocity, Position);
-                Eigen::Matrix<double, 3, 1> vn = std::get<0>(tuple);
-                Eigen::Matrix<double, 3, 1> f = std::get<1>(tuple);
-                //
-                Velocity[i] = vn;
-                Force[i] = f; 
+                Velocity[i] = std::get<0>(tuple);
+                Force[i] = std::get<1>(tuple);
             } 
         } 
-        
         double min_diff = 1000;
         double max_diff = 0;
-        #pragma omp parallel for schedule(static) num_threads(omp_get_thread_num())
         for (int i = 0; i < meshV.rows(); ++i)
         {
             double norm = (Position[i]-OriginalPosition[i]).norm();
@@ -95,11 +87,8 @@ void update(){
                 max_diff = norm;
             } 
         } 
-        std::cout<<"After updating, min_offset: "<<min_diff<<", max_offset: "<<max_diff<<std::endl;
-    
+        std::cout<<"After updating, min offset: "<<min_diff<<", max offset: "<<max_diff<<std::endl;
         polyscope::getSurfaceMesh("my mesh")->updateVertexPositions(Position);
-        // polyscope::show();
-        // update();
     // }
 }
 
@@ -107,7 +96,6 @@ void update(){
 void myCallback()
 { 
     if (ImGui::Button("Start/stop simulation")){ 
-        // std::thread first (update); 
         running = !running;
     } 
     if (running)
@@ -122,22 +110,22 @@ int main(int argc, const char * argv[]) {
     // igl::readOBJ("/Users/pressure/Downloads/mesh_source/models/cube.obj", meshV, meshF);
     // igl::readOBJ("/Users/pressure/Downloads/mesh_source/models/small_bunny.obj", meshV, meshF);
     // igl::readOBJ("/Users/pressure/Downloads/mesh_source/models/sphere3.obj", meshV, meshF);
-    igl::readOBJ(argc>1?argv[1]:DATA_PATH / "camelhead-decimate-qslim.obj", meshV, meshF); 
-    // Eigen::MatrixXd N; // #V-by-3 3D vertex normals 
-    // Eigen::MatrixXd TC;
-    // Eigen::MatrixXi FTC;
-    // Eigen::MatrixXi FN;
-    // igl::readOBJ(argc>1?argv[1]:DATA_PATH / "animal-straightened-decimated.obj", meshV, TC, N, meshF, FTC, FN); 
+    // igl::readOBJ(argc>1?argv[1]:DATA_PATH / "camelhead-decimate-qslim.obj", meshV, meshF); 
+    // igl::readOFF(argc>1?argv[1]:DATA_PATH /"bunny_200.off", meshV, meshF);
+    igl::readMESH(argc>1?argv[1]:DATA_PATH / "bunny_200.mesh", meshV, T, meshF);   
+    double angle = 0.4;
+    Eigen::Matrix<double, 3, 3> rotation;
+    rotation << std::cos(angle), -std::sin(angle), 0,
+                std::sin(angle), std::cos(angle), 0,
+                0, 0, 1;
+    Eigen::Matrix<double, 3, 1> translation;
+    translation << 0, 0, 0; 
+    for (int i = 0; i < meshV.rows(); ++i)
+    {
+        meshV.row(i) = rotation * meshV.row(i).transpose() + translation;
+    } 
 
-    // igl::readOBJ("/Users/pressure/Downloads/mesh_source/models/sphere.obj", meshV, meshF);
-    // igl::readOBJ("/Users/pressure/Downloads/libigl-polyscope-project/input/sphere.obj", meshV, meshF);
-    // igl::readOBJ("/Users/pressure/Documents/git/ddg-exercises/input/sphere.obj", meshV, meshF);
-    // igl::readOFF("/Users/pressure/Downloads/Laplacian-Mesh-Smoothing/Models/bumpy.off", meshV, meshF); // 69KB 5mins
-    // igl::readSTL("/Users/pressure/Downloads/small_mesh_from_Thingi10k/1772593.stl", meshV, meshF, meshN); 
-    // igl::readOFF("/Users/pressure/Downloads/Laplacian-Mesh-Smoothing/Models/cow.off", meshV, meshF);
-    // igl::readOBJ("/Users/pressure/Downloads/mesh_source/models/sphere.obj", meshV, meshF);
-    // igl::readOBJ("/Users/pressure/Documents/git/meshtaichi/vertex_normal/models/bunny.obj", meshV, meshF);
-    // Initialize triangle mesh
+    // the lowest point is 0.3
     double minY = 1000;
     double offset = 0;
     for (int i = 0; i < meshV.rows(); ++i)
@@ -146,38 +134,28 @@ int main(int argc, const char * argv[]) {
         {
             minY = meshV(i, 1);
         }
-        // std::cout<<"i: "<<i<<", ("<<meshV(i, 0)<<", "<<meshV(i, 1)<<", "<<meshV(i, 2)<<")"<<std::endl;
     } 
-    if (minY < 0)
-    {
-        offset = -minY + 0.1;
-    }
-    else{
-        offset = 0;
-    }
-    std::cout<<"offset: "<<offset<<std::endl;
+    offset = 0.03 - minY;
     for (int i = 0; i < meshV.rows(); ++i)
     {
         meshV(i, 1) += offset;
     }
-    triangle_mesh.initialize(meshF);
-    // Initialize polyscope
-    polyscope::options::autocenterStructures = false;
-    polyscope::options::autoscaleStructures = false;
-    polyscope::init();  
-    polyscope::options::automaticallyComputeSceneExtents = false;
-    polyscope::registerSurfaceMesh("my mesh", meshV, meshF);
-    polyscope::state::userCallback = myCallback;
-    Eigen::Matrix<double, 3, 1> initV;
-    initV << 0, 0, -100;
+    // Initialize triangle mesh
+    triangle_mesh.initialize(meshF); 
     for (int i = 0; i < meshV.rows(); ++i)
     {
         Position.push_back(meshV.row(i).transpose());
         OriginalPosition.push_back(meshV.row(i).transpose());
-        //
         Velocity.push_back(Eigen::Matrix<double, 3, 1>::Zero());
         Force.push_back(Eigen::Matrix<double, 3, 1>::Zero());
     } 
+    // Initialize polyscope 
+    polyscope::init();   
+    polyscope::registerSurfaceMesh("my mesh", OriginalPosition, meshF);
+    // polyscope::options::groundPlaneMode = polyscope::GroundPlaneMode::ShadowOnly;
+    // polyscope::options::groundPlaneHeightFactor = -polyscope::state::lengthScale * 1e-4 + std::get<0>(polyscope::state::boundingBox)[1]; // adjust the plane height
+    // polyscope::state::lengthScale = 0;
+    polyscope::state::userCallback = myCallback;
     polyscope::show();
     return 0;
 }

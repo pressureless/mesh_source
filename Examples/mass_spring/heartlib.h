@@ -6,28 +6,29 @@ x_i ∈ ℝ^3: original positions
 m ∈ ℝ: mass
 damping ∈ ℝ: damping
 K ∈ ℝ: stiffness
-dt ∈ ℝ: step size
+`Δt` ∈ ℝ: step size
 bottom ∈ ℝ: ground height
 V, E, F = ElementSets( M )
 
 
 e(i, j) = ||x_i - x_j|| where i,j ∈ V
 
-ComputeInternalForces(i, v, xn) = tuple(vn, f+(0.0, -98.0, 0.0))  where i ∈ V, v_i ∈ ℝ^3, xn_i ∈ ℝ^3,
-f = (sum_(j ∈ VertexOneRing(i)) (-K) (||disp|| - e(i, j)) dir
-where disp = xn_i - xn_j,
-dir = disp/||disp||),
-vn = v_i exp(-dt damping) + dt f
+ComputeInternalForces(i, v, p) = tuple(ṽ, f+(0.0, -98.0, 0.0))  where i ∈ V, v_i ∈ ℝ^3, p_i ∈ ℝ^3,
+f = (sum_(j ∈ VertexOneRing(i)) (-K) (||d|| - e(i, j)) d̄ 
+where d = p_i - p_j,
+d̄ = d/||d||),
+ṽ = v_i exp(-`Δt` damping) + `Δt` f
 
 
-ApplyForces(i, v, f, xn) = tuple(vn, xnn) where i ∈ V, v_i ∈ ℝ^3, f_i ∈ ℝ^3,xn_i ∈ ℝ^3,
+ApplyForces(i, v, f, p) = tuple(ṽ, x̃) where i ∈ V, v_i ∈ ℝ^3, f_i ∈ ℝ^3, p_i ∈ ℝ^3,
 a = f_i / m,
-vn = v_i + a dt,
-vnn = { (0, -vn_2, 0) if xn_i,2 < bottom
-     vn otherwise,
-xnnn = { (xn_i,1, bottom, xn_i,3) if xn_i,2 < bottom
-     xn_i otherwise,
-xnn = xnnn + vnn dt
+v̄ = v_i + a `Δt`,
+ṽ = { (0, -v̄_2, 0) if p_i,2 < bottom
+      v̄ otherwise,
+p̃ = { (p_i,1, bottom, p_i,3) if p_i,2 < bottom
+     p_i otherwise,
+x̃ = p̃ + ṽ `Δt`
+
 
 
 */
@@ -52,7 +53,7 @@ struct heartlib {
     TriangleMesh M;
     std::vector<Eigen::Matrix<double, 3, 1>> x;
     double K;
-    double dt;
+    double Δt;
     double damping;
     double m;
     double bottom;
@@ -69,76 +70,76 @@ struct heartlib {
     std::tuple< Eigen::Matrix<REAL, 3, 1>, Eigen::Matrix<REAL, 3, 1> > ComputeInternalForces(
         const int & i,
         const std::vector<Eigen::Matrix<REAL, 3, 1>> & v,
-        const std::vector<Eigen::Matrix<REAL, 3, 1>> & xn)
+        const std::vector<Eigen::Matrix<REAL, 3, 1>> & p)
     {
         const long dim_1 = v.size();
-        assert( xn.size() == dim_1 );
+        assert( p.size() == dim_1 );
         assert( std::binary_search(V.begin(), V.end(), i) );
 
-        // f = (sum_(j ∈ VertexOneRing(i)) (-K) (||disp|| - e(i, j)) dir
-        // where disp = xn_i - xn_j,
-        // dir = disp/||disp||)
+        // f = (sum_(j ∈ VertexOneRing(i)) (-K) (||d|| - e(i, j)) d̄ 
+        // where d = p_i - p_j,
+        // d̄ = d/||d||)
         MatrixD sum_0 = MatrixD::Zero(3, 1);
         for(int j : this->VertexOneRing(i)){
-                // disp = xn_i - xn_j
-            Eigen::Matrix<REAL, 3, 1> disp = xn.at(i) - xn.at(j);
-                // dir = disp/||disp||
-            Eigen::Matrix<REAL, 3, 1> dir = disp / REAL((disp).template lpNorm<2>());
-            sum_0 += (-this->K) * ((disp).template lpNorm<2>() - e(i, j)) * dir;
+                // d = p_i - p_j
+            Eigen::Matrix<REAL, 3, 1> d = p.at(i) - p.at(j);
+                // d̄ = d/||d||
+            Eigen::Matrix<REAL, 3, 1> d̄ = d / REAL((d).template lpNorm<2>());
+            sum_0 += (-this->K) * ((d).template lpNorm<2>() - e(i, j)) * d̄;
         }
         Eigen::Matrix<REAL, 3, 1> f = (sum_0);
 
-        // vn = v_i exp(-dt damping) + dt f
-        Eigen::Matrix<REAL, 3, 1> vn = v.at(i) * exp(-this->dt * this->damping) + this->dt * f;
+        // ṽ = v_i exp(-`Δt` damping) + `Δt` f
+        Eigen::Matrix<REAL, 3, 1> ṽ = v.at(i) * exp(-this->Δt * this->damping) + this->Δt * f;
         Eigen::Matrix<REAL, 3, 1> ComputeInternalForces_0;
         ComputeInternalForces_0 << 0.0, -98.0, 0.0;
-        return std::tuple<Eigen::Matrix<REAL, 3, 1>,Eigen::Matrix<REAL, 3, 1> >{ vn,f + ComputeInternalForces_0 };    
+        return std::tuple<Eigen::Matrix<REAL, 3, 1>,Eigen::Matrix<REAL, 3, 1> >{ ṽ,f + ComputeInternalForces_0 };    
     }
     template<typename REAL>
     std::tuple< Eigen::Matrix<REAL, 3, 1>, Eigen::Matrix<REAL, 3, 1> > ApplyForces(
         const int & i,
         const std::vector<Eigen::Matrix<REAL, 3, 1>> & v,
         const std::vector<Eigen::Matrix<REAL, 3, 1>> & f,
-        const std::vector<Eigen::Matrix<REAL, 3, 1>> & xn)
+        const std::vector<Eigen::Matrix<REAL, 3, 1>> & p)
     {
         const long dim_2 = v.size();
         assert( f.size() == dim_2 );
-        assert( xn.size() == dim_2 );
+        assert( p.size() == dim_2 );
         assert( std::binary_search(V.begin(), V.end(), i) );
 
         // a = f_i / m
         Eigen::Matrix<REAL, 3, 1> a = f.at(i) / REAL(this->m);
 
-        // vn = v_i + a dt
-        Eigen::Matrix<REAL, 3, 1> vn = v.at(i) + a * this->dt;
+        // v̄ = v_i + a `Δt`
+        Eigen::Matrix<REAL, 3, 1> v̄ = v.at(i) + a * this->Δt;
 
-        // vnn = { (0, -vn_2, 0) if xn_i,2 < bottom
-        //      vn otherwise
-        Eigen::Matrix<REAL, 3, 1> vnn;
-        if(xn.at(i)[2-1] < this->bottom){
-            Eigen::Matrix<REAL, 3, 1> vnn_0;
-        vnn_0 << 0, -vn[2-1], 0;
-            vnn = vnn_0;
+        // ṽ = { (0, -v̄_2, 0) if p_i,2 < bottom
+        //       v̄ otherwise
+        Eigen::Matrix<REAL, 3, 1> ṽ;
+        if(p.at(i)[2-1] < this->bottom){
+            Eigen::Matrix<REAL, 3, 1> ṽ_0;
+        ṽ_0 << 0, -v̄[2-1], 0;
+            ṽ = ṽ_0;
         }
         else{
-            vnn = vn;
+            ṽ = v̄;
         }
 
-        // xnnn = { (xn_i,1, bottom, xn_i,3) if xn_i,2 < bottom
-        //      xn_i otherwise
-        Eigen::Matrix<REAL, 3, 1> xnnn;
-        if(xn.at(i)[2-1] < this->bottom){
-            Eigen::Matrix<REAL, 3, 1> xnnn_0;
-        xnnn_0 << xn.at(i)[1-1], this->bottom, xn.at(i)[3-1];
-            xnnn = xnnn_0;
+        // p̃ = { (p_i,1, bottom, p_i,3) if p_i,2 < bottom
+        //      p_i otherwise
+        Eigen::Matrix<REAL, 3, 1> p̃;
+        if(p.at(i)[2-1] < this->bottom){
+            Eigen::Matrix<REAL, 3, 1> p̃_0;
+        p̃_0 << p.at(i)[1-1], this->bottom, p.at(i)[3-1];
+            p̃ = p̃_0;
         }
         else{
-            xnnn = xn.at(i);
+            p̃ = p.at(i);
         }
 
-        // xnn = xnnn + vnn dt
-        Eigen::Matrix<REAL, 3, 1> xnn = xnnn + vnn * this->dt;
-        return std::tuple<Eigen::Matrix<REAL, 3, 1>,Eigen::Matrix<REAL, 3, 1> >{ vn,xnn };    
+        // x̃ = p̃ + ṽ `Δt`
+        Eigen::Matrix<REAL, 3, 1> x̃ = p̃ + ṽ * this->Δt;
+        return std::tuple<Eigen::Matrix<REAL, 3, 1>,Eigen::Matrix<REAL, 3, 1> >{ ṽ,x̃ };    
     }
     using DT_ = double;
     using MatrixD_ = Eigen::MatrixXd;
@@ -717,7 +718,7 @@ struct heartlib {
         const double & m,
         const double & damping,
         const double & K,
-        const double & dt,
+        const double & Δt,
         const double & bottom)
     :
     _Neighborhoods(M)
@@ -734,7 +735,7 @@ struct heartlib {
         this->M = M;
         this->x = x;
         this->K = K;
-        this->dt = dt;
+        this->Δt = Δt;
         this->damping = damping;
         this->m = m;
         this->bottom = bottom;

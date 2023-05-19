@@ -12,19 +12,19 @@ V, E, F = ElementSets( M )
 
 e(i, j) = ||x_i - x_j|| where i,j ∈ V
 
-ComputeInternalForces(i, v, xn) = tuple(vn, f+(0.0, -98.0, 0.0))  where i ∈ V, v_i ∈ ℝ^3, xn_i ∈ ℝ^3,
-f = (sum_(j ∈ VertexOneRing(i)) (-K) (||d|| - e(i, j)) d̄
-where d = xn_i - xn_j,
+ComputeInternalForces(i, v, p) = tuple(ṽ, f+(0.0, -98.0, 0.0))  where i ∈ V, v_i ∈ ℝ^3, p_i ∈ ℝ^3,
+f = (sum_(j ∈ VertexOneRing(i)) (-K) (||d|| - e(i, j)) d̄ 
+where d = p_i - p_j,
 d̄ = d/||d||),
-vn = v_i exp(-`Δt` damping) + `Δt` f
+ṽ = v_i exp(-`Δt` damping) + `Δt` f
 
 
-ApplyForces(i, v, f, xn) = tuple(vn, xnn) where i ∈ V, v_i ∈ ℝ^3, f_i ∈ ℝ^3,xn_i ∈ ℝ^3,
+ApplyForces(i, v, f, p) = tuple(ṽ, x̃) where i ∈ V, v_i ∈ ℝ^3, f_i ∈ ℝ^3, p_i ∈ ℝ^3,
 a = f_i / m,
-vn = v_i + a `Δt`,
-vnn = { (0, -vn_2, 0) if xn_i,2 < bottom
-     vn otherwise,
-xnnn = { (xn_i,1, bottom, xn_i,3) if xn_i,2 < bottom
-     xn_i otherwise,
-xnn = xnnn + vnn `Δt`
+v̄ = v_i + a `Δt`,
+ṽ = { (0, -v̄_2, 0) if p_i,2 < bottom
+      v̄ otherwise,
+p̃ = { (p_i,1, bottom, p_i,3) if p_i,2 < bottom
+     p_i otherwise,
+x̃ = p̃ + ṽ `Δt`
 
