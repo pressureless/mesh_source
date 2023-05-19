@@ -37,7 +37,7 @@ int main(int argc, const char * argv[]) {
     }
 
     // std::vector<std::vector<size_t>> neighbors = GetPointNeighbors(PN, 6);
-    std::vector<std::vector<size_t>> neighbors = GetPointNeighbors(PN, 4);
+    std::vector<std::vector<size_t>> neighbors = GetPointNeighbors(PN, 6);
     // std::vector<std::vector<size_t>> neighbors = GetPointNeighbors(PN, 0.2);
     PointCloud pc(PN, neighbors);
     heartlib ihla(pc, P);
@@ -63,35 +63,35 @@ int main(int argc, const char * argv[]) {
     } 
     //
     std::cout<<"normal calculated"<<std::endl;
-    // Set up parameters
-    LBFGSParam<double> param;
-    param.epsilon = 1e-10;
-    param.max_iterations = 100;
-    // Create solver and function object
-    LBFGSpp::LBFGSSolver<double> solver(param);
-    // Initial guess
-    Eigen::VectorXd s = Eigen::VectorXd::Random(point_normals.size());
-    // std::cout << "s = " << s.transpose() << std::endl;
-    // x will be overwritten to be the best point found
-    auto func = [&]( const Eigen::VectorXd& S, Eigen::VectorXd& gradient_out ) -> double {
-            orientation ori(pc, S, point_normals);
-            gradient_out = ori.g;
-            std::cout << "energy: "<<ori.total<< std::endl;
-            return to_double(ori.total);
-    };
-    double fx;
-    int niter = solver.minimize(func, s, fx);
-    std::cout << niter << " iterations" << std::endl;
-    // std::cout << "s = \n" << s.transpose() << std::endl;
-    std::cout << "f(x) = " << fx << std::endl;
-    std::cout<<"normal oriented"<<std::endl;
+    // // Set up parameters
+    // LBFGSParam<double> param;
+    // param.epsilon = 1e-10;
+    // param.max_iterations = 100;
+    // // Create solver and function object
+    // LBFGSpp::LBFGSSolver<double> solver(param);
+    // // Initial guess
+    // Eigen::VectorXd s = Eigen::VectorXd::Random(point_normals.size());
+    // // std::cout << "s = " << s.transpose() << std::endl;
+    // // x will be overwritten to be the best point found
+    // auto func = [&]( const Eigen::VectorXd& S, Eigen::VectorXd& gradient_out ) -> double {
+    //         orientation ori(pc, S, point_normals);
+    //         gradient_out = ori.g;
+    //         std::cout << "energy: "<<ori.total<< std::endl;
+    //         return to_double(ori.total);
+    // };
+    // double fx;
+    // int niter = solver.minimize(func, s, fx);
+    // std::cout << niter << " iterations" << std::endl;
+    // // std::cout << "s = \n" << s.transpose() << std::endl;
+    // std::cout << "f(x) = " << fx << std::endl;
+    // std::cout<<"normal oriented"<<std::endl;
 
-    #pragma omp parallel for schedule(static) num_threads(omp_get_thread_num())
-    for (int i = 0; i < meshV.rows(); ++i)
-    {
-        point_normals[i] = point_normals[i] * (s(i)>0?1:-1);
-        inverse_point_normals[i] = -point_normals[i];
-    } 
+    // #pragma omp parallel for schedule(static) num_threads(omp_get_thread_num())
+    // for (int i = 0; i < meshV.rows(); ++i)
+    // {
+    //     point_normals[i] = point_normals[i] * (s(i)>0?1:-1);
+    //     inverse_point_normals[i] = -point_normals[i];
+    // } 
     // Initialize polyscope
     polyscope::init();   
     polyscope::PointCloud* psCloud = polyscope::registerPointCloud("really great points", P);
@@ -99,9 +99,9 @@ int main(int argc, const char * argv[]) {
     psCloud->setPointRadius(0.01);
     psCloud->setPointRenderMode(polyscope::PointRenderMode::Sphere);
     psCloud->addVectorQuantity("Normals", original_normals);
-    psCloud->addVectorQuantity("Oriented Normals", point_normals);
+    // psCloud->addVectorQuantity("Oriented Normals", point_normals);
     psCloud->addVectorQuantity("Inverse Normals", inverse_original_normals);
-    psCloud->addVectorQuantity("Inverse Oriented Normals", inverse_point_normals);
+    // psCloud->addVectorQuantity("Inverse Oriented Normals", inverse_point_normals);
     // show
     polyscope::show();
     return 0;
