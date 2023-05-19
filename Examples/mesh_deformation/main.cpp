@@ -1,10 +1,3 @@
-//
-//  main.cpp
-//  DEC
-//
-//  Created by pressure on 10/31/22.
-//
-
 #include <iostream>
 #include <Eigen/Dense>
 #include "Tetrahedron.h"
