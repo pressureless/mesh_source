@@ -1,6 +1,6 @@
 #include <iostream>
 #include <Eigen/Dense>
-#include "TriangleMesh.h" 
+#include "Tetrahedron.h"
 #include <Eigen/Dense>
 #include <Eigen/Sparse> 
 #include <igl/readOBJ.h>
@@ -26,7 +26,7 @@ Eigen::MatrixXd meshV;
 Eigen::MatrixXi T;
 Eigen::MatrixXi meshF;
 Eigen::MatrixXd meshN;
-TriangleMesh triangle_mesh;
+Tetrahedron tet_mesh;
 
 bool running = false;
 double mass = 1.0;
@@ -41,7 +41,7 @@ std::vector<Eigen::Matrix<double, 3, 1>> Velocity;
 std::vector<Eigen::Matrix<double, 3, 1>> Force;
  
 void update(){
-    heartlib ihla(triangle_mesh, OriginalPosition, mass, damping, stiffness, dt, bottom_z);
+    heartlib ihla(tet_mesh, OriginalPosition, mass, damping, stiffness, dt, bottom_z);
     for (int i = 0; i < meshV.rows(); ++i)
     {
         Velocity[i] = Eigen::Matrix<double, 3, 1>::Zero();
@@ -133,8 +133,8 @@ int main(int argc, const char * argv[]) {
     {
         meshV(i, 1) += offset;
     }
-    // Initialize triangle mesh
-    triangle_mesh.initialize(meshF); 
+    // Initialize tet mesh
+    tet_mesh.initialize(T); 
     for (int i = 0; i < meshV.rows(); ++i)
     {
         Position.push_back(meshV.row(i).transpose());
