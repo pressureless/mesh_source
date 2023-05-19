@@ -107,15 +107,15 @@ endif()
 find_package(OpenMP)
 
 # Add src/header to the lib
-file(GLOB_RECURSE MESH_EXAMPLES_HEADERS include/*.hpp include/*.h)
-file(GLOB_RECURSE MESH_EXAMPLES_SOURCES src/*.cpp)
+file(GLOB_RECURSE MESH_EXAMPLES_HEADERS resource/include/*.hpp resource/include/*.h)
+file(GLOB_RECURSE MESH_EXAMPLES_SOURCES resource/src/*.cpp)
 add_library(Mesh-Examples ${MESH_EXAMPLES_SOURCES} ${MESH_EXAMPLES_HEADERS})
 
 # Set models path
-target_compile_definitions(Mesh-Examples PUBLIC DATA_PATH_STR="${CMAKE_CURRENT_SOURCE_DIR}/models")
+target_compile_definitions(Mesh-Examples PUBLIC DATA_PATH_STR="${CMAKE_CURRENT_SOURCE_DIR}/resource/models")
 
 # Include settings
-target_include_directories(Mesh-Examples PUBLIC "${CMAKE_CURRENT_SOURCE_DIR}/include/")
+target_include_directories(Mesh-Examples PUBLIC "${CMAKE_CURRENT_SOURCE_DIR}/resource/include/")
 
 # Link settings
 target_link_libraries(Mesh-Examples igl::core polyscope Eigen3::Eigen OpenMP::OpenMP_CXX autodiff::autodiff)

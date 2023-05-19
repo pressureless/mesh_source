@@ -73,22 +73,22 @@ add_definitions(-DNO_DECREMENT_DEPRECATED_WARNINGS)
 # Create an executable
 set(SRCS 
   main.cpp
-  ../../src/Connectivity.cpp
-  ../../src/dec_util.cpp
-  ../../src/MeshHelper.cpp
-  ../../src/PointCloud.cpp
-  ../../src/PolygonMesh.cpp
-  ../../src/Tetrahedron.cpp
-  ../../src/TriangleMesh.cpp
+  ../../resource/src/Connectivity.cpp
+  ../../resource/src/dec_util.cpp
+  ../../resource/src/MeshHelper.cpp
+  ../../resource/src/PointCloud.cpp
+  ../../resource/src/PolygonMesh.cpp
+  ../../resource/src/Tetrahedron.cpp
+  ../../resource/src/TriangleMesh.cpp
 )
 
 add_executable(main "${SRCS}")
 
 # Set models path
-target_compile_definitions(main PUBLIC DATA_PATH_STR="${CMAKE_CURRENT_SOURCE_DIR}/../../models")
+target_compile_definitions(main PUBLIC DATA_PATH_STR="${CMAKE_CURRENT_SOURCE_DIR}/../../resource/models")
 
 # Include settings
-target_include_directories(main PUBLIC "${CMAKE_CURRENT_SOURCE_DIR}/../../include/")
+target_include_directories(main PUBLIC "${CMAKE_CURRENT_SOURCE_DIR}/../../resource/include/")
 
 # Link settings
 target_link_libraries(main igl::core polyscope Eigen3::Eigen autodiff::autodiff OpenMeshCore)

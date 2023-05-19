@@ -12,13 +12,13 @@
 #include "polyscope/surface_mesh.h"
 #include "polyscope/point_cloud.h"
 #include "PointCloud.h"
-#include <LBFGS.h>
+// #include <LBFGS.h>
 #include <filesystem>
 namespace fs = std::filesystem;
 inline fs::path DATA_PATH = fs::path(DATA_PATH_STR);
 
 using namespace iheartmesh;
-using namespace LBFGSpp;
+// using namespace LBFGSpp;
 
 int main(int argc, const char * argv[]) {
     Eigen::MatrixXd meshV;
