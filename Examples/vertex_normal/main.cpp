@@ -20,11 +20,7 @@ using namespace iheartmesh;
 int main(int argc, const char * argv[]) {
     Eigen::MatrixXd meshV;
     Eigen::MatrixXi meshF;
-    // igl::readOBJ("/Users/pressure/Downloads/mesh_source/models/cube.obj", meshV, meshF);
     igl::readOBJ(argc>1?argv[1]:DATA_PATH / "small_bunny.obj", meshV, meshF);
-    // igl::readOFF("../../../models/bunny_1k.off", meshV, meshF); 
-    // igl::readOFF("../../../models/bunny_200.off", meshV, meshF); 
-    // igl::readOBJ("/Users/pressure/Documents/git/meshtaichi/vertex_normal/models/bunny.obj", meshV, meshF);
     // Initialize triangle mesh
     TriangleMesh triangle_mesh;
     triangle_mesh.initialize(meshF);
@@ -49,11 +45,9 @@ int main(int argc, const char * argv[]) {
         // gaussian curvature normal
         Eigen::Matrix<double, 3, 1> gaussian = ihla.KN(i);
         gaussian_curvature_normal[i] = gaussian;
-        // printf("Thread %d is doing iteration %d.\n", omp_get_thread_num(), i);
         // mean
         Eigen::Matrix<double, 3, 1> mean = ihla.HN(i);
         mean_curvature_normal[i] = mean;
-        // std::cout<<"ihla.getVertexNormal(i):\n"<<n<<std::endl;
     } 
     // Initialize polyscope
     polyscope::init();  

@@ -112,11 +112,6 @@ void myCallback()
  
 
 int main(int argc, const char * argv[]) {
-    // igl::readOBJ("/Users/pressure/Downloads/mesh_source/models/cube.obj", meshV, meshF);
-    // igl::readOBJ("/Users/pressure/Downloads/mesh_source/models/small_bunny.obj", meshV, meshF);
-    // igl::readOBJ("/Users/pressure/Downloads/mesh_source/models/sphere3.obj", meshV, meshF);
-    // igl::readOBJ(argc>1?argv[1]:DATA_PATH / "camelhead-decimate-qslim.obj", meshV, meshF); 
-    // igl::readOFF(argc>1?argv[1]:DATA_PATH /"bunny_200.off", meshV, meshF);
     igl::readMESH(argc>1?argv[1]:DATA_PATH / "bunny_200.mesh", meshV, T, meshF);   
     // igl::readMESH(argc>1?argv[1]:DATA_PATH / "bunny1k.mesh", meshV, T, meshF);   
     // double angle = 0.4;
@@ -130,7 +125,6 @@ int main(int argc, const char * argv[]) {
     // {
     //     meshV.row(i) = rotation * meshV.row(i).transpose() + translation;
     // } 
-
     // the lowest point is 0.3
     double minY = 1000;
     double offset = 0;

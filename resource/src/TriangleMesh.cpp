@@ -48,7 +48,7 @@ void TriangleMesh::initialize(MatrixXi &T){
         this->build_boundary_mat2();
     }
     this->init_mesh_indices();
-    std::cout<<"Total vertices:"<<this->num_v<<", edges:"<<this->E.rows()<<", faces:"<<this->F.rows()<<", tets:"<<this->T.rows()<<std::endl;
+    // std::cout<<"Total vertices:"<<this->num_v<<", edges:"<<this->E.rows()<<", faces:"<<this->F.rows()<<", tets:"<<this->T.rows()<<std::endl;
 }
 
 

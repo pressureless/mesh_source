@@ -25,9 +25,7 @@ typedef OpenMesh::PolyMesh_ArrayKernelT<>  MyMesh;
 int main(int argc, const char * argv[]) {
     Eigen::MatrixXd meshV;
     Eigen::MatrixXi meshF;
-    // igl::readOBJ("/Users/pressure/Downloads/mesh_source/models/cube.obj", meshV, meshF);
     igl::readOBJ(argc>1?argv[1]: DATA_PATH /  "polygon/suzanne.obj", meshV, meshF);
-    // igl::readOBJ("/Users/pressure/Documents/git/meshtaichi/vertex_normal/models/bunny.obj", meshV, meshF);
 
     MyMesh mesh;
     if (!OpenMesh::IO::read_mesh(mesh, DATA_PATH / "polygon/suzanne.obj")){
@@ -36,17 +34,13 @@ int main(int argc, const char * argv[]) {
     std::vector<std::vector<int> > faces;
     for (MyMesh::FaceIter f_it=mesh.faces_begin(); f_it!=mesh.faces_end(); ++f_it) {
         std::vector<int> f_list;
-        // std::cout<<"cur_face: ";
         for (OpenMesh::PolyConnectivity::FaceVertexCCWIter v_iter = mesh.fv_ccwiter (*f_it);
             v_iter.is_valid(); ++v_iter)
         {
-            // std::cout<<v_iter->idx()<<", ";
             f_list.push_back(v_iter->idx());
         }
-        // std::cout<<std::endl;
         faces.push_back(f_list);
     }
-    // std::cout<<"Faces:"<<faces.size()<<std::endl;
     // Initialize triangle mesh
     PolygonMesh polygon_mesh;
     polygon_mesh.initialize(faces);
@@ -64,7 +58,6 @@ int main(int argc, const char * argv[]) {
     {
         Eigen::Matrix<double, 3, 1> n = ihla.VertexNormal(i);
         N.push_back(n);
-        // std::cout<<"ihla.getVertexNormal(i):\n"<<n<<std::endl;
     } 
     polyscope::getSurfaceMesh("my mesh")->addVertexVectorQuantity("VertexNormal", N); 
     polyscope::show();

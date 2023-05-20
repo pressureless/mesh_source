@@ -89,12 +89,10 @@ void get_multiple_vis(MatrixXd &V_vis,
 
 void update_visualization(igl::opengl::glfw::Viewer & viewer)
 {
-  // std::cout<<"cur slicing:"<<slice_z<<std::endl;
   MatrixXd V_vis;
   MatrixXi F_vis;
   MatrixXd C_vis;
   get_vis(V_vis, F_vis, C_vis, slice_z);
-  // get_multiple_vis(V_vis, F_vis, C_vis);
   //
   const auto & append_mesh = [&C_vis,&F_vis,&V_vis](
     const Eigen::MatrixXd & V,
@@ -172,9 +170,6 @@ void set_winding_number(){
     {
         W[i] = ihla.w(BC.row(i));
     } 
-    // auto end = std::chrono::duration_cast<std::chrono::seconds>(std::chrono::system_clock::now().time_since_epoch()).count();
-    // std::cout <<end-start<< " seconds in total"<<std::endl;
-    // cout<<"W, rows:"<<W.rows()<<", cols:"<<W.cols()<<endl;
 }
 
 
@@ -215,9 +210,7 @@ int main(int argc, char *argv[])
   cout<<endl;
   // Load mesh: (V,T) tet-mesh of convex hull, F contains facets of input
   // surface mesh _after_ self-intersection resolution
-  // igl::readMESH(TUTORIAL_SHARED_PATH "/big-sigcat.mesh",V,T,F);
   igl::readMESH(argc>1?argv[1]:DATA_PATH / "cat_surface.mesh", V, T, F);  //6851 sec
-  // igl::readMESH(argc>1?argv[1]:DATA_PATH / "cat_volume.mesh", VV, TT, FF);  //6851 sec
   set_slicing_colors();
   // Plot the generated mesh
   igl::opengl::glfw::Viewer viewer;

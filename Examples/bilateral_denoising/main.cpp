@@ -25,11 +25,6 @@ std::vector<Eigen::Matrix<double, 3, 1>> P;
 
 void update(){
     heartlib ihla(triangle_mesh, P); 
-    // std::cout<<"before"<<std::endl;
-    // for (int i = 0; i < 10; ++i)
-    // {
-    //     std::cout<<"i: "<<i<<", "<<P[i]<<std::endl;
-    // } 
     std::vector<Eigen::Matrix<double, 3, 1>> NP;
     for (int i = 0; i < meshV.rows(); ++i)
     {
@@ -37,11 +32,6 @@ void update(){
         NP.push_back(new_pos);
     } 
     P = NP;
-    // std::cout<<"after"<<std::endl;
-    // for (int i = 0; i < 10; ++i)
-    // {
-    //     std::cout<<"i: "<<i<<", "<<P[i]<<std::endl;
-    // } 
     polyscope::getSurfaceMesh("my mesh")->updateVertexPositions(P);
 }
 
@@ -73,16 +63,7 @@ void myCallback()
 }
 
 int main(int argc, const char * argv[]) {
-    // igl::readOBJ("/Users/pressure/Downloads/mesh_source/models/cube.obj", meshV, meshF);
-    // igl::readOBJ("/Users/pressure/Downloads/mesh_source/models/cube.obj", meshV, meshF);
-    // igl::readOBJ("/Users/pressure/Downloads/mesh_source/models/small_bunny.obj", meshV, meshF);
-    // igl::readOBJ("/Users/pressure/Downloads/Mesh_Denoiseing_BilateralFilter/Noisy.obj", meshV, meshF);
-    // igl::readOBJ("/Users/pressure/Downloads/fast-mesh-denoising/meshes/Noisy/block_n1.obj", meshV, meshF);
-    // igl::readOFF("/Users/pressure/Downloads/Laplacian-Mesh-Smoothing/Models/bumpy.off", meshV, meshF); // 69KB 5mins
     igl::readOBJ(DATA_PATH / "torusnoise.obj", meshV, meshF); // 177KB 20 mins
-    
-
-    // igl::readOBJ("/Users/pressure/Documents/git/meshtaichi/vertex_normal/models/bunny.obj", meshV, meshF);
     // Initialize triangle mesh
     triangle_mesh.initialize(meshF);
     // Initialize polyscope
@@ -94,16 +75,6 @@ int main(int argc, const char * argv[]) {
     {
         P.push_back(meshV.row(i).transpose());
     }
-    // update();
-    // heartlib ihla(triangle_mesh, P); 
-    // // std::cout<<"before"<<std::endl;
-
-    // std::cout<<"nn:\n"<<std::endl;
-    // i, j, k = ihla.Vertices(0);
-    // // print_set();
-    // std::cout<<"i:"<<i<<", j:"<<j<<", k:"<<k<<std::endl;
-    // std::cout<<"nn:\n"<<P[0]<<std::endl;
-    // polyscope::getSurfaceMesh("my mesh")->addVertexVectorQuantity("VertexNormal", N); 
     polyscope::show();
     return 0;
 }
