@@ -4,7 +4,7 @@ OrientedVertices from Neighborhoods(M)
 M : TriangleMesh
 x_i ∈ ℝ³ 
 V, E, F = ElementSets( M )
- 
+
 Ω_f(𝐩) = 2 atan2(|[𝐚 𝐛 𝐜]|, (abc+(𝐚⋅𝐛)c+(𝐛⋅𝐜)a+(𝐜⋅𝐚)b)) where f ∈ F, 𝐩 ∈ ℝ³,
 𝐚 = x_i - 𝐩,
 𝐛 = x_j - 𝐩,

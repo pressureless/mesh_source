@@ -30,7 +30,7 @@ oj, oi = OrientedVertices(k, j, i),
 cos = (x_oj - x_k)⋅(x_oi-x_k),
 sin = ||(x_oj - x_k)×(x_oi-x_k)||
 
- 
+
 KN(i) = 1/2 (sum_(j ∈ VertexOneRing(i)) ϕ_ij/l_ij (x_j - x_i)) where i ∈ V
 
 
