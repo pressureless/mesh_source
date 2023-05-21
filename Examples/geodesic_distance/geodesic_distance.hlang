@@ -1,11 +1,11 @@
 ElementSets from MeshConnectivity
-VertexOneRing, Faces from Neighborhoods(M)
+VertexOneRing, NeighborVerticesInFace from Neighborhoods(M)
 M : TriangleMesh
 x_i ∈ ℝ^3  
 V, E, F = ElementSets( M )
 
 UpdateStep(i, j, k, d) = { p if s_1,1 < 0 and s_2,1 < 0 
-			min(d_j+||x_j - x_i||, d_k+||x_k - x_i||) otherwise where i,j,k ∈ V, d_i ∈ ℝ,
+			min(d_j+‖x_j - x_i‖, d_k+‖x_k - x_i‖) otherwise where i,j,k ∈ V, d_i ∈ ℝ,
 X = [x_j-x_i x_k-x_i],
 t = [d_j d_k]ᵀ,
 Q = (XᵀX)⁻¹,

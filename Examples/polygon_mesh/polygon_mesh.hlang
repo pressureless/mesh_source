@@ -6,6 +6,6 @@ x_i ∈ ℝ^3
 
 V, E, F = ElementSets( M )
 
-VertexNormal(i) = (sum_(f ∈ Faces(i)) (x_j- x_i)×(x_k-x_i)/(||x_j-x_i||² + ||x_k-x_i||²) 
+VertexNormal(i) = (∑_(f ∈ Faces(i)) (x_j- x_i)×(x_k-x_i)/(||x_j-x_i||² ||x_k-x_i||²) 
 where j, k = NeighborVerticesInFace(f, i) ) where i ∈ V
 
