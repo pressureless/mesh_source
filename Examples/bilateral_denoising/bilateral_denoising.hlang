@@ -5,7 +5,7 @@ x_i ∈ ℝ^3
 
 V, E, F = ElementSets( M )
 VertexNormal(i) = w/||w|| where i ∈ V,
-w = (sum_(f ∈ Faces(i)) (x_j- x_i)×(x_k-x_i)
+w = (∑_(f ∈ Faces(i)) (x_j- x_i)×(x_k-x_i)
 where j, k = NeighborVerticesInFace(f, i) )
 
 CalcNorm(i, v, n, `σ_c`, `σ_s`) = `w_c`⋅`w_s` where i,v ∈ ℤ vertices,`σ_c`, `σ_s` ∈ ℝ, n ∈ ℝ³,
@@ -23,8 +23,8 @@ n = VertexNormal(i),
 `σ_c` = CalcSigmaC(i),
 neighbors = AdaptiveVertexNeighbor(i, {i}, `σ_c`),
 `σ_s` = CalcSigmaS(i, neighbors),
-s = (sum_(v ∈ neighbors) CalcS(i, v, n, `σ_c`, `σ_s`)),
-norm = (sum_(v ∈ neighbors) CalcNorm(i, v, n, `σ_c`, `σ_s`))
+s = (∑_(v ∈ neighbors) CalcS(i, v, n, `σ_c`, `σ_s`)),
+norm = (∑_(v ∈ neighbors) CalcNorm(i, v, n, `σ_c`, `σ_s`))
  
 
 CalcSigmaC(i) = min({||x_i - x_v|| for v ∈ VertexOneRing(i)}) where i ∈ V
@@ -32,8 +32,8 @@ CalcSigmaC(i) = min({||x_i - x_v|| for v ∈ VertexOneRing(i)}) where i ∈ V
 CalcSigmaS(i, N) = {sqrt(offset) + 10^(-12) if sqrt(offset) < 10^(-12)
 	sqrt(offset) otherwise where i ∈ V, N ⊂ V,
 n = VertexNormal(i),
-avg = (sum_(v ∈ N) t/|N| where t = sqrt(((x_v - x_i)⋅n)²)),
-sqs = (sum_(v ∈ N) (t-avg)² where t = sqrt(((x_v - x_i)⋅n)²)),
+avg = (∑_(v ∈ N) t/|N| where t = sqrt(((x_v - x_i)⋅n)²)),
+sqs = (∑_(v ∈ N) (t-avg)² where t = sqrt(((x_v - x_i)⋅n)²)),
 offset = sqs / |N|
 
 

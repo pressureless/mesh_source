@@ -1,11 +1,11 @@
 arccos, atan2 from trigonometry
 ElementSets from MeshConnectivity
-Faces, Vertices, Edges,OppositeFaces, VertexOneRing, OrientedOppositeFaces, OppositeVertices, NeighborVerticesInFace, OrientedVertices, EdgeIndex from Neighborhoods(M)
+Faces, VertexOneRing, OrientedOppositeFaces, OppositeVertices, NeighborVerticesInFace, OrientedVertices from Neighborhoods(M)
 M : TriangleMesh
 x_i ∈ ℝ^3  
 V, E, F = ElementSets( M )
 
-VertexNormal(i) = (sum_(f ∈ Faces(i)) (x_j- x_i)×(x_k-x_i)/(||x_j-x_i||² ||x_k-x_i||²) 
+VertexNormal(i) = (∑_(f ∈ Faces(i)) (x_j- x_i)×(x_k-x_i)/(||x_j-x_i||² ||x_k-x_i||²) 
 where j, k = NeighborVerticesInFace(f, i) ) where i ∈ V
 
 θ(i, f) = arccos((x_j-x_i)⋅(x_k-x_i)/(‖x_j-x_i‖ ‖x_k-x_i‖)) where i ∈ V, f ∈ F,
@@ -31,10 +31,10 @@ cos = (x_oj - x_k)⋅(x_oi-x_k),
 sin = ||(x_oj - x_k)×(x_oi-x_k)||
 
 
-KN(i) = 1/2 (sum_(j ∈ VertexOneRing(i)) ϕ_ij/l_ij (x_j - x_i)) where i ∈ V
+KN(i) = 1/2 (∑_(j ∈ VertexOneRing(i)) ϕ_ij/l_ij (x_j - x_i)) where i ∈ V
 
 
-HN(i) = 1/2 (sum_(j ∈ VertexOneRing(i))(`cot(α)` + `cot(β)`) (x_i - x_j) 
+HN(i) = 1/2 (∑_(j ∈ VertexOneRing(i))(`cot(α)` + `cot(β)`) (x_i - x_j) 
 where k, p = OppositeVertices(i, j),
 `cot(α)` = cot(k, j, i),
 `cot(β)` = cot(p, i, j) ) where i ∈ V

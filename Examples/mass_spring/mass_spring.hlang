@@ -13,7 +13,7 @@ V, E, F, T = ElementSets( M )
 e(i, j) = ||x_i - x_j|| where i,j ∈ V
 
 ComputeInternalForces(i, v, p) = tuple(ṽ, f+(0.0, -98.0, 0.0))  where i ∈ V, v_i ∈ ℝ^3, p_i ∈ ℝ^3,
-f = (sum_(j ∈ VertexOneRing(i)) (-K) (||d|| - e(i, j)) d̄ 
+f = (∑_(j ∈ VertexOneRing(i)) (-K) (||d|| - e(i, j)) d̄ 
 where d = p_i - p_j,
 d̄ = d/||d||),
 ṽ = v_i exp(-`Δt` damping) + `Δt` f
