@@ -20,14 +20,15 @@ cr = ((x̄_c-x̄_a)⋅b1, (x̄_c-x̄_a)⋅b2)
 
 
 S(f, x) = { ∞ if |m| ≤ 0
-    A (‖J‖² + ‖J⁻¹‖²) otherwise where f ∈ F, x_i ∈ ℝ²,
+    A (‖J‖² + ‖J⁻¹‖²) otherwise 
+where f ∈ F, x_i ∈ ℝ²,
 a, b, c = OrientedVertices(f),
 m = [x_b-x_a x_c-x_a],
 A = ½ |`m_r`(f)|,
 J = m `m_r`(f)⁻¹
 
-e = ∑_(i ∈ F) S(i, x)
+e = ∑_(i ∈ F) S_i(x)
 
-H = ∑_(i ∈ F) psd(∂²S(i, x)/∂x²)
+H = ∑_(i ∈ F) psd(∂²S_i(x)/∂x²)
 
 G = ∂e/∂x  
