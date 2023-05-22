@@ -8,8 +8,12 @@
 
 ## files under resource folder
 include folder and src folder contain the mesh libraries
+
 models folder contains various models used by examples
+
 iheartmesh folder contains the source code developed based on I❤️LA
+
+mass-spring bunny_to_the_ground.mp4: video for mass spring example
 
 # Example files
 For each example, we have the following files:
