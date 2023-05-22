@@ -1,6 +1,6 @@
 vec, inversevec, diag, svd from linearalgebra
 ElementSets from MeshConnectivity
-OrientedVertices from Neighborhoods(M)
+NeighborVerticesInFace, Faces, VertexOneRing, OrientedVertices from Neighborhoods(M)
 M : TriangleMesh
 x̄_i ∈ ℝ^3 : rest pos in 3D
 x_i ∈ ℝ^2 : current pos in 2D
@@ -20,7 +20,7 @@ cr = ((x̄_c-x̄_a)⋅b1, (x̄_c-x̄_a)⋅b2)
 
 
 S(f, x) = { ∞ if |m| ≤ 0
-    A (‖J‖² + ‖J⁻¹‖²) otherwise where f ∈ F, x_i ∈ ℝ^2,
+    A (‖J‖² + ‖J⁻¹‖²) otherwise where f ∈ F, x_i ∈ ℝ²,
 a, b, c = OrientedVertices(f),
 m = [x_b-x_a x_c-x_a],
 A = ½ |`m_r`(f)|,
