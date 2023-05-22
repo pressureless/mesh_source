@@ -207,7 +207,7 @@ if __name__ == '__main__':
     #    0  |  3
     #     \ | /
     #       1
-    # v, f = igl.read_triangle_mesh("/Users/pressure/Downloads/sphere.obj")
+    # v, f = igl.read_triangle_mesh("sphere.obj")
     T = np.asarray([[0,1,2,3], [1,2,3,4]])
     P = np.asarray([[1, 1, 1], [1, 2, 3], [2, 1, 4], [3, 1, 2]])
     tri = TriangleMesh(T)
