@@ -14,32 +14,32 @@ V, E, F, C = ElementSets(M)
 
 vol_i,j,k,l = ⅙ |[x̄_j-x̄_i x̄_k-x̄_i x̄_l-x̄_i]| where i,j,k,l ∈ V
 
-mr(s) = [x̄_b-x̄_a x̄_c-x̄_a x̄_d-x̄_a] where s ∈ C,
+`m_r`(s) = [x̄_b-x̄_a x̄_c-x̄_a x̄_d-x̄_a] where s ∈ C,
 a, b, c, d = OrientedVertices(s)
 
 S(s, x) = { ∞ if |m| ≤ 0
   vol_abcd (‖J‖² + ‖J⁻¹‖²) otherwise where s ∈ C, x_i ∈ ℝ³,
 a, b, c, d = OrientedVertices(s),
 m = [x_b-x_a x_c-x_a x_d-x_a],
-J = m mr(s)⁻¹
+J = m `m_r`(s)⁻¹
 
 EXPS(s, x) = { ∞ if |m| ≤ 0
   vol_abcd exp(‖J‖² + ‖J⁻¹‖²) otherwise where s ∈ C, x_i ∈ ℝ³,
 a, b, c, d = OrientedVertices(s),
 m = [x_b-x_a x_c-x_a x_d-x_a],
-J = m mr(s)⁻¹
+J = m `m_r`(s)⁻¹
 
 AMIPS(s, x) = { ∞ if |m| ≤ 0
   vol_abcd exp(½(‖J‖²/|J| + ½(|J|+|J⁻¹|))) otherwise where s ∈ C, x_i ∈ ℝ³,
 a, b, c, d = OrientedVertices(s),
 m = [x_b-x_a x_c-x_a x_d-x_a],
-J = m mr(s)⁻¹
+J = m `m_r`(s)⁻¹
 
 CAMIPS(s, x) = { ∞ if |m| ≤ 0
   vol_abcd (‖J‖²/|J|^⅔) otherwise where s ∈ C, x_i ∈ ℝ³,
 a, b, c, d = OrientedVertices(s),
 m = [x_b-x_a x_c-x_a x_d-x_a],
-J = m mr(s)⁻¹
+J = m `m_r`(s)⁻¹
 
 E2 = w ∑_j ‖bp_j - x_(bx_j)‖²
 
