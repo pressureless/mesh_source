@@ -1,0 +1,6 @@
+TatSu==5.8.3
+wxpython
+appdirs
+regex
+sympy
+pymupdf
