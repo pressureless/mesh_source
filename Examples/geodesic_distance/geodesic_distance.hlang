@@ -1,5 +1,5 @@
 ElementSets from MeshConnectivity
-VertexOneRing, NeighborVerticesInFace from Neighborhoods(M)
+VertexOneRing, Faces, NeighborVerticesInFace from Neighborhoods(M)
 M : TriangleMesh
 x_i ∈ ℝ^3  
 V, E, F = ElementSets( M )

@@ -3,10 +3,10 @@ vec, inversevec, diag, svd from linearalgebra
 ElementSets from MeshConnectivity
 NeighborVerticesInFace, Faces, Vertices, VertexOneRing, OrientedVertices from TetrahderonNeighborhoods(M)
 M : TetrahedralMesh
-x̄_i ∈ ℝ^3 : rest pos
-x_i ∈ ℝ^3 : current pos
+x̄_i ∈ ℝ³ : rest pos
+x_i ∈ ℝ³ : current pos
 bx_j ∈ ℤ index: boundary indices
-bp_j ∈ ℝ^3 : boundary positions
+bp_j ∈ ℝ³ : boundary positions
 w ∈ ℝ : penalty
 ε ∈ ℝ : eps
 psd : ℝ^(p×p) -> ℝ^(p×p) sparse
@@ -15,40 +15,41 @@ V, E, F, C = ElementSets(M)
 
 vol_i,j,k,l = ⅙ |[x̄_j-x̄_i x̄_k-x̄_i x̄_l-x̄_i]| where i,j,k,l ∈ V
 
-mr(s) = [x̄_b-x̄_a x̄_c-x̄_a x̄_d-x̄_a] where s ∈ C,
+`m_r`(s) = [x̄_b-x̄_a x̄_c-x̄_a x̄_d-x̄_a] where s ∈ C,
 a, b, c, d = OrientedVertices(s)
 
-S(s, x) = { ∞ if |m| <= 0
-  vol_abcd (‖J‖² + ‖J⁻¹‖²) otherwise where s ∈ C, x_i ∈ ℝ^3,
+S(s, x) = { ∞ if |m| ≤ 0
+            vol_abcd (‖J‖² + ‖J⁻¹‖²) otherwise 
+where s ∈ C, x_i ∈ ℝ³,
 a, b, c, d = OrientedVertices(s),
 m = [x_b-x_a x_c-x_a x_d-x_a],
-J = m mr(s)⁻¹
+J = m `m_r`(s)⁻¹
 
-EXPS(s, x) = { ∞ if |m| <= 0
-  vol_abcd exp(‖J‖² + ‖J⁻¹‖²) otherwise where s ∈ C, x_i ∈ ℝ^3,
+EXPS(s, x) = { ∞ if |m| ≤ 0
+               vol_abcd exp(‖J‖² + ‖J⁻¹‖²) otherwise 
+where s ∈ C, x_i ∈ ℝ³,
 a, b, c, d = OrientedVertices(s),
 m = [x_b-x_a x_c-x_a x_d-x_a],
-J = m mr(s)⁻¹
+J = m `m_r`(s)⁻¹
 
-AMIPS(s, x) = { ∞ if |m| <= 0
-  vol_abcd exp(½(‖J‖²/|J| + ½(|J|+|J⁻¹|))) otherwise where s ∈ C, x_i ∈ ℝ^3,
+AMIPS(s, x) = { ∞ if |m| ≤ 0
+                vol_abcd exp(½(‖J‖²/|J| + ½(|J|+|J⁻¹|))) otherwise 
+where s ∈ C, x_i ∈ ℝ³,
 a, b, c, d = OrientedVertices(s),
 m = [x_b-x_a x_c-x_a x_d-x_a],
-J = m mr(s)⁻¹
+J = m `m_r`(s)⁻¹
 
-CAMIPS(s, x) = { ∞ if |m| <= 0
-  vol_abcd (‖J‖²/|J|^⅔) otherwise where s ∈ C, x_i ∈ ℝ^3,
+CAMIPS(s, x) = { ∞ if |m| ≤ 0
+                 vol_abcd (‖J‖²/|J|^⅔) otherwise 
+where s ∈ C, x_i ∈ ℝ³,
 a, b, c, d = OrientedVertices(s),
 m = [x_b-x_a x_c-x_a x_d-x_a],
-J = m mr(s)⁻¹
+J = m `m_r`(s)⁻¹
 
-E2 = w sum_j ‖bp_j - x_(bx_j)‖²
-
-e = sum_(i ∈ C) S(i, x) + E2
-
+E2 = w ∑_j ‖bp_j - x_(bx_j)‖²
+e = ∑_(i ∈ C) S_i(x) + E2
 G = ∂e/∂x
-
-H = sum_(i ∈ C) psd(∂²S(i, x)/∂x²) + psd(∂²E2/∂x²)
+H = ∑_(i ∈ C) psd(∂²S_i(x)/∂x²) + psd(∂²E2/∂x²)
 */
 #include <Eigen/Core>
 #include <Eigen/QR>
@@ -94,7 +95,7 @@ struct heartlib {
         vol_0 << this->x̄.at(j) - this->x̄.at(i), this->x̄.at(k) - this->x̄.at(i), this->x̄.at(l) - this->x̄.at(i);
         return (1/double(6)) * (vol_0).determinant();    
     }
-    Eigen::Matrix<double, 3, 3> mr(
+    Eigen::Matrix<double, 3, 3> m_r(
         const int & s)
     {
         assert( std::binary_search(C.begin(), C.end(), s) );
@@ -105,9 +106,9 @@ struct heartlib {
         int b = std::get<1>(rhs_1);
         int c = std::get<2>(rhs_1);
         int d = std::get<3>(rhs_1);
-        Eigen::Matrix<double, 3, 3> mr_0;
-        mr_0 << this->x̄.at(b) - this->x̄.at(a), this->x̄.at(c) - this->x̄.at(a), this->x̄.at(d) - this->x̄.at(a);
-        return mr_0;    
+        Eigen::Matrix<double, 3, 3> m_r_0;
+        m_r_0 << this->x̄.at(b) - this->x̄.at(a), this->x̄.at(c) - this->x̄.at(a), this->x̄.at(d) - this->x̄.at(a);
+        return m_r_0;    
     }
     template<typename REAL>
     REAL S(
@@ -130,8 +131,8 @@ struct heartlib {
         m_0 << x.at(b) - x.at(a), x.at(c) - x.at(a), x.at(d) - x.at(a);
         Eigen::Matrix<REAL, 3, 3> m = m_0;
 
-        // J = m mr(s)⁻¹
-        Eigen::Matrix<REAL, 3, 3> J = m * mr(s).inverse();
+        // J = m `m_r`(s)⁻¹
+        Eigen::Matrix<REAL, 3, 3> J = m * m_r(s).inverse();
         if((m).determinant() <= 0){
             S_ret = INFINITY;
         }
@@ -161,8 +162,8 @@ struct heartlib {
         m_1 << x.at(b) - x.at(a), x.at(c) - x.at(a), x.at(d) - x.at(a);
         Eigen::Matrix<REAL, 3, 3> m = m_1;
 
-        // J = m mr(s)⁻¹
-        Eigen::Matrix<REAL, 3, 3> J = m * mr(s).inverse();
+        // J = m `m_r`(s)⁻¹
+        Eigen::Matrix<REAL, 3, 3> J = m * m_r(s).inverse();
         if((m).determinant() <= 0){
             EXPS_ret = INFINITY;
         }
@@ -192,8 +193,8 @@ struct heartlib {
         m_2 << x.at(b) - x.at(a), x.at(c) - x.at(a), x.at(d) - x.at(a);
         Eigen::Matrix<REAL, 3, 3> m = m_2;
 
-        // J = m mr(s)⁻¹
-        Eigen::Matrix<REAL, 3, 3> J = m * mr(s).inverse();
+        // J = m `m_r`(s)⁻¹
+        Eigen::Matrix<REAL, 3, 3> J = m * m_r(s).inverse();
         if((m).determinant() <= 0){
             AMIPS_ret = INFINITY;
         }
@@ -223,8 +224,8 @@ struct heartlib {
         m_3 << x.at(b) - x.at(a), x.at(c) - x.at(a), x.at(d) - x.at(a);
         Eigen::Matrix<REAL, 3, 3> m = m_3;
 
-        // J = m mr(s)⁻¹
-        Eigen::Matrix<REAL, 3, 3> J = m * mr(s).inverse();
+        // J = m `m_r`(s)⁻¹
+        Eigen::Matrix<REAL, 3, 3> J = m * m_r(s).inverse();
         if((m).determinant() <= 0){
             CAMIPS_ret = INFINITY;
         }
@@ -233,10 +234,10 @@ struct heartlib {
         }
         return CAMIPS_ret;    
     }
-    using DT_ = double;
-    using MatrixD_ = Eigen::MatrixXd;
-    using VectorD_ = Eigen::VectorXd;
     struct TetrahderonNeighborhoods {
+        using DT_ = double;
+        using MatrixD_ = Eigen::MatrixXd;
+        using VectorD_ = Eigen::VectorXd;
         std::vector<int > V;
         std::vector<int > E;
         std::vector<int > F;
@@ -247,6 +248,9 @@ struct heartlib {
         Eigen::SparseMatrix<int> B0;
         Eigen::SparseMatrix<int> B1;
         Eigen::SparseMatrix<int> B2;
+        Eigen::SparseMatrix<int> B0T;
+        Eigen::SparseMatrix<int> B1T;
+        Eigen::SparseMatrix<int> B2T;
         Tetrahedron M;
         std::vector<int > VertexOneRing(
             const int & v)
@@ -263,7 +267,7 @@ struct heartlib {
                 VertexOneRingset_1.erase(unique(VertexOneRingset_1.begin(), VertexOneRingset_1.end() ), VertexOneRingset_1.end());
             }
             std::vector<int > difference;
-            const std::vector<int >& lhs_diff = nonzeros(this->B0 * this->B0.transpose() * M.vertices_to_vector(VertexOneRingset_0));
+            const std::vector<int >& lhs_diff = nonzeros(this->B0 * (this->B0T * M.vertices_to_vector(VertexOneRingset_0)));
             const std::vector<int >& rhs_diff = VertexOneRingset_1;
             difference.reserve(lhs_diff.size());
             std::set_difference(lhs_diff.begin(), lhs_diff.end(), rhs_diff.begin(), rhs_diff.end(), std::back_inserter(difference));
@@ -273,7 +277,7 @@ struct heartlib {
             const std::vector<int > & v)
         {
             std::vector<int > difference_1;
-            const std::vector<int >& lhs_diff_1 = nonzeros(this->B0 * this->B0.transpose() * M.vertices_to_vector(v));
+            const std::vector<int >& lhs_diff_1 = nonzeros(this->B0 * (this->B0T * M.vertices_to_vector(v)));
             const std::vector<int >& rhs_diff_1 = v;
             difference_1.reserve(lhs_diff_1.size());
             std::set_difference(lhs_diff_1.begin(), lhs_diff_1.end(), rhs_diff_1.begin(), rhs_diff_1.end(), std::back_inserter(difference_1));
@@ -300,14 +304,14 @@ struct heartlib {
         {
             assert( std::binary_search(V.begin(), V.end(), v) );
             assert( std::binary_search(F.begin(), F.end(), f) );
-            // es = edgeset(NonZeros(`∂1` IndicatorVector({f})))
+            // es = edgeset(NonZeros(`∂¹` IndicatorVector({f})))
             std::vector<int > NeighborVerticesInFaceset_0({f});
             if(NeighborVerticesInFaceset_0.size() > 1){
                 sort(NeighborVerticesInFaceset_0.begin(), NeighborVerticesInFaceset_0.end());
                 NeighborVerticesInFaceset_0.erase(unique(NeighborVerticesInFaceset_0.begin(), NeighborVerticesInFaceset_0.end() ), NeighborVerticesInFaceset_0.end());
             }
             std::vector<int > es = nonzeros(this->dee1 * M.faces_to_vector(NeighborVerticesInFaceset_0));
-            // nes = { s for s ∈ es if `∂0`_v,s != 0 }
+            // nes = { s for s ∈ es if `∂⁰`_v,s != 0 }
             std::vector<int > NeighborVerticesInFaceset_1;
             const std::vector<int >& range = es;
             NeighborVerticesInFaceset_1.reserve(range.size());
@@ -321,7 +325,7 @@ struct heartlib {
                 NeighborVerticesInFaceset_1.erase(unique(NeighborVerticesInFaceset_1.begin(), NeighborVerticesInFaceset_1.end() ), NeighborVerticesInFaceset_1.end());
             }
             std::vector<int > nes = NeighborVerticesInFaceset_1;
-            // eset1 = { e for e ∈ nes if `∂1`_e,f `∂0`_v,e = -1}
+            // eset1 = { e for e ∈ nes if `∂¹`_e,f `∂⁰`_v,e = -1}
             std::vector<int > NeighborVerticesInFaceset_2;
             const std::vector<int >& range_1 = nes;
             NeighborVerticesInFaceset_2.reserve(range_1.size());
@@ -335,7 +339,7 @@ struct heartlib {
                 NeighborVerticesInFaceset_2.erase(unique(NeighborVerticesInFaceset_2.begin(), NeighborVerticesInFaceset_2.end() ), NeighborVerticesInFaceset_2.end());
             }
             std::vector<int > eset1 = NeighborVerticesInFaceset_2;
-            // vset1 = vertexset(NonZeros(B0 IndicatorVector(eset1))) - {v}
+            // vset1 = vertexset(NonZeros(`B⁰` IndicatorVector(eset1))) - {v}
             std::vector<int > NeighborVerticesInFaceset_3({v});
             if(NeighborVerticesInFaceset_3.size() > 1){
                 sort(NeighborVerticesInFaceset_3.begin(), NeighborVerticesInFaceset_3.end());
@@ -347,7 +351,7 @@ struct heartlib {
             difference_2.reserve(lhs_diff_2.size());
             std::set_difference(lhs_diff_2.begin(), lhs_diff_2.end(), rhs_diff_2.begin(), rhs_diff_2.end(), std::back_inserter(difference_2));
             std::vector<int > vset1 = difference_2;
-            // eset2 = { e for e ∈ nes if `∂1`_e,f `∂0`_v,e = 1 }
+            // eset2 = { e for e ∈ nes if `∂¹`_e,f `∂⁰`_v,e = 1 }
             std::vector<int > NeighborVerticesInFaceset_4;
             const std::vector<int >& range_2 = nes;
             NeighborVerticesInFaceset_4.reserve(range_2.size());
@@ -361,7 +365,7 @@ struct heartlib {
                 NeighborVerticesInFaceset_4.erase(unique(NeighborVerticesInFaceset_4.begin(), NeighborVerticesInFaceset_4.end() ), NeighborVerticesInFaceset_4.end());
             }
             std::vector<int > eset2 = NeighborVerticesInFaceset_4;
-            // vset2 = vertexset(NonZeros(B0 IndicatorVector(eset2))) - {v}
+            // vset2 = vertexset(NonZeros(`B⁰` IndicatorVector(eset2))) - {v}
             std::vector<int > NeighborVerticesInFaceset_5({v});
             if(NeighborVerticesInFaceset_5.size() > 1){
                 sort(NeighborVerticesInFaceset_5.begin(), NeighborVerticesInFaceset_5.end());
@@ -381,7 +385,7 @@ struct heartlib {
         {
             assert( std::binary_search(V.begin(), V.end(), v) );
             assert( std::binary_search(F.begin(), F.end(), f) );
-            // eset = { e for e ∈ Edges(f) if `∂1`_e,f `∂0`_v,e = -1}
+            // eset = { e for e ∈ Edges(f) if `∂¹`_e,f `∂⁰`_v,e = -1}
             std::vector<int > NextVerticeInFaceset_0;
             const std::vector<int >& range_3 = Edges_1(f);
             NextVerticeInFaceset_0.reserve(range_3.size());
@@ -427,7 +431,7 @@ struct heartlib {
             assert( std::binary_search(C.begin(), C.end(), c) );
             // fset = Faces(c)
             std::vector<int > fset = Faces_2(c);
-            // pfset = { f for f ∈ fset if `∂2`_f,c == 1 }
+            // pfset = { f for f ∈ fset if `∂²`_f,c == 1 }
             std::vector<int > OrientedVertices_0set_0;
             const std::vector<int >& range_4 = fset;
             OrientedVertices_0set_0.reserve(range_4.size());
@@ -465,30 +469,30 @@ struct heartlib {
             assert( std::binary_search(V.begin(), V.end(), i) );
             assert( std::binary_search(V.begin(), V.end(), j) );
             assert( std::binary_search(V.begin(), V.end(), k) );
-            // ufv = (B0 B1)ᵀ
-            Eigen::SparseMatrix<int> ufv = (this->B0 * this->B1).transpose();
-            // iface = faceset(NonZeros(ufv  IndicatorVector({i})))
+            // V, E, F, C = ElementSets( M )1
+            Eigen::SparseMatrix<int> ufv = this->B1T * this->B0T;
+            // V, E, F, C = ElementSets( M )2
             std::vector<int > FaceIndexset_0({i});
             if(FaceIndexset_0.size() > 1){
                 sort(FaceIndexset_0.begin(), FaceIndexset_0.end());
                 FaceIndexset_0.erase(unique(FaceIndexset_0.begin(), FaceIndexset_0.end() ), FaceIndexset_0.end());
             }
             std::vector<int > iface = nonzeros(ufv * M.vertices_to_vector(FaceIndexset_0));
-            // V, E, F, C = ElementSets( M )0
+            // V, E, F, C = ElementSets( M )3
             std::vector<int > FaceIndexset_1({j});
             if(FaceIndexset_1.size() > 1){
                 sort(FaceIndexset_1.begin(), FaceIndexset_1.end());
                 FaceIndexset_1.erase(unique(FaceIndexset_1.begin(), FaceIndexset_1.end() ), FaceIndexset_1.end());
             }
             std::vector<int > jface = nonzeros(ufv * M.vertices_to_vector(FaceIndexset_1));
-            // V, E, F, C = ElementSets( M )1
+            // V, E, F, C = ElementSets( M )4
             std::vector<int > FaceIndexset_2({k});
             if(FaceIndexset_2.size() > 1){
                 sort(FaceIndexset_2.begin(), FaceIndexset_2.end());
                 FaceIndexset_2.erase(unique(FaceIndexset_2.begin(), FaceIndexset_2.end() ), FaceIndexset_2.end());
             }
             std::vector<int > kface = nonzeros(ufv * M.vertices_to_vector(FaceIndexset_2));
-            // V, E, F, C = ElementSets( M )2
+            // V, E, F, C = ElementSets( M )5
             std::vector<int > intsect_1;
             const std::vector<int >& lhs_1 = jface;
             const std::vector<int >& rhs_6 = kface;
@@ -510,14 +514,14 @@ struct heartlib {
             assert( std::binary_search(V.begin(), V.end(), i) );
             assert( std::binary_search(V.begin(), V.end(), j) );
             assert( std::binary_search(V.begin(), V.end(), k) );
-            // V, E, F, C = ElementSets( M )5
+            // V, E, F, C = ElementSets( M )8
             int f = FaceIndex(i, j, k);
             return NeighborVerticesInFace(f, i);    
         }
-        using DT = double;
-        using MatrixD = Eigen::MatrixXd;
-        using VectorD = Eigen::VectorXd;
         struct FundamentalTetrahedronAccessors {
+            using DT = double;
+            using MatrixD = Eigen::MatrixXd;
+            using VectorD = Eigen::VectorXd;
             std::vector<int > V;
             std::vector<int > E;
             std::vector<int > F;
@@ -528,6 +532,9 @@ struct heartlib {
             Eigen::SparseMatrix<int> B0;
             Eigen::SparseMatrix<int> B1;
             Eigen::SparseMatrix<int> B2;
+            Eigen::SparseMatrix<int> B0T;
+            Eigen::SparseMatrix<int> B1T;
+            Eigen::SparseMatrix<int> B2T;
             Tetrahedron M;
             std::vector<int > Vertices(
                 const std::tuple< std::vector<int >, std::vector<int >, std::vector<int >, std::vector<int > > & S)
@@ -558,12 +565,12 @@ struct heartlib {
                     sort(Vertices_0set_0.begin(), Vertices_0set_0.end());
                     Vertices_0set_0.erase(unique(Vertices_0set_0.begin(), Vertices_0set_0.end() ), Vertices_0set_0.end());
                 }
-                return nonzeros(this->B0 * this->B1 * M.faces_to_vector(Vertices_0set_0));    
+                return nonzeros(this->B0 * (this->B1 * M.faces_to_vector(Vertices_0set_0)));    
             }
             std::vector<int > Vertices_1(
                 const std::vector<int > & G)
             {
-                return nonzeros(this->B0 * this->B1 * M.faces_to_vector(G));    
+                return nonzeros(this->B0 * (this->B1 * M.faces_to_vector(G)));    
             }
             std::vector<int > Vertices_2(
                 const int & t)
@@ -574,12 +581,12 @@ struct heartlib {
                     sort(Vertices_2set_0.begin(), Vertices_2set_0.end());
                     Vertices_2set_0.erase(unique(Vertices_2set_0.begin(), Vertices_2set_0.end() ), Vertices_2set_0.end());
                 }
-                return nonzeros(this->B0 * this->B1 * this->B2 * M.tets_to_vector(Vertices_2set_0));    
+                return nonzeros(this->B0 * (this->B1 * (this->B2 * M.tets_to_vector(Vertices_2set_0))));    
             }
             std::vector<int > Vertices_3(
                 const std::vector<int > & J)
             {
-                return nonzeros(this->B0 * this->B1 * this->B2 * M.tets_to_vector(J));    
+                return nonzeros(this->B0 * (this->B1 * (this->B2 * M.tets_to_vector(J))));    
             }
             std::vector<int > Vertices_4(
                 const int & e)
@@ -606,7 +613,7 @@ struct heartlib {
                     sort(Edges_0set_0.begin(), Edges_0set_0.end());
                     Edges_0set_0.erase(unique(Edges_0set_0.begin(), Edges_0set_0.end() ), Edges_0set_0.end());
                 }
-                return nonzeros(this->B0.transpose() * M.vertices_to_vector(Edges_0set_0));    
+                return nonzeros(this->B0T * M.vertices_to_vector(Edges_0set_0));    
             }
             std::vector<int > Edges_1(
                 const int & f)
@@ -628,7 +635,7 @@ struct heartlib {
                     sort(Edges_2set_0.begin(), Edges_2set_0.end());
                     Edges_2set_0.erase(unique(Edges_2set_0.begin(), Edges_2set_0.end() ), Edges_2set_0.end());
                 }
-                return nonzeros(this->B1 * this->B2 * M.tets_to_vector(Edges_2set_0));    
+                return nonzeros(this->B1 * (this->B2 * M.tets_to_vector(Edges_2set_0)));    
             }
             std::vector<int > Faces_0(
                 const int & v)
@@ -639,7 +646,7 @@ struct heartlib {
                     sort(Faces_0set_0.begin(), Faces_0set_0.end());
                     Faces_0set_0.erase(unique(Faces_0set_0.begin(), Faces_0set_0.end() ), Faces_0set_0.end());
                 }
-                return nonzeros((this->B0 * this->B1).transpose() * M.vertices_to_vector(Faces_0set_0));    
+                return nonzeros(this->B1T * (this->B0T * M.vertices_to_vector(Faces_0set_0)));    
             }
             std::vector<int > Faces_1(
                 const int & e)
@@ -650,7 +657,7 @@ struct heartlib {
                     sort(Faces_1set_0.begin(), Faces_1set_0.end());
                     Faces_1set_0.erase(unique(Faces_1set_0.begin(), Faces_1set_0.end() ), Faces_1set_0.end());
                 }
-                return nonzeros(this->B1.transpose() * M.edges_to_vector(Faces_1set_0));    
+                return nonzeros(this->B1T * M.edges_to_vector(Faces_1set_0));    
             }
             std::vector<int > Faces_2(
                 const int & t)
@@ -686,6 +693,12 @@ struct heartlib {
                 B0 = std::get<0>(rhs_2);
                 B1 = std::get<1>(rhs_2);
                 B2 = std::get<2>(rhs_2);
+                // B0T = B0ᵀ
+                B0T = B0.transpose();
+                // B1T = B1ᵀ
+                B1T = B1.transpose();
+                // B2T = B2ᵀ
+                B2T = B2.transpose();
             }
         };
         FundamentalTetrahedronAccessors _FundamentalTetrahedronAccessors;
@@ -749,16 +762,22 @@ struct heartlib {
             int dimf_0 = M.n_faces();
             int dimt_0 = M.n_tets();
             this->M = M;
-            // `∂0`, `∂1`, `∂2` = BoundaryMatrices(M)
+            // `∂⁰`, `∂¹`, `∂²` = BoundaryMatrices(M)
             std::tuple< Eigen::SparseMatrix<int>, Eigen::SparseMatrix<int>, Eigen::SparseMatrix<int> > rhs_1 = M.BoundaryMatrices();
             dee0 = std::get<0>(rhs_1);
             dee1 = std::get<1>(rhs_1);
             dee2 = std::get<2>(rhs_1);
-            // B0, B1, B2 = UnsignedBoundaryMatrices(M)
+            // `B⁰`, `B¹`, `B²` = UnsignedBoundaryMatrices(M)
             std::tuple< Eigen::SparseMatrix<int>, Eigen::SparseMatrix<int>, Eigen::SparseMatrix<int> > rhs_2 = M.UnsignedBoundaryMatrices();
             B0 = std::get<0>(rhs_2);
             B1 = std::get<1>(rhs_2);
             B2 = std::get<2>(rhs_2);
+            // `B⁰ᵀ` = `B⁰`ᵀ
+            B0T = B0.transpose();
+            // `B¹ᵀ` = `B¹`ᵀ
+            B1T = B1.transpose();
+            // `B²ᵀ` = `B²`ᵀ
+            B2T = B2.transpose();
         }
     };
     TetrahderonNeighborhoods _TetrahderonNeighborhoods;
@@ -851,13 +870,13 @@ struct heartlib {
         {
             this->x[i] = new_x.segment(3*i, 3);
         }
-        // E2 = w sum_j ‖bp_j - x_(bx_j)‖²
+        // E2 = w ∑_j ‖bp_j - x_(bx_j)‖²
         DT sum_0 = 0;
         for(int j=1; j<=bp.size(); j++){
             sum_0 += pow((bp.at(j-1) - this->x.at(bx.at(j-1))).template lpNorm<2>(), 2);
         }
         E2 = w * sum_0;
-        // e = sum_(i ∈ C) S(i, x) + E2
+        // e = ∑_(i ∈ C) S_i(x) + E2
         DT sum_1 = 0;
         for(int i : this->C){
             sum_1 += S(i, this->x);
@@ -865,7 +884,7 @@ struct heartlib {
         e = sum_1 + E2;
         // G = ∂e/∂x
         G = gradient(e, this->new_x);
-        // H = sum_(i ∈ C) psd(∂²S(i, x)/∂x²) + psd(∂²E2/∂x²)
+        // H = ∑_(i ∈ C) psd(∂²S_i(x)/∂x²) + psd(∂²E2/∂x²)
         Eigen::SparseMatrix<double> sum_2(3*dim_1, 3*dim_1);
         for(int i : this->C){
             sum_2 += psd(hessian(S(i, this->x), this->new_x));

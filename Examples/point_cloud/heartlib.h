@@ -22,13 +22,13 @@ u, `∑`, vv = svd(m)
 #include <set>
 #include <algorithm>
 #include "type_helper.h"
-using namespace iheartmesh;
 #include "PointCloud.h"
 
+using namespace iheartmesh;
 struct heartlib {
-    using DT = double;
-    using MatrixD = Eigen::MatrixXd;
-    using VectorD = Eigen::VectorXd;
+    using DT__ = double;
+    using MatrixD__ = Eigen::MatrixXd;
+    using VectorD__ = Eigen::VectorXd;
     std::vector<int > V;
     std::vector<int > E;
     PointCloud M;
@@ -42,7 +42,7 @@ struct heartlib {
         std::vector<int > N = this->VertexOneRing(v);
 
         // p̄ = (∑_(n ∈ N) x_n)/|N|
-        MatrixD sum_0 = MatrixD::Zero(3, 1);
+        MatrixD__ sum_0 = MatrixD__::Zero(3, 1);
         for(int n : N){
             sum_0 += this->x.at(n);
         }
@@ -74,7 +74,7 @@ struct heartlib {
         std::vector<Eigen::Matrix<double, 3, 1> > d = Normalset_0;
 
         // m_i,* = d_i
-        Eigen::MatrixXd m = MatrixD::Zero(d.size(), 3);
+        Eigen::MatrixXd m = MatrixD__::Zero(d.size(), 3);
         for( int i=1; i<=d.size(); i++){
             m.row(i-1) = d[i-1];
         }
@@ -87,14 +87,16 @@ struct heartlib {
         Eigen::Matrix<double, 3, 3> vv = std::get<2>(rhs_1);
         return vv.col(3-1);    
     }
-    using DT_ = double;
-    using MatrixD_ = Eigen::MatrixXd;
-    using VectorD_ = Eigen::VectorXd;
     struct PointCloudNeighborhoods {
+        using DT_ = double;
+        using MatrixD_ = Eigen::MatrixXd;
+        using VectorD_ = Eigen::VectorXd;
         std::vector<int > V;
         std::vector<int > E;
         Eigen::SparseMatrix<int> dee0;
+        Eigen::SparseMatrix<int> dee0T;
         Eigen::SparseMatrix<int> B0;
+        Eigen::SparseMatrix<int> B0T;
         PointCloud M;
         std::vector<int > VertexOneRing(
             const int & v)
@@ -111,7 +113,7 @@ struct heartlib {
                 VertexOneRingset_1.erase(unique(VertexOneRingset_1.begin(), VertexOneRingset_1.end() ), VertexOneRingset_1.end());
             }
             std::vector<int > difference;
-            const std::vector<int >& lhs_diff = nonzeros(this->B0 * this->B0.transpose() * M.vertices_to_vector(VertexOneRingset_0));
+            const std::vector<int >& lhs_diff = nonzeros(this->B0 * (this->B0T * M.vertices_to_vector(VertexOneRingset_0)));
             const std::vector<int >& rhs_diff = VertexOneRingset_1;
             difference.reserve(lhs_diff.size());
             std::set_difference(lhs_diff.begin(), lhs_diff.end(), rhs_diff.begin(), rhs_diff.end(), std::back_inserter(difference));
@@ -121,7 +123,7 @@ struct heartlib {
             const std::vector<int > & v)
         {
             std::vector<int > difference_1;
-            const std::vector<int >& lhs_diff_1 = nonzeros(this->B0 * this->B0.transpose() * M.vertices_to_vector(v));
+            const std::vector<int >& lhs_diff_1 = nonzeros(this->B0 * (this->B0T * M.vertices_to_vector(v)));
             const std::vector<int >& rhs_diff_1 = v;
             difference_1.reserve(lhs_diff_1.size());
             std::set_difference(lhs_diff_1.begin(), lhs_diff_1.end(), rhs_diff_1.begin(), rhs_diff_1.end(), std::back_inserter(difference_1));
@@ -133,7 +135,7 @@ struct heartlib {
         {
             assert( std::binary_search(V.begin(), V.end(), i) );
             assert( std::binary_search(V.begin(), V.end(), j) );
-            // eset = edgeset(NonZeros(`∂0`ᵀ IndicatorVector({i}))) ∩ vertexset(NonZeros(`∂0`ᵀ IndicatorVector({j})))
+            // eset = edgeset(NonZeros(`∂⁰ᵀ` IndicatorVector({i}))) ∩ vertexset(NonZeros(`∂⁰ᵀ` IndicatorVector({j})))
             std::vector<int > EdgeIndexset_0({i});
             if(EdgeIndexset_0.size() > 1){
                 sort(EdgeIndexset_0.begin(), EdgeIndexset_0.end());
@@ -145,21 +147,22 @@ struct heartlib {
                 EdgeIndexset_1.erase(unique(EdgeIndexset_1.begin(), EdgeIndexset_1.end() ), EdgeIndexset_1.end());
             }
             std::vector<int > intsect;
-            const std::vector<int >& lhs = nonzeros(this->dee0.transpose() * M.vertices_to_vector(EdgeIndexset_0));
-            const std::vector<int >& rhs_1 = nonzeros(this->dee0.transpose() * M.vertices_to_vector(EdgeIndexset_1));
+            const std::vector<int >& lhs = nonzeros(this->dee0T * M.vertices_to_vector(EdgeIndexset_0));
+            const std::vector<int >& rhs_1 = nonzeros(this->dee0T * M.vertices_to_vector(EdgeIndexset_1));
             intsect.reserve(std::min(lhs.size(), rhs_1.size()));
             std::set_intersection(lhs.begin(), lhs.end(), rhs_1.begin(), rhs_1.end(), std::back_inserter(intsect));
             std::vector<int > eset = intsect;
             return eset[1-1];    
         }
-        using DT = double;
-        using MatrixD = Eigen::MatrixXd;
-        using VectorD = Eigen::VectorXd;
         struct FundamentalPointCloudAccessors {
+            using DT = double;
+            using MatrixD = Eigen::MatrixXd;
+            using VectorD = Eigen::VectorXd;
             std::vector<int > V;
             std::vector<int > E;
             Eigen::SparseMatrix<int> dee0;
             Eigen::SparseMatrix<int> B0;
+            Eigen::SparseMatrix<int> B0T;
             PointCloud M;
             std::vector<int > Vertices(
                 const std::tuple< std::vector<int >, std::vector<int >, std::vector<int >, std::vector<int > > & S)
@@ -196,7 +199,7 @@ struct heartlib {
                     sort(Edges_0set_0.begin(), Edges_0set_0.end());
                     Edges_0set_0.erase(unique(Edges_0set_0.begin(), Edges_0set_0.end() ), Edges_0set_0.end());
                 }
-                return nonzeros(this->B0.transpose() * M.vertices_to_vector(Edges_0set_0));    
+                return nonzeros(this->B0T * M.vertices_to_vector(Edges_0set_0));    
             }
             FundamentalPointCloudAccessors(const PointCloud & M)
             {
@@ -211,6 +214,8 @@ struct heartlib {
                 dee0 = M.BoundaryMatrices();
                 // B0 = UnsignedBoundaryMatrices(M)
                 B0 = M.UnsignedBoundaryMatrices();
+                // B0T = B0ᵀ
+                B0T = B0.transpose();
             }
         };
         FundamentalPointCloudAccessors _FundamentalPointCloudAccessors;
@@ -240,10 +245,14 @@ struct heartlib {
             int dimv_0 = M.n_vertices();
             int dime_0 = M.n_edges();
             this->M = M;
-            // `∂0` = BoundaryMatrices(M)
+            // `∂⁰` = BoundaryMatrices(M)
             dee0 = M.BoundaryMatrices();
-            // B0 = UnsignedBoundaryMatrices(M)
+            // `∂⁰ᵀ` = `∂⁰`ᵀ
+            dee0T = dee0.transpose();
+            // `B⁰` = UnsignedBoundaryMatrices(M)
             B0 = M.UnsignedBoundaryMatrices();
+            // `B⁰ᵀ` = `B⁰`ᵀ
+            B0T = B0.transpose();
         }
     };
     PointCloudNeighborhoods _PointCloudNeighborhoods;

@@ -168,7 +168,8 @@ void set_winding_number(){
     #pragma omp parallel for schedule(static) num_threads(omp_get_thread_num())
     for (int i = 0; i < BC.rows(); ++i)
     {
-        W[i] = ihla.w(BC.row(i));
+        Eigen::Matrix<double, 3, 1> cur_row = BC.row(i).transpose();
+        W[i] = ihla.w(cur_row);
     } 
 }
 
