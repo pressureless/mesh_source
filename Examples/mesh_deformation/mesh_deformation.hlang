@@ -18,33 +18,34 @@ vol_i,j,k,l = ⅙ |[x̄_j-x̄_i x̄_k-x̄_i x̄_l-x̄_i]| where i,j,k,l ∈ V
 a, b, c, d = OrientedVertices(s)
 
 S(s, x) = { ∞ if |m| ≤ 0
-  vol_abcd (‖J‖² + ‖J⁻¹‖²) otherwise where s ∈ C, x_i ∈ ℝ³,
+            vol_abcd (‖J‖² + ‖J⁻¹‖²) otherwise 
+where s ∈ C, x_i ∈ ℝ³,
 a, b, c, d = OrientedVertices(s),
 m = [x_b-x_a x_c-x_a x_d-x_a],
 J = m `m_r`(s)⁻¹
 
 EXPS(s, x) = { ∞ if |m| ≤ 0
-  vol_abcd exp(‖J‖² + ‖J⁻¹‖²) otherwise where s ∈ C, x_i ∈ ℝ³,
+               vol_abcd exp(‖J‖² + ‖J⁻¹‖²) otherwise 
+where s ∈ C, x_i ∈ ℝ³,
 a, b, c, d = OrientedVertices(s),
 m = [x_b-x_a x_c-x_a x_d-x_a],
 J = m `m_r`(s)⁻¹
 
 AMIPS(s, x) = { ∞ if |m| ≤ 0
-  vol_abcd exp(½(‖J‖²/|J| + ½(|J|+|J⁻¹|))) otherwise where s ∈ C, x_i ∈ ℝ³,
+                vol_abcd exp(½(‖J‖²/|J| + ½(|J|+|J⁻¹|))) otherwise 
+where s ∈ C, x_i ∈ ℝ³,
 a, b, c, d = OrientedVertices(s),
 m = [x_b-x_a x_c-x_a x_d-x_a],
 J = m `m_r`(s)⁻¹
 
 CAMIPS(s, x) = { ∞ if |m| ≤ 0
-  vol_abcd (‖J‖²/|J|^⅔) otherwise where s ∈ C, x_i ∈ ℝ³,
+                 vol_abcd (‖J‖²/|J|^⅔) otherwise 
+where s ∈ C, x_i ∈ ℝ³,
 a, b, c, d = OrientedVertices(s),
 m = [x_b-x_a x_c-x_a x_d-x_a],
 J = m `m_r`(s)⁻¹
 
 E2 = w ∑_j ‖bp_j - x_(bx_j)‖²
-
-e = ∑_(i ∈ C) S(i, x) + E2
-
+e = ∑_(i ∈ C) S_i(x) + E2
 G = ∂e/∂x
-
-H = ∑_(i ∈ C) psd(∂²S(i, x)/∂x²) + psd(∂²E2/∂x²)
+H = ∑_(i ∈ C) psd(∂²S_i(x)/∂x²) + psd(∂²E2/∂x²)
