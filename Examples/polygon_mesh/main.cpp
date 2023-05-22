@@ -57,7 +57,7 @@ int main(int argc, const char * argv[]) {
     for (int i = 0; i < meshV.rows(); ++i)
     {
         Eigen::Matrix<double, 3, 1> n = ihla.VertexNormal(i);
-        N.push_back(n);
+        N.push_back(n/n.norm());
     } 
     polyscope::getSurfaceMesh("my mesh")->addVertexVectorQuantity("VertexNormal", N); 
     polyscope::show();
