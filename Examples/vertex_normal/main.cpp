@@ -41,7 +41,7 @@ int main(int argc, const char * argv[]) {
     {
         // vertex normal
         Eigen::Matrix<double, 3, 1> n = ihla.VertexNormal(i);
-        N[i] = n;
+        N[i] = n/n.norm();
         // gaussian curvature normal
         Eigen::Matrix<double, 3, 1> gaussian = ihla.KN(i);
         gaussian_curvature_normal[i] = gaussian;
