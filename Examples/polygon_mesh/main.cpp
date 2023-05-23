@@ -28,7 +28,7 @@ int main(int argc, const char * argv[]) {
     igl::readOBJ(argc>1?argv[1]: DATA_PATH /  "polygon/suzanne.obj", meshV, meshF);
 
     MyMesh mesh;
-    if (!OpenMesh::IO::read_mesh(mesh, DATA_PATH / "polygon/suzanne.obj")){
+    if (!OpenMesh::IO::read_mesh(mesh, argc>1?argv[1]: DATA_PATH /  "polygon/suzanne.obj")){
         std::cout<<"file i/o error"<<std::endl;
     }
     std::vector<std::vector<int> > faces;
