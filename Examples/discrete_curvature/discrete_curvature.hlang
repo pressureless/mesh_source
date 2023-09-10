@@ -1,7 +1,7 @@
 arccos, atan2 from trigonometry
 ElementSets from MeshConnectivity
 Faces, OrientedOppositeFaces, VertexOneRing, NeighborVerticesInFace, OrientedVertices from Neighborhoods(M)
-M : TriangleMesh
+M : FaceMesh
 x_i ∈ ℝ³ 
 V, E, F = ElementSets( M )
 

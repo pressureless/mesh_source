@@ -1,6 +1,7 @@
 #include <iostream>
 #include <Eigen/Dense>
 #include "Tetrahedron.h"
+#include "CellMesh.h"
 #include <Eigen/Dense>
 #include <Eigen/Sparse> 
 #include <igl/readOBJ.h>
@@ -172,6 +173,7 @@ Eigen::MatrixXi F; // #F-by-3 indices into V
 Eigen::MatrixXi T;  
 // Eigen::MatrixXi FF; // #F-by-3 indices into V
 Tetrahedron tet_mesh;
+CellMesh *cell_mesh;
 double eps = 1e-2;
 double weight = 1e5;
 std::vector<int> bc;
@@ -179,7 +181,7 @@ std::vector<Eigen::Matrix<double, 3, 1>> bp;
 
 bool step(){
     bool has_updated = true;
-    heartlib ihla(tet_mesh, x̄, x, bc, bp, weight, eps, psd);
+    heartlib ihla(*cell_mesh, x̄, x, bc, bp, weight, eps, psd);
 
     auto end = std::chrono::duration_cast<std::chrono::seconds>(std::chrono::system_clock::now().time_since_epoch()).count();
     std::cout <<end-start<< " seconds init"<<std::endl;
@@ -261,6 +263,7 @@ void myCallback()
 void load_cube_tet(){
     igl::readMESH(DATA_PATH /  "cube_v729.mesh", V, T, F);
     tet_mesh.initialize(T);
+    cell_mesh = new CellMesh(tet_mesh.bm1, tet_mesh.bm2, tet_mesh.bm3);
     for (int i = 0; i < V.rows(); ++i)
     {
         x.push_back(V.row(i));

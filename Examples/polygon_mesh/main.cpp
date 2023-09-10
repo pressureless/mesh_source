@@ -1,6 +1,7 @@
 #include <iostream>
 #include <Eigen/Dense>
 #include "TriangleMesh.h" 
+#include "FaceMesh.h" 
 #include <Eigen/Dense>
 #include <Eigen/Sparse> 
 #include <igl/readOBJ.h>
@@ -44,6 +45,7 @@ int main(int argc, const char * argv[]) {
     // Initialize triangle mesh
     PolygonMesh polygon_mesh;
     polygon_mesh.initialize(faces);
+    FaceMesh face_mesh(polygon_mesh.bm1, polygon_mesh.bm2);
     // Initialize polyscope
     polyscope::init();  
     polyscope::registerSurfaceMesh("my mesh", meshV, faces);
@@ -52,7 +54,7 @@ int main(int argc, const char * argv[]) {
     {
         P.push_back(meshV.row(i).transpose());
     }
-    heartlib ihla(polygon_mesh, P);
+    heartlib ihla(face_mesh, P);
     std::vector<Eigen::Matrix<double, 3, 1>> N;
     for (int i = 0; i < meshV.rows(); ++i)
     {

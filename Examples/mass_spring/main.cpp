@@ -1,6 +1,7 @@
 #include <iostream>
 #include <Eigen/Dense>
 #include "Tetrahedron.h"
+#include "CellMesh.h"
 #include <Eigen/Dense>
 #include <Eigen/Sparse> 
 #include <igl/readOBJ.h>
@@ -146,7 +147,8 @@ int main(int argc, const char * argv[]) {
     {
         OriginalPosition.push_back(meshV.row(i).transpose());
     } 
-    _heartlib = new heartlib(tet_mesh, OriginalPosition, mass, damping, stiffness, dt, bottom_z);
+    CellMesh cell_mesh(tet_mesh.bm1, tet_mesh.bm2, tet_mesh.bm3);
+    _heartlib = new heartlib(cell_mesh, OriginalPosition, mass, damping, stiffness, dt, bottom_z);
     Position.resize(OriginalPosition.size());
     Velocity.resize(OriginalPosition.size());
     Force.resize(OriginalPosition.size());

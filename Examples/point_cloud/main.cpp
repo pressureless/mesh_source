@@ -1,6 +1,6 @@
 #include <iostream>
 #include <Eigen/Dense>
-#include "TriangleMesh.h" 
+#include "EdgeMesh.h" 
 #include <Eigen/Dense>
 #include <Eigen/Sparse> 
 #include <igl/readOBJ.h>
@@ -30,7 +30,8 @@ int main(int argc, const char * argv[]) {
     }
     std::vector<std::vector<size_t>> neighbors = GetPointNeighbors(PN, 6);
     PointCloud pc(PN, neighbors);
-    heartlib ihla(pc, P);
+    EdgeMesh edge_mesh(pc.bm1);
+    heartlib ihla(edge_mesh, P);
     std::vector<Eigen::VectorXd> original_normals(meshV.rows());
     std::vector<Eigen::VectorXd> point_normals(meshV.rows());
     std::vector<Eigen::VectorXd> inverse_original_normals(meshV.rows());
@@ -40,7 +41,7 @@ int main(int argc, const char * argv[]) {
     for (int i = 0; i < meshV.rows(); ++i)
     {
         Eigen::VectorXd n = ihla.Normal(i);
-        point_normals[i] = n;
+        point_normals[i] = n/n.norm();
         original_normals[i] = point_normals[i];
         inverse_original_normals[i] = -point_normals[i];
     } 

@@ -80,6 +80,9 @@ set(SRCS
   ../../resource/src/PolygonMesh.cpp
   ../../resource/src/Tetrahedron.cpp
   ../../resource/src/TriangleMesh.cpp
+  ../../resource/src/EdgeMesh.cpp
+  ../../resource/src/FaceMesh.cpp
+  ../../resource/src/CellMesh.cpp
 )
 
 add_executable(main "${SRCS}")

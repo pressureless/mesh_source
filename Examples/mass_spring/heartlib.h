@@ -1,7 +1,7 @@
 /*
 ElementSets from MeshConnectivity
 VertexOneRing from TetrahderonNeighborhoods(M)
-M : TetrahedralMesh
+M : CellMesh
 x_i ∈ ℝ^3: original positions
 m ∈ ℝ: mass
 damping ∈ ℝ: damping
@@ -39,18 +39,18 @@ x̃ = p̃ + ṽ `Δt`
 #include <set>
 #include <algorithm>
 #include "type_helper.h"
-#include "Tetrahedron.h"
+#include "CellMesh.h"
 
 using namespace iheartmesh;
 struct heartlib {
-    using DT__ = double;
-    using MatrixD__ = Eigen::MatrixXd;
-    using VectorD__ = Eigen::VectorXd;
+    using DT = double;
+    using MatrixD = Eigen::MatrixXd;
+    using VectorD = Eigen::VectorXd;
     std::vector<int > V;
     std::vector<int > E;
     std::vector<int > F;
     std::vector<int > T;
-    Tetrahedron M;
+    CellMesh M;
     std::vector<Eigen::Matrix<double, 3, 1>> x;
     double K;
     double Δt;
@@ -79,7 +79,7 @@ struct heartlib {
         // f = (∑_(j ∈ VertexOneRing(i)) (-K) (||d|| - e(i, j)) d̄ 
         // where d = p_i - p_j,
         // d̄ = d/||d||)
-        MatrixD__ sum_0 = MatrixD__::Zero(3, 1);
+        MatrixD sum_0 = MatrixD::Zero(3, 1);
         for(int j : this->VertexOneRing(i)){
                 // d = p_i - p_j
             Eigen::Matrix<REAL, 3, 1> d = p.at(i) - p.at(j);
@@ -158,7 +158,7 @@ struct heartlib {
         Eigen::SparseMatrix<int> B0T;
         Eigen::SparseMatrix<int> B1T;
         Eigen::SparseMatrix<int> B2T;
-        Tetrahedron M;
+        CellMesh M;
         std::vector<int > VertexOneRing(
             const int & v)
         {
@@ -442,7 +442,7 @@ struct heartlib {
             Eigen::SparseMatrix<int> B0T;
             Eigen::SparseMatrix<int> B1T;
             Eigen::SparseMatrix<int> B2T;
-            Tetrahedron M;
+            CellMesh M;
             std::vector<int > Vertices(
                 const std::tuple< std::vector<int >, std::vector<int >, std::vector<int >, std::vector<int > > & S)
             {
@@ -577,7 +577,7 @@ struct heartlib {
                 }
                 return nonzeros(this->B2 * M.tets_to_vector(Faces_2set_0));    
             }
-            FundamentalTetrahedronAccessors(const Tetrahedron & M)
+            FundamentalTetrahedronAccessors(const CellMesh & M)
             {
                 // V, E, F, C = ElementSets( M )
                 std::tuple< std::vector<int >, std::vector<int >, std::vector<int >, std::vector<int > > rhs = M.ElementSets();
@@ -654,7 +654,7 @@ struct heartlib {
         std::vector<int > Faces_2(int p0){
             return _FundamentalTetrahedronAccessors.Faces_2(p0);
         };
-        TetrahderonNeighborhoods(const Tetrahedron & M)
+        TetrahderonNeighborhoods(const CellMesh & M)
         :
         _FundamentalTetrahedronAccessors(M)
         {
@@ -695,7 +695,7 @@ struct heartlib {
         return _TetrahderonNeighborhoods.VertexOneRing(p0);
     };
     heartlib(
-        const Tetrahedron & M,
+        const CellMesh & M,
         const std::vector<Eigen::Matrix<double, 3, 1>> & x,
         const double & m,
         const double & damping,

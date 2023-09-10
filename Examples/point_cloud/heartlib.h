@@ -2,7 +2,7 @@
 svd from linearalgebra
 ElementSets from MeshConnectivity
 VertexOneRing from PointCloudNeighborhoods(M)
-M : PointCloud 
+M : EdgeMesh 
 x_i ∈ ℝ^3 
 
 V, E = ElementSets( M )
@@ -22,7 +22,7 @@ u, `∑`, vv = svd(m)
 #include <set>
 #include <algorithm>
 #include "type_helper.h"
-#include "PointCloud.h"
+#include "EdgeMesh.h"
 
 using namespace iheartmesh;
 struct heartlib {
@@ -31,7 +31,7 @@ struct heartlib {
     using VectorD__ = Eigen::VectorXd;
     std::vector<int > V;
     std::vector<int > E;
-    PointCloud M;
+    EdgeMesh M;
     std::vector<Eigen::Matrix<double, 3, 1>> x;
     Eigen::Matrix<double, 3, 1> Normal(
         const int & v)
@@ -97,7 +97,7 @@ struct heartlib {
         Eigen::SparseMatrix<int> dee0T;
         Eigen::SparseMatrix<int> B0;
         Eigen::SparseMatrix<int> B0T;
-        PointCloud M;
+        EdgeMesh M;
         std::vector<int > VertexOneRing(
             const int & v)
         {
@@ -163,7 +163,7 @@ struct heartlib {
             Eigen::SparseMatrix<int> dee0;
             Eigen::SparseMatrix<int> B0;
             Eigen::SparseMatrix<int> B0T;
-            PointCloud M;
+            EdgeMesh M;
             std::vector<int > Vertices(
                 const std::tuple< std::vector<int >, std::vector<int >, std::vector<int >, std::vector<int > > & S)
             {
@@ -201,7 +201,7 @@ struct heartlib {
                 }
                 return nonzeros(this->B0T * M.vertices_to_vector(Edges_0set_0));    
             }
-            FundamentalPointCloudAccessors(const PointCloud & M)
+            FundamentalPointCloudAccessors(const EdgeMesh & M)
             {
                 // V, E = ElementSets( M )
                 std::tuple< std::vector<int >, std::vector<int > > rhs = M.ElementSets();
@@ -234,7 +234,7 @@ struct heartlib {
         std::vector<int > Edges(int p0){
             return _FundamentalPointCloudAccessors.Edges(p0);
         };
-        PointCloudNeighborhoods(const PointCloud & M)
+        PointCloudNeighborhoods(const EdgeMesh & M)
         :
         _FundamentalPointCloudAccessors(M)
         {
@@ -263,7 +263,7 @@ struct heartlib {
         return _PointCloudNeighborhoods.VertexOneRing(p0);
     };
     heartlib(
-        const PointCloud & M,
+        const EdgeMesh & M,
         const std::vector<Eigen::Matrix<double, 3, 1>> & x)
     :
     _PointCloudNeighborhoods(M)

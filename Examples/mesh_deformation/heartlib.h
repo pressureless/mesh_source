@@ -2,7 +2,7 @@
 vec, inversevec, diag, svd from linearalgebra
 ElementSets from MeshConnectivity
 NeighborVerticesInFace, Faces, Vertices, VertexOneRing, OrientedVertices from TetrahderonNeighborhoods(M)
-M : TetrahedralMesh
+M : CellMesh
 x̄_i ∈ ℝ³ : rest pos
 x_i ∈ ℝ³ : current pos
 bx_j ∈ ℤ index: boundary indices
@@ -61,25 +61,25 @@ H = ∑_(i ∈ C) psd(∂²S_i(x)/∂x²) + psd(∂²E2/∂x²)
 #include <autodiff/reverse/var.hpp>
 #include <autodiff/reverse/var/eigen.hpp>
 #include "type_helper.h"
-#include "Tetrahedron.h"
+#include "CellMesh.h"
 
 using namespace iheartmesh;
 struct heartlib {
-    using DT = autodiff::var;
-    using MatrixD = Eigen::Matrix<autodiff::var, Eigen::Dynamic, Eigen::Dynamic>;
-    using VectorD = Eigen::Matrix<autodiff::var, Eigen::Dynamic, 1>;
+    using DT__ = autodiff::var;
+    using MatrixD__ = Eigen::Matrix<autodiff::var, Eigen::Dynamic, Eigen::Dynamic>;
+    using VectorD__ = Eigen::Matrix<autodiff::var, Eigen::Dynamic, 1>;
     std::vector<int > V;
     std::vector<int > E;
     std::vector<int > F;
     std::vector<int > C;
-    DT E2;
-    DT e;
+    DT__ E2;
+    DT__ e;
     Eigen::VectorXd G;
     Eigen::SparseMatrix<double> H;
-    Tetrahedron M;
+    CellMesh M;
     std::vector<Eigen::Matrix<double, 3, 1>> x̄;
-    std::vector<Eigen::Matrix<DT, 3, 1>> x;
-    autodiff::ArrayXvar new_x;
+    std::vector<Eigen::Matrix<DT__, 3, 1>> x;
+    autodiff::ArrayXvar new_x_1;
     double vol(
         const int & i,
         const int & j,
@@ -251,7 +251,7 @@ struct heartlib {
         Eigen::SparseMatrix<int> B0T;
         Eigen::SparseMatrix<int> B1T;
         Eigen::SparseMatrix<int> B2T;
-        Tetrahedron M;
+        CellMesh M;
         std::vector<int > VertexOneRing(
             const int & v)
         {
@@ -535,7 +535,7 @@ struct heartlib {
             Eigen::SparseMatrix<int> B0T;
             Eigen::SparseMatrix<int> B1T;
             Eigen::SparseMatrix<int> B2T;
-            Tetrahedron M;
+            CellMesh M;
             std::vector<int > Vertices(
                 const std::tuple< std::vector<int >, std::vector<int >, std::vector<int >, std::vector<int > > & S)
             {
@@ -670,7 +670,7 @@ struct heartlib {
                 }
                 return nonzeros(this->B2 * M.tets_to_vector(Faces_2set_0));    
             }
-            FundamentalTetrahedronAccessors(const Tetrahedron & M)
+            FundamentalTetrahedronAccessors(const CellMesh & M)
             {
                 // V, E, F, C = ElementSets( M )
                 std::tuple< std::vector<int >, std::vector<int >, std::vector<int >, std::vector<int > > rhs = M.ElementSets();
@@ -747,7 +747,7 @@ struct heartlib {
         std::vector<int > Faces_2(int p0){
             return _FundamentalTetrahedronAccessors.Faces_2(p0);
         };
-        TetrahderonNeighborhoods(const Tetrahedron & M)
+        TetrahderonNeighborhoods(const CellMesh & M)
         :
         _FundamentalTetrahedronAccessors(M)
         {
@@ -833,7 +833,7 @@ struct heartlib {
         return _TetrahderonNeighborhoods.OrientedVertices_1(p0,p1,p2);
     };
     heartlib(
-        const Tetrahedron & M,
+        const CellMesh & M,
         const std::vector<Eigen::Matrix<double, 3, 1>> & x̄,
         const std::vector<Eigen::Matrix<double, 3, 1>> & x,
         const std::vector<int> & bx,
@@ -860,36 +860,36 @@ struct heartlib {
         assert( bp.size() == dim_0 );
         this->M = M;
         this->x̄ = x̄;
-        new_x.resize(dim_1*3);
+        new_x_1.resize(dim_1*3);
         for (int i = 0; i < x.size(); ++i)
         {
-            new_x.segment(3*i, 3) = x[i];
+            new_x_1.segment(3*i, 3) = x[i];
         }
         this->x.resize(x.size());
         for (int i = 0; i < x.size(); ++i)
         {
-            this->x[i] = new_x.segment(3*i, 3);
+            this->x[i] = new_x_1.segment(3*i, 3);
         }
         // E2 = w ∑_j ‖bp_j - x_(bx_j)‖²
-        DT sum_0 = 0;
+        DT__ sum_0 = 0;
         for(int j=1; j<=bp.size(); j++){
             sum_0 += pow((bp.at(j-1) - this->x.at(bx.at(j-1))).template lpNorm<2>(), 2);
         }
         E2 = w * sum_0;
         // e = ∑_(i ∈ C) S_i(x) + E2
-        DT sum_1 = 0;
+        DT__ sum_1 = 0;
         for(int i : this->C){
             sum_1 += S(i, this->x);
         }
         e = sum_1 + E2;
         // G = ∂e/∂x
-        G = gradient(e, this->new_x);
+        G = gradient(e, this->new_x_1);
         // H = ∑_(i ∈ C) psd(∂²S_i(x)/∂x²) + psd(∂²E2/∂x²)
         Eigen::SparseMatrix<double> sum_2(3*dim_1, 3*dim_1);
         for(int i : this->C){
-            sum_2 += psd(hessian(S(i, this->x), this->new_x));
+            sum_2 += psd(hessian(S(i, this->x), this->new_x_1));
         }
-        H = sum_2 + psd(hessian(E2, this->new_x));
+        H = sum_2 + psd(hessian(E2, this->new_x_1));
     }
 };
 

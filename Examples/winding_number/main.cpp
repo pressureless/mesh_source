@@ -1,6 +1,7 @@
 #include <iostream>
 #include <Eigen/Dense>
 #include "TriangleMesh.h" 
+#include "FaceMesh.h" 
 #include <Eigen/Dense>
 #include <Eigen/Sparse> 
 #include <igl/readOBJ.h>
@@ -156,12 +157,13 @@ void set_winding_number(){
     //Initialize triangle mesh
     TriangleMesh triangle_mesh;
     triangle_mesh.initialize(F);
+    FaceMesh face_mesh(triangle_mesh.bm1, triangle_mesh.bm2);
     std::vector<Eigen::Matrix<double, 3, 1>> P;
     for (int i = 0; i < V.rows(); ++i)
     {
         P.push_back(V.row(i).transpose());
     }
-    heartlib ihla(triangle_mesh, P);
+    heartlib ihla(face_mesh, P);
     int start = std::chrono::duration_cast<std::chrono::seconds>(std::chrono::system_clock::now().time_since_epoch()).count();
         ;
     W.resize(BC.rows());

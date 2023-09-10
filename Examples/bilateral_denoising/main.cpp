@@ -1,6 +1,7 @@
 #include <iostream>
 #include <Eigen/Dense>
 #include "TriangleMesh.h" 
+#include "FaceMesh.h" 
 #include <Eigen/Dense>
 #include <Eigen/Sparse> 
 #include <igl/readOBJ.h>
@@ -20,11 +21,12 @@ using namespace iheartmesh;
 Eigen::MatrixXd meshV;
 Eigen::MatrixXi meshF;
 TriangleMesh triangle_mesh;
+FaceMesh *face_mesh;
 
 std::vector<Eigen::Matrix<double, 3, 1>> P;
 
 void update(){
-    heartlib ihla(triangle_mesh, P); 
+    heartlib ihla(*face_mesh, P); 
     std::vector<Eigen::Matrix<double, 3, 1>> NP;
     for (int i = 0; i < meshV.rows(); ++i)
     {
@@ -66,6 +68,7 @@ int main(int argc, const char * argv[]) {
     igl::readOBJ(DATA_PATH / "torusnoise.obj", meshV, meshF); // 177KB 20 mins
     // Initialize triangle mesh
     triangle_mesh.initialize(meshF);
+    face_mesh = new FaceMesh(triangle_mesh.bm1, triangle_mesh.bm2);
     // Initialize polyscope
     polyscope::init();  
     polyscope::registerSurfaceMesh("my mesh", meshV, meshF);

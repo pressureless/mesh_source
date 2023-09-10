@@ -1,6 +1,7 @@
 #include <iostream>
 #include <Eigen/Dense>
 #include "TriangleMesh.h" 
+#include "FaceMesh.h" 
 #include <Eigen/Dense>
 #include <Eigen/Sparse> 
 #include <igl/readOBJ.h>
@@ -44,6 +45,7 @@ Eigen::MatrixXd TC;
 Eigen::MatrixXi FTC;
 Eigen::MatrixXi FN;
 TriangleMesh triangle_mesh;
+FaceMesh *face_mesh;
 double eps = 1e-2;
 
 inline Eigen::MatrixXd tutte_embedding(
@@ -206,7 +208,7 @@ Eigen::VectorXd my_line_search(
 
 bool step(){
     bool has_updated = true;
-    heartlib ihla(triangle_mesh, x̄, x, eps, psd);
+    heartlib ihla(*face_mesh, x̄, x, eps, psd);
     std::cout<<"Cur energy is "<<ihla.e<<std::endl;
     Eigen::VectorXd g = ihla.G;
     Eigen::SparseMatrix<double> H = ihla.H;
@@ -317,6 +319,7 @@ int main(int argc, const char * argv[]) {
     igl::per_vertex_normals(V,F,N); 
 
     triangle_mesh.initialize(F);
+    face_mesh = new FaceMesh(triangle_mesh.bm1, triangle_mesh.bm2);
     for (int i = 0; i < P.rows(); ++i)
     {
         x.push_back(P.row(i));

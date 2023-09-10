@@ -1,7 +1,7 @@
 /*
 ElementSets from MeshConnectivity
 NeighborVerticesInFace, Faces, VertexOneRing from Neighborhoods(M)
-M : TriangleMesh
+M : FaceMesh
 x_i ∈ ℝ^3 
 
 V, E, F = ElementSets( M )
@@ -52,7 +52,7 @@ target = {v for v ∈ VertexOneRing(n) if ||x_i-x_v||< 2σ} ∪ n
 #include <set>
 #include <algorithm>
 #include "type_helper.h"
-#include "TriangleMesh.h"
+#include "FaceMesh.h"
 
 using namespace iheartmesh;
 struct heartlib {
@@ -62,7 +62,7 @@ struct heartlib {
     std::vector<int > V;
     std::vector<int > E;
     std::vector<int > F;
-    TriangleMesh M;
+    FaceMesh M;
     std::vector<Eigen::Matrix<double, 3, 1>> x;
     Eigen::Matrix<double, 3, 1> VertexNormal(
         const int & i)
@@ -244,9 +244,9 @@ struct heartlib {
         return this->x.at(i) + n * (s / double(norm));    
     }
     struct Neighborhoods {
-        using DT_ = double;
-        using MatrixD_ = Eigen::MatrixXd;
-        using VectorD_ = Eigen::VectorXd;
+        using DT = double;
+        using MatrixD = Eigen::MatrixXd;
+        using VectorD = Eigen::VectorXd;
         std::vector<int > V;
         std::vector<int > E;
         std::vector<int > F;
@@ -256,7 +256,7 @@ struct heartlib {
         Eigen::SparseMatrix<int> B1;
         Eigen::SparseMatrix<int> B0T;
         Eigen::SparseMatrix<int> B1T;
-        TriangleMesh M;
+        FaceMesh M;
         std::vector<int > VertexOneRing(
             const int & v)
         {
@@ -641,7 +641,7 @@ struct heartlib {
             Eigen::SparseMatrix<int> B1;
             Eigen::SparseMatrix<int> B0T;
             Eigen::SparseMatrix<int> B1T;
-            TriangleMesh M;
+            FaceMesh M;
             std::vector<int > Vertices(
                 const std::tuple< std::vector<int >, std::vector<int >, std::vector<int >, std::vector<int > > & S)
             {
@@ -733,7 +733,7 @@ struct heartlib {
                 }
                 return nonzeros(this->B1T * M.edges_to_vector(Faces_1set_0));    
             }
-            FundamentalMeshAccessors(const TriangleMesh & M)
+            FundamentalMeshAccessors(const FaceMesh & M)
             {
                 // V, E, F = ElementSets( M )
                 std::tuple< std::vector<int >, std::vector<int >, std::vector<int > > rhs = M.ElementSets();
@@ -792,7 +792,7 @@ struct heartlib {
         std::vector<int > Faces_1(int p0){
             return _FundamentalMeshAccessors.Faces_1(p0);
         };
-        Neighborhoods(const TriangleMesh & M)
+        Neighborhoods(const FaceMesh & M)
         :
         _FundamentalMeshAccessors(M)
         {
@@ -839,7 +839,7 @@ struct heartlib {
         return _Neighborhoods.VertexOneRing(p0);
     };
     heartlib(
-        const TriangleMesh & M,
+        const FaceMesh & M,
         const std::vector<Eigen::Matrix<double, 3, 1>> & x)
     :
     _Neighborhoods(M)

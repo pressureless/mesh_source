@@ -1,15 +1,13 @@
 /*
-svd from linearalgebra
 ElementSets from MeshConnectivity
 NeighborVerticesInFace, Faces from PolygonNeighborhoods(M)
-M : PolygonMesh 
-x_i ∈ ℝ^3 
+M : FaceMesh
+x_i ∈ ℝ^3
 
 V, E, F = ElementSets( M )
 
 VertexNormal(i) = (∑_(f ∈ Faces(i)) (x_j- x_i)×(x_k-x_i)/(‖x_j-x_i‖² ‖x_k-x_i‖²) 
 where j, k = NeighborVerticesInFace(f, i) ) where i ∈ V
-
 
 */
 #include <Eigen/Core>
@@ -20,24 +18,24 @@ where j, k = NeighborVerticesInFace(f, i) ) where i ∈ V
 #include <set>
 #include <algorithm>
 #include "type_helper.h"
-#include "PolygonMesh.h"
+#include "FaceMesh.h"
 
 using namespace iheartmesh;
 struct heartlib {
-    using DT__ = double;
-    using MatrixD__ = Eigen::MatrixXd;
-    using VectorD__ = Eigen::VectorXd;
+    using DT = double;
+    using MatrixD = Eigen::MatrixXd;
+    using VectorD = Eigen::VectorXd;
     std::vector<int > V;
     std::vector<int > E;
     std::vector<int > F;
-    PolygonMesh M;
+    FaceMesh M;
     std::vector<Eigen::Matrix<double, 3, 1>> x;
     Eigen::Matrix<double, 3, 1> VertexNormal(
         const int & i)
     {
         assert( std::binary_search(V.begin(), V.end(), i) );
 
-        MatrixD__ sum_0 = MatrixD__::Zero(3, 1);
+        MatrixD sum_0 = MatrixD::Zero(3, 1);
         for(int f : Faces_0(i)){
                 // j, k = NeighborVerticesInFace(f, i)
             std::tuple< int, int > rhs_1 = this->NeighborVerticesInFace(f, i);
@@ -61,7 +59,7 @@ struct heartlib {
         Eigen::SparseMatrix<int> B1;
         Eigen::SparseMatrix<int> B0T;
         Eigen::SparseMatrix<int> B1T;
-        PolygonMesh M;
+        FaceMesh M;
         std::vector<int > VertexOneRing(
             const int & v)
         {
@@ -303,7 +301,7 @@ struct heartlib {
             Eigen::SparseMatrix<int> B1;
             Eigen::SparseMatrix<int> B0T;
             Eigen::SparseMatrix<int> B1T;
-            PolygonMesh M;
+            FaceMesh M;
             std::vector<int > Vertices(
                 const std::tuple< std::vector<int >, std::vector<int >, std::vector<int >, std::vector<int > > & S)
             {
@@ -395,7 +393,7 @@ struct heartlib {
                 }
                 return nonzeros(this->B1T * M.edges_to_vector(Faces_1set_0));    
             }
-            FundamentalPolygonAccessors(const PolygonMesh & M)
+            FundamentalPolygonAccessors(const FaceMesh & M)
             {
                 // V, E, F = ElementSets( M )
                 std::tuple< std::vector<int >, std::vector<int >, std::vector<int > > rhs = M.ElementSets();
@@ -454,7 +452,7 @@ struct heartlib {
         std::vector<int > Faces_1(int p0){
             return _FundamentalPolygonAccessors.Faces_1(p0);
         };
-        PolygonNeighborhoods(const PolygonMesh & M)
+        PolygonNeighborhoods(const FaceMesh & M)
         :
         _FundamentalPolygonAccessors(M)
         {
@@ -497,7 +495,7 @@ struct heartlib {
         return _PolygonNeighborhoods.Faces_1(p0);
     };
     heartlib(
-        const PolygonMesh & M,
+        const FaceMesh & M,
         const std::vector<Eigen::Matrix<double, 3, 1>> & x)
     :
     _PolygonNeighborhoods(M)

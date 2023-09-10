@@ -1,7 +1,7 @@
 vec, inversevec, diag, svd from linearalgebra
 ElementSets from MeshConnectivity
 NeighborVerticesInFace, Faces, VertexOneRing, OrientedVertices from Neighborhoods(M)
-M : TriangleMesh
+M : FaceMesh
 x̄_i ∈ ℝ^3 : rest pos in 3D
 x_i ∈ ℝ^2 : current pos in 2D
 ε ∈ ℝ : eps
