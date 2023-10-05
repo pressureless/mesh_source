@@ -83,9 +83,9 @@ struct heartlib {
         return 1 / REAL((4 * M_PI)) * sum_0;    
     }
     struct Neighborhoods {
-        using DT = double;
-        using MatrixD = Eigen::MatrixXd;
-        using VectorD = Eigen::VectorXd;
+        using DT_ = double;
+        using MatrixD_ = Eigen::MatrixXd;
+        using VectorD_ = Eigen::VectorXd;
         std::vector<int > V;
         std::vector<int > E;
         std::vector<int > F;
@@ -111,7 +111,7 @@ struct heartlib {
                 VertexOneRingset_1.erase(unique(VertexOneRingset_1.begin(), VertexOneRingset_1.end() ), VertexOneRingset_1.end());
             }
             std::vector<int > difference;
-            const std::vector<int >& lhs_diff = nonzeros(this->B0 * (this->B0T * M.vertices_to_vector(VertexOneRingset_0)));
+            const std::vector<int >& lhs_diff = nonzeros(this->B0 * (this->B0T * indicator(VertexOneRingset_0, M.n_vertices())));
             const std::vector<int >& rhs_diff = VertexOneRingset_1;
             difference.reserve(lhs_diff.size());
             std::set_difference(lhs_diff.begin(), lhs_diff.end(), rhs_diff.begin(), rhs_diff.end(), std::back_inserter(difference));
@@ -121,7 +121,7 @@ struct heartlib {
             const std::vector<int > & v)
         {
             std::vector<int > difference_1;
-            const std::vector<int >& lhs_diff_1 = nonzeros(this->B0 * (this->B0T * M.vertices_to_vector(v)));
+            const std::vector<int >& lhs_diff_1 = nonzeros(this->B0 * (this->B0T * indicator(v, M.n_vertices())));
             const std::vector<int >& rhs_diff_1 = v;
             difference_1.reserve(lhs_diff_1.size());
             std::set_difference(lhs_diff_1.begin(), lhs_diff_1.end(), rhs_diff_1.begin(), rhs_diff_1.end(), std::back_inserter(difference_1));
@@ -154,7 +154,7 @@ struct heartlib {
                 sort(NeighborVerticesInFaceset_0.begin(), NeighborVerticesInFaceset_0.end());
                 NeighborVerticesInFaceset_0.erase(unique(NeighborVerticesInFaceset_0.begin(), NeighborVerticesInFaceset_0.end() ), NeighborVerticesInFaceset_0.end());
             }
-            std::vector<int > es = nonzeros(this->dee1 * M.faces_to_vector(NeighborVerticesInFaceset_0));
+            std::vector<int > es = nonzeros(this->dee1 * indicator(NeighborVerticesInFaceset_0, M.n_faces()));
             // nes = { s for s ∈ es if `∂⁰`_v,s != 0 }
             std::vector<int > NeighborVerticesInFaceset_1;
             const std::vector<int >& range = es;
@@ -190,7 +190,7 @@ struct heartlib {
                 NeighborVerticesInFaceset_3.erase(unique(NeighborVerticesInFaceset_3.begin(), NeighborVerticesInFaceset_3.end() ), NeighborVerticesInFaceset_3.end());
             }
             std::vector<int > difference_2;
-            const std::vector<int >& lhs_diff_2 = nonzeros(this->B0 * M.edges_to_vector(eset1));
+            const std::vector<int >& lhs_diff_2 = nonzeros(this->B0 * indicator(eset1, M.n_edges()));
             const std::vector<int >& rhs_diff_2 = NeighborVerticesInFaceset_3;
             difference_2.reserve(lhs_diff_2.size());
             std::set_difference(lhs_diff_2.begin(), lhs_diff_2.end(), rhs_diff_2.begin(), rhs_diff_2.end(), std::back_inserter(difference_2));
@@ -216,7 +216,7 @@ struct heartlib {
                 NeighborVerticesInFaceset_5.erase(unique(NeighborVerticesInFaceset_5.begin(), NeighborVerticesInFaceset_5.end() ), NeighborVerticesInFaceset_5.end());
             }
             std::vector<int > difference_3;
-            const std::vector<int >& lhs_diff_3 = nonzeros(this->B0 * M.edges_to_vector(eset2));
+            const std::vector<int >& lhs_diff_3 = nonzeros(this->B0 * indicator(eset2, M.n_edges()));
             const std::vector<int >& rhs_diff_3 = NeighborVerticesInFaceset_5;
             difference_3.reserve(lhs_diff_3.size());
             std::set_difference(lhs_diff_3.begin(), lhs_diff_3.end(), rhs_diff_3.begin(), rhs_diff_3.end(), std::back_inserter(difference_3));
@@ -426,21 +426,21 @@ struct heartlib {
                 sort(FaceIndexset_0.begin(), FaceIndexset_0.end());
                 FaceIndexset_0.erase(unique(FaceIndexset_0.begin(), FaceIndexset_0.end() ), FaceIndexset_0.end());
             }
-            std::vector<int > iface = nonzeros(ufv * M.vertices_to_vector(FaceIndexset_0));
+            std::vector<int > iface = nonzeros(ufv * indicator(FaceIndexset_0, M.n_vertices()));
             // `B⁰`, `B¹` = UnsignedBoundaryMatrices(M)8
             std::vector<int > FaceIndexset_1({j});
             if(FaceIndexset_1.size() > 1){
                 sort(FaceIndexset_1.begin(), FaceIndexset_1.end());
                 FaceIndexset_1.erase(unique(FaceIndexset_1.begin(), FaceIndexset_1.end() ), FaceIndexset_1.end());
             }
-            std::vector<int > jface = nonzeros(ufv * M.vertices_to_vector(FaceIndexset_1));
+            std::vector<int > jface = nonzeros(ufv * indicator(FaceIndexset_1, M.n_vertices()));
             // `B⁰`, `B¹` = UnsignedBoundaryMatrices(M)9
             std::vector<int > FaceIndexset_2({k});
             if(FaceIndexset_2.size() > 1){
                 sort(FaceIndexset_2.begin(), FaceIndexset_2.end());
                 FaceIndexset_2.erase(unique(FaceIndexset_2.begin(), FaceIndexset_2.end() ), FaceIndexset_2.end());
             }
-            std::vector<int > kface = nonzeros(ufv * M.vertices_to_vector(FaceIndexset_2));
+            std::vector<int > kface = nonzeros(ufv * indicator(FaceIndexset_2, M.n_vertices()));
             // `B⁰ᵀ` = `B⁰`ᵀ0
             std::vector<int > intsect_1;
             const std::vector<int >& lhs_1 = jface;
@@ -505,12 +505,12 @@ struct heartlib {
                     sort(Vertices_0set_0.begin(), Vertices_0set_0.end());
                     Vertices_0set_0.erase(unique(Vertices_0set_0.begin(), Vertices_0set_0.end() ), Vertices_0set_0.end());
                 }
-                return nonzeros(this->B0 * (this->B1 * M.faces_to_vector(Vertices_0set_0)));    
+                return nonzeros(this->B0 * (this->B1 * indicator(Vertices_0set_0, M.n_faces())));    
             }
             std::vector<int > Vertices_1(
                 const std::vector<int > & G)
             {
-                return nonzeros(this->B0 * (this->B1 * M.faces_to_vector(G)));    
+                return nonzeros(this->B0 * (this->B1 * indicator(G, M.n_faces())));    
             }
             std::vector<int > Vertices_2(
                 const int & e)
@@ -521,12 +521,12 @@ struct heartlib {
                     sort(Vertices_2set_0.begin(), Vertices_2set_0.end());
                     Vertices_2set_0.erase(unique(Vertices_2set_0.begin(), Vertices_2set_0.end() ), Vertices_2set_0.end());
                 }
-                return nonzeros(this->B0 * M.edges_to_vector(Vertices_2set_0));    
+                return nonzeros(this->B0 * indicator(Vertices_2set_0, M.n_edges()));    
             }
             std::vector<int > Vertices_3(
                 const std::vector<int > & H)
             {
-                return nonzeros(this->B0 * M.edges_to_vector(H));    
+                return nonzeros(this->B0 * indicator(H, M.n_edges()));    
             }
             std::vector<int > Edges_0(
                 const int & v)
@@ -537,7 +537,7 @@ struct heartlib {
                     sort(Edges_0set_0.begin(), Edges_0set_0.end());
                     Edges_0set_0.erase(unique(Edges_0set_0.begin(), Edges_0set_0.end() ), Edges_0set_0.end());
                 }
-                return nonzeros(this->B0T * M.vertices_to_vector(Edges_0set_0));    
+                return nonzeros(this->B0T * indicator(Edges_0set_0, M.n_vertices()));    
             }
             std::vector<int > Edges_1(
                 const int & f)
@@ -548,7 +548,7 @@ struct heartlib {
                     sort(Edges_1set_0.begin(), Edges_1set_0.end());
                     Edges_1set_0.erase(unique(Edges_1set_0.begin(), Edges_1set_0.end() ), Edges_1set_0.end());
                 }
-                return nonzeros(this->B1 * M.faces_to_vector(Edges_1set_0));    
+                return nonzeros(this->B1 * indicator(Edges_1set_0, M.n_faces()));    
             }
             std::vector<int > Faces_0(
                 const int & v)
@@ -559,7 +559,7 @@ struct heartlib {
                     sort(Faces_0set_0.begin(), Faces_0set_0.end());
                     Faces_0set_0.erase(unique(Faces_0set_0.begin(), Faces_0set_0.end() ), Faces_0set_0.end());
                 }
-                return nonzeros(this->B1T * (this->B0T * M.vertices_to_vector(Faces_0set_0)));    
+                return nonzeros(this->B1T * (this->B0T * indicator(Faces_0set_0, M.n_vertices())));    
             }
             std::vector<int > Faces_1(
                 const int & e)
@@ -570,7 +570,7 @@ struct heartlib {
                     sort(Faces_1set_0.begin(), Faces_1set_0.end());
                     Faces_1set_0.erase(unique(Faces_1set_0.begin(), Faces_1set_0.end() ), Faces_1set_0.end());
                 }
-                return nonzeros(this->B1T * M.edges_to_vector(Faces_1set_0));    
+                return nonzeros(this->B1T * indicator(Faces_1set_0, M.n_edges()));    
             }
             FundamentalMeshAccessors(const FaceMesh & M)
             {

@@ -113,7 +113,7 @@ struct heartlib {
                 VertexOneRingset_1.erase(unique(VertexOneRingset_1.begin(), VertexOneRingset_1.end() ), VertexOneRingset_1.end());
             }
             std::vector<int > difference;
-            const std::vector<int >& lhs_diff = nonzeros(this->B0 * (this->B0T * M.vertices_to_vector(VertexOneRingset_0)));
+            const std::vector<int >& lhs_diff = nonzeros(this->B0 * (this->B0T * indicator(VertexOneRingset_0, M.n_vertices())));
             const std::vector<int >& rhs_diff = VertexOneRingset_1;
             difference.reserve(lhs_diff.size());
             std::set_difference(lhs_diff.begin(), lhs_diff.end(), rhs_diff.begin(), rhs_diff.end(), std::back_inserter(difference));
@@ -123,7 +123,7 @@ struct heartlib {
             const std::vector<int > & v)
         {
             std::vector<int > difference_1;
-            const std::vector<int >& lhs_diff_1 = nonzeros(this->B0 * (this->B0T * M.vertices_to_vector(v)));
+            const std::vector<int >& lhs_diff_1 = nonzeros(this->B0 * (this->B0T * indicator(v, M.n_vertices())));
             const std::vector<int >& rhs_diff_1 = v;
             difference_1.reserve(lhs_diff_1.size());
             std::set_difference(lhs_diff_1.begin(), lhs_diff_1.end(), rhs_diff_1.begin(), rhs_diff_1.end(), std::back_inserter(difference_1));
@@ -147,8 +147,8 @@ struct heartlib {
                 EdgeIndexset_1.erase(unique(EdgeIndexset_1.begin(), EdgeIndexset_1.end() ), EdgeIndexset_1.end());
             }
             std::vector<int > intsect;
-            const std::vector<int >& lhs = nonzeros(this->dee0T * M.vertices_to_vector(EdgeIndexset_0));
-            const std::vector<int >& rhs_1 = nonzeros(this->dee0T * M.vertices_to_vector(EdgeIndexset_1));
+            const std::vector<int >& lhs = nonzeros(this->dee0T * indicator(EdgeIndexset_0, M.n_vertices()));
+            const std::vector<int >& rhs_1 = nonzeros(this->dee0T * indicator(EdgeIndexset_1, M.n_vertices()));
             intsect.reserve(std::min(lhs.size(), rhs_1.size()));
             std::set_intersection(lhs.begin(), lhs.end(), rhs_1.begin(), rhs_1.end(), std::back_inserter(intsect));
             std::vector<int > eset = intsect;
@@ -183,12 +183,12 @@ struct heartlib {
                     sort(Vertices_0set_0.begin(), Vertices_0set_0.end());
                     Vertices_0set_0.erase(unique(Vertices_0set_0.begin(), Vertices_0set_0.end() ), Vertices_0set_0.end());
                 }
-                return nonzeros(this->B0 * M.edges_to_vector(Vertices_0set_0));    
+                return nonzeros(this->B0 * indicator(Vertices_0set_0, M.n_edges()));    
             }
             std::vector<int > Vertices(
                 const std::vector<int > & H)
             {
-                return nonzeros(this->B0 * M.edges_to_vector(H));    
+                return nonzeros(this->B0 * indicator(H, M.n_edges()));    
             }
             std::vector<int > Edges(
                 const int & v)
@@ -199,7 +199,7 @@ struct heartlib {
                     sort(Edges_0set_0.begin(), Edges_0set_0.end());
                     Edges_0set_0.erase(unique(Edges_0set_0.begin(), Edges_0set_0.end() ), Edges_0set_0.end());
                 }
-                return nonzeros(this->B0T * M.vertices_to_vector(Edges_0set_0));    
+                return nonzeros(this->B0T * indicator(Edges_0set_0, M.n_vertices()));    
             }
             FundamentalPointCloudAccessors(const EdgeMesh & M)
             {
