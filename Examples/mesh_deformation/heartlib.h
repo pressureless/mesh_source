@@ -65,20 +65,20 @@ H = ∑_(i ∈ C) psd(∂²S_i(x)/∂x²) + psd(∂²E2/∂x²)
 
 using namespace iheartmesh;
 struct heartlib {
-    using DT = autodiff::var;
-    using MatrixD = Eigen::Matrix<autodiff::var, Eigen::Dynamic, Eigen::Dynamic>;
-    using VectorD = Eigen::Matrix<autodiff::var, Eigen::Dynamic, 1>;
+    using DT__ = autodiff::var;
+    using MatrixD__ = Eigen::Matrix<autodiff::var, Eigen::Dynamic, Eigen::Dynamic>;
+    using VectorD__ = Eigen::Matrix<autodiff::var, Eigen::Dynamic, 1>;
     std::vector<int > V;
     std::vector<int > E;
     std::vector<int > F;
     std::vector<int > C;
-    DT E2;
-    DT e;
+    DT__ E2;
+    DT__ e;
     Eigen::VectorXd G;
     Eigen::SparseMatrix<double> H;
     CellMesh M;
     std::vector<Eigen::Matrix<double, 3, 1>> x̄;
-    std::vector<Eigen::Matrix<DT, 3, 1>> x;
+    std::vector<Eigen::Matrix<DT__, 3, 1>> x;
     autodiff::ArrayXvar new_x;
     double vol(
         const int & i,
@@ -551,7 +551,7 @@ struct heartlib {
             {
                 return std::get<3-1>(S);    
             }
-            std::vector<int > Tets(
+            std::vector<int > Cells(
                 const std::tuple< std::vector<int >, std::vector<int >, std::vector<int >, std::vector<int > > & S)
             {
                 return std::get<4-1>(S);    
@@ -871,13 +871,13 @@ struct heartlib {
             this->x[i] = new_x.segment(3*i, 3);
         }
         // E2 = w ∑_j ‖bp_j - x_(bx_j)‖²
-        DT sum_0 = 0;
+        DT__ sum_0 = 0;
         for(int j=1; j<=bp.size(); j++){
             sum_0 += pow((bp.at(j-1) - this->x.at(bx.at(j-1))).template lpNorm<2>(), 2);
         }
         E2 = w * sum_0;
         // e = ∑_(i ∈ C) S_i(x) + E2
-        DT sum_1 = 0;
+        DT__ sum_1 = 0;
         for(int i : this->C){
             sum_1 += S(i, this->x);
         }
