@@ -4,7 +4,7 @@ Each example in the `Examples` directory contains the following files:
 
 * `.hlang` is the I❤️MESH source code
 * `.pdf` is the typeset generated LaTeX.
-* `iheartmesh.h` is the generated C++ code.
+* `heartlib.h` is the generated C++ code.
 * `main.cpp` is the driver application.
 
 ## Compiling
