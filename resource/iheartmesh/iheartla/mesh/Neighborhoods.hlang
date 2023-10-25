@@ -1,6 +1,6 @@
 ElementSets, BoundaryMatrices, UnsignedBoundaryMatrices, NonZeros, IndicatorVector from MeshConnectivity
 Vertices, Edges, Faces from FundamentalMeshAccessors(M)
-M ∈ TriangleMesh
+M ∈ FaceMesh
 V, E, F = ElementSets( M )
 `∂⁰`, `∂¹` = BoundaryMatrices(M) 
 `B⁰`, `B¹` = UnsignedBoundaryMatrices(M)
@@ -30,18 +30,18 @@ OrientedVertices(f) = tuple(vs_1, i, j)    where f ∈ F,
 vs = Vertices(f),
 i,j = NeighborVerticesInFace(f, vs_1)
 
-Diamond(e) = SimplicialSet(Vertices(e), {e}, Faces(e)) where e ∈ E
+Diamond(e) = CellularSet(Vertices(e), {e}, Faces(e)) where e ∈ E
 
 OrientedOppositeFaces(i, j) = tuple(firf_1, secf_1) where i,j ∈ V,
 e = EdgeIndex(i, j),
 fset = Faces(e),
-firf = { f for f ∈ fset if `∂¹`_e,f `∂⁰`_i,e == -1 },
+firf = { f for f ∈ fset if `∂¹`_e,f `∂⁰`_i,e = -1 },
 secf = fset - firf
 
 OppositeFaces(e) = tuple(firf_1, secf_1) where e ∈ E,
 fset = Faces(e),
-firf = { f for f ∈ fset if `∂¹`_e,f == 1 },
-secf = { f for f ∈ fset if `∂¹`_e,f == -1 }
+firf = { f for f ∈ fset if `∂¹`_e,f = 1 },
+secf = { f for f ∈ fset if `∂¹`_e,f = -1 }
 
 OppositeVertices(e) = tuple(firv_1, secv_1) where e ∈ E,
 firf, secf = OppositeFaces(e),

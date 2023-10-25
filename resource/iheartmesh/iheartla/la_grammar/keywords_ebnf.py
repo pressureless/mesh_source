@@ -73,19 +73,16 @@ MATRIX = /matrix/;
 VERTEXSET = /[Vv]ertex[Ss]et/;
 EDGESET = /[Ee]dge[Ss]et/;
 FACESET = /[Ff]ace[Ss]et/;
-TETSET = /[Tt]et[Ss]et/;
-SIMPLICIALSET = /[Ss]implicial[Ss]et/;
-MESH = /mesh/ | /Mesh/;
-TRIANGLE = /[Tt]riangle[Mm]esh/;
-POLYGON = /[Pp]olygon[Mm]esh/;
-POINTCLOUD = /[Pp]oint [Cc]loud/ | /[Pp]oint[Cc]loud/;
-TETRAHEDRON = /[Tt]etrahedral[Mm]esh/;
-POLYHEDRON = /[Pp]olyhedral[Mm]esh/;
+TETSET = /[Cc]ell[Ss]et/;
+SIMPLICIALSET = /[Cc]ellular[Ss]et/;
+EDGEMESH = /[Ee]dge[Mm]esh/;
+FACEMESH = /[Ff]ace[Mm]esh/;
+CELLMESH = /[Cc]ell[Mm]esh/;
 INDEX = /index/;
 VERTICES = /vertices/;
 EDGES = /edges/;
 FACES = /faces/;
-TETS = /tets/;
+TETS = /cells/;
 TUPLE = /tuple/;
 SEQUENCE = /sequence/;
 SVD = /svd/;
@@ -132,12 +129,9 @@ BUILTIN_KEYWORDS
     | FACESET
     | TETSET
     | SIMPLICIALSET
-    | MESH
-    | TRIANGLE
-    | POLYGON
-    | POINTCLOUD
-    | TETRAHEDRON
-    | POLYHEDRON
+    | EDGEMESH
+    | FACEMESH
+    | CELLMESH
     | SPARSE
     | INDEX
     | VERTICES
