@@ -45,6 +45,9 @@ tags
 *.a
 *.lib
 
+# Python
+__pycache__
+
 # Executables
 *.exe
 *.out

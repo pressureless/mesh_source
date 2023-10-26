@@ -120,7 +120,7 @@ target_include_directories(Mesh-Examples PUBLIC "${CMAKE_CURRENT_SOURCE_DIR}/res
 # Link settings
 target_link_libraries(Mesh-Examples igl::core polyscope Eigen3::Eigen OpenMP::OpenMP_CXX autodiff::autodiff)
 
-file(GLOB EXAMPLE_APPS Examples/*/main.cpp)
+file(GLOB EXAMPLE_APPS examples/*/main.cpp)
 foreach(main ${EXAMPLE_APPS})
     # message(STATUS "Main is ${main}")
     get_filename_component(app_name ${main} NAME_WE)

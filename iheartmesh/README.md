@@ -31,7 +31,7 @@ Install the modules via `pip`:
     # For development, also install:
     pip3 install graphviz cppyy numpy scipy pyinstaller
 
-(2023-05-10: There is a known bug with Python >= 3.10 and wxPython 4.2.0's PDF viewer. It will be fixed in the next release of wxPython. For now, either run on Python 3.9, live without PDF rendering, compile top-of-tree wxPython yourself, or change `/` to `//` in `wx/lib/pdfviewer/viewer.py:354` (so that `self.Ypagepixels` is an `int`). The relevant commit is [here](https://github.com/wxWidgets/Phoenix/commit/aa4394773a8696444ce5d8a90273d67796e499d0).)
+(Note: There was a known bug with Python >= 3.10 and wxPython 4.2.0's PDF viewer. It was fixed in wxPython 4.2.1.)
 
 ## Output Dependencies
 
